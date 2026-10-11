@@ -1,16 +1,20 @@
 services:
-  app:
-    image: ghcr.io/animeaichat/xiaozhi-server-go:server
+  xiaozhi-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xiaozhi-server-go:latest
     container_name: xiaozhi-server
     restart: unless-stopped
-    volumes:
-      - .:/app
-    working_dir: /app
-    command: ["./linux-amd64-server-upx"] # Replace with your binary name
     ports:
       - "8080:8080"
       - "8000:8000"
+    volumes:
+      - xiaozhi_data:/app/data
     environment:
-      - DATABASE_URL=sqlite://./config.db
       - ENV=production
       - PORT=8080
+
+volumes:
+  xiaozhi_data:
+    driver: local

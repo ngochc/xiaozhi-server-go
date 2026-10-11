@@ -121,20 +121,16 @@ go build -o xiaozhi-server ./src/main.go
 
 ## Docker Deployment
 
-A [`docker-compose.yml`](docker-compose.yml) is included for running prebuilt Linux releases. Place the following files in the same directory and set `command` in `docker-compose.yml` to match your binary name:
-
-- Linux server binary
-- `.config.yaml`
-- `docker-compose.yml`
-
-Then run:
+Build and run the container directly with Docker Compose:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 docker compose logs -f
 ```
 
-Ensure ports `8000` and `8080` are forwarded to the host, and set `web.websocket` in `.config.yaml` to the host IP or domain reachable by devices.
+- **Ports:** `8080` (Web Admin console) and `8000` (WebSocket / device connection) are published to the host.
+- **Persistence:** The SQLite database (`config.db`) and runtime configuration (`.config.yaml`) are automatically initialized and persisted in the `xiaozhi_data` Docker volume.
+- Update `web.websocket` in your configuration to the host IP or domain reachable by your client devices.
 
 ## MCP Configuration
 

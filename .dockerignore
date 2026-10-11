@@ -1,0 +1,15 @@
+.git
+.gitignore
+.config.yaml
+config.db
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+tmp/
+scratch/
+bin/
+*.exe
+*.test
+xiaozhi-server
+linux-*
