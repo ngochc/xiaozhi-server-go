@@ -9,7 +9,7 @@ import (
 	"xiaozhi-server-go/src/core/utils"
 )
 
-// TransportManager 传输管理器
+// TransportManager transport manager
 type TransportManager struct {
 	transports map[string]Transport
 	logger     *utils.Logger
@@ -17,7 +17,7 @@ type TransportManager struct {
 	mu         sync.RWMutex
 }
 
-// NewTransportManager 创建新的传输管理器
+// NewTransportManager creates a new transport manager
 func NewTransportManager(config *configs.Config, logger *utils.Logger) *TransportManager {
 	return &TransportManager{
 		transports: make(map[string]Transport),
@@ -26,26 +26,26 @@ func NewTransportManager(config *configs.Config, logger *utils.Logger) *Transpor
 	}
 }
 
-// RegisterTransport 注册传输层
+// RegisterTransport registers a transport layer
 func (m *TransportManager) RegisterTransport(name string, transport Transport) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.transports[name] = transport
-	m.logger.Debug("注册传输层: %s (%s)", name, transport.GetType())
+	m.logger.Debug("registered transport layer: %s (%s)", name, transport.GetType())
 }
 
-// StartAll 启动所有传输层
+// StartAll starts all transport layers
 func (m *TransportManager) StartAll(ctx context.Context) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	for name, transport := range m.transports {
-		// m.logger.Info(fmt.Sprintf("启动传输层: %s", name))
+		// m.logger.Info(fmt.Sprintf("starting transport layer: %s", name))
 
-		// 为每个传输层启动独立的goroutine
+		// Launch separate goroutine for each transport layer
 		go func(name string, transport Transport) {
 			if err := transport.Start(ctx); err != nil {
-				m.logger.Error("传输层 %s 运行失败: %v", name, err)
+				m.logger.Error("transport layer %s failed: %v", name, err)
 			}
 		}(name, transport)
 	}
@@ -56,7 +56,7 @@ func (m *TransportManager) StartAll(ctx context.Context) error {
 }
 
 func (m *TransportManager) StartTicker(ctx context.Context) {
-	// 设置定时器，打印各个传输层的状态信息
+	// Set ticker to print status for each transport layer
 	go func() {
 		ticker := time.NewTicker(60 * time.Second)
 		defer ticker.Stop()
@@ -73,7 +73,7 @@ func (m *TransportManager) StartTicker(ctx context.Context) {
 					clientCnt += c
 					sessionCnt += s
 				}
-				//m.logger.Info("当前活跃连接数: %d, 当前活跃会话数: %d", clientCnt, sessionCnt)
+				//m.logger.Info("Active connections: %d, Active sessions: %d", clientCnt, sessionCnt)
 				systemMemoryUse, _ := utils.GetSystemMemoryUsage()
 				systemCPUUse, _ := utils.GetSystemCPUUsage()
 				database.UpdateServerStatus(systemMemoryUse, systemCPUUse, clientCnt, sessionCnt)
@@ -82,7 +82,7 @@ func (m *TransportManager) StartTicker(ctx context.Context) {
 	}()
 }
 
-// StopAll 停止所有传输层
+// StopAll stops all transport layers
 func (m *TransportManager) StopAll() error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -90,14 +90,14 @@ func (m *TransportManager) StopAll() error {
 	var lastErr error
 	for name, transport := range m.transports {
 		if err := transport.Stop(); err != nil {
-			m.logger.Error("停止传输层 %s 失败: %v", name, err)
+			m.logger.Error("failed to stop transport layer %s: %v", name, err)
 			lastErr = err
 		}
 	}
 	return lastErr
 }
 
-// GetTransport 获取指定名称的传输层
+// GetTransport gets transport layer by name
 func (m *TransportManager) GetTransport(name string) Transport {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

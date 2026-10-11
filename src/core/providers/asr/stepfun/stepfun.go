@@ -19,11 +19,11 @@ import (
 // Ensure Provider implements asr.Provider interface
 var _ asr.Provider = (*Provider)(nil)
 
-// Provider 阶跃ASR提供者实现
+// Provider StepFun ASR provider implementation
 type Provider struct {
 	*asr.BaseProvider
 
-	// 配置
+	// Configuration
 	apiKey string
 	model  string
 	voice  string
@@ -31,7 +31,7 @@ type Provider struct {
 	logger *utils.Logger
 	prompt string
 
-	// 流式识别相关字段
+	// Streaming recognition fields
 	conn        *websocket.Conn
 	isStreaming bool
 	result      string
@@ -42,24 +42,24 @@ type Provider struct {
 func NewProvider(config *asr.Config, deleteFile bool, logger *utils.Logger) (*Provider, error) {
 	base := asr.NewBaseProvider(config, deleteFile)
 
-	// 从config.Data中获取配置
+	// Retrieve configuration from config.Data
 	apiKey, ok := config.Data["api_key"].(string)
 	if !ok {
-		return nil, fmt.Errorf("缺少api_key配置")
+		return nil, fmt.Errorf("missing api_key configuration")
 	}
 
 	model, ok := config.Data["model"].(string)
 	if !ok {
-		return nil, fmt.Errorf("缺少model配置")
+		return nil, fmt.Errorf("missing model configuration")
 	}
 	voice, ok := config.Data["voice"].(string)
 	if !ok {
-		return nil, fmt.Errorf("缺少voice配置")
+		return nil, fmt.Errorf("missing voice configuration")
 	}
 
 	prompt, ok := config.Data["prompt"].(string)
 	if !ok {
-		prompt = "你是由阶跃星辰提供的AI聊天助手，你擅长中文、英文及多语种对话。"
+		prompt = "You are an AI assistant capable of multi-language conversations."
 	}
 
 	provider := &Provider{
@@ -80,14 +80,14 @@ func NewProvider(config *asr.Config, deleteFile bool, logger *utils.Logger) (*Pr
 // Ensure Provider implements asr.Provider interface
 var _ asr.Provider = (*Provider)(nil)
 
-// AddAudio 添加音频数据到缓冲区
+// AddAudio adds audio data to buffer
 func (p *Provider) AddAudio(data []byte) error {
 	return p.AddAudioWithContext(context.Background(), data)
 }
 
-// AddAudioWithContext 带上下文添加音频数据
+// AddAudioWithContext adds audio data with context
 func (p *Provider) AddAudioWithContext(ctx context.Context, data []byte) error {
-	// 检查并启动流式识别
+	// Check and start streaming recognition
 	p.connMutex.Lock()
 	isStreaming := p.isStreaming
 	p.connMutex.Unlock()
@@ -98,7 +98,7 @@ func (p *Provider) AddAudioWithContext(ctx context.Context, data []byte) error {
 		}
 	}
 
-	// 发送音频数据（Base64编码）
+	// Send audio data (Base64 encoded)
 	if len(data) > 0 {
 		if err := p.sendAppendAudio(data); err != nil {
 			return err
@@ -108,7 +108,7 @@ func (p *Provider) AddAudioWithContext(ctx context.Context, data []byte) error {
 	return nil
 }
 
-// SendLastAudio 提交当前音频缓冲区，以便服务端立即完成本轮识别。
+// SendLastAudio submits audio buffer to finish recognition round immediately
 func (p *Provider) SendLastAudio(data []byte) error {
 	if len(data) > 0 {
 		if err := p.AddAudio(data); err != nil {
@@ -121,10 +121,10 @@ func (p *Provider) SendLastAudio(data []byte) error {
 	})
 }
 
-// Transcribe 直接识别整段音频（简化：流式通道发送并等待回调结果）
+// Transcribe recognizes audio segment directly
 func (p *Provider) Transcribe(ctx context.Context, audioData []byte) (string, error) {
 	if p.isStreaming {
-		return "", fmt.Errorf("正在进行流式识别, 请先调用Reset")
+		return "", fmt.Errorf("streaming recognition in progress, call Reset first")
 	}
 	if err := p.StartStreaming(ctx); err != nil {
 		return "", err
@@ -134,25 +134,25 @@ func (p *Provider) Transcribe(ctx context.Context, audioData []byte) (string, er
 	if err := p.AddAudioWithContext(ctx, audioData); err != nil {
 		return "", err
 	}
-	// 这里不阻塞等待最终结果，由监听器回调返回
+	// Non-blocking return via listener callback
 	return p.result, nil
 }
 
-// StartStreaming 建立与Step Realtime的WebSocket连接并发送session.update
+// StartStreaming connects to Step Realtime WebSocket and sends session.update
 func (p *Provider) StartStreaming(ctx context.Context) error {
-	p.logger.Info("----开始Step流式识别----")
+	p.logger.Info("----Starting Step streaming recognition----")
 	p.ResetStartListenTime()
 
 	if p.isStreaming {
-		p.logger.Debug("Step流式识别已启动，跳过初始化")
+		p.logger.Debug("Step streaming recognition already started, skipping init")
 		return nil
 	}
 
-	// 加锁保护连接初始化
+	// Mutex protects connection initialization
 	p.connMutex.Lock()
-	// 确保旧连接关闭
+	// Ensure old connection is closed
 	if p.conn != nil {
-		p.logger.Debug("Step流式识别关闭旧连接")
+		p.logger.Debug("Step streaming recognition closing old connection")
 		p.closeConnection()
 	}
 
@@ -168,13 +168,13 @@ func (p *Provider) StartStreaming(ctx context.Context) error {
 		if resp != nil {
 			status = resp.StatusCode
 		}
-		return fmt.Errorf("WebSocket连接失败(状态码:%d): %v", status, err)
+		return fmt.Errorf("WebSocket connection failed (status code: %d): %v", status, err)
 	}
-	p.logger.Debug("Step流式识别建立WebSocket连接成功")
+	p.logger.Debug("Step streaming recognition established WebSocket successfully")
 	p.conn = conn
 	p.connMutex.Unlock()
 
-	// 发送 session.update
+	// Send session.update
 	sessionPayload := map[string]interface{}{
 		"event_id": fmt.Sprintf("event_%d", time.Now().UnixNano()),
 		"type":     "session.update",
@@ -186,7 +186,7 @@ func (p *Provider) StartStreaming(ctx context.Context) error {
 			"output_audio_format": "pcm16",
 			"turn_detection": map[string]interface{}{
 				"type":                       "server_vad",
-				"energy_awakeness_threshold": 100, // 放大激活阈值
+				"energy_awakeness_threshold": 100, // Activation threshold
 			},
 		},
 	}
@@ -195,17 +195,17 @@ func (p *Provider) StartStreaming(ctx context.Context) error {
 		_ = p.conn.Close()
 		p.conn = nil
 		p.connMutex.Unlock()
-		return fmt.Errorf("发送session.update失败: %v", err)
+		return fmt.Errorf("failed to send session.update: %v", err)
 	}
 
-	// 标记流式识别并启动读取协程
+	// Flag streaming and start reader goroutine
 	p.isStreaming = true
 	go p.readLoop()
 	return nil
 }
 
 func (p *Provider) sendAppendAudio(data []byte) error {
-	// 将PCM16字节编码为Base64
+	// Encode PCM16 bytes to Base64
 	encoded := base64.StdEncoding.EncodeToString(data)
 	payload := map[string]interface{}{
 		"event_id": fmt.Sprintf("event_%d", time.Now().UnixNano()),
@@ -221,7 +221,7 @@ func (p *Provider) sendJSON(v interface{}) error {
 	defer p.connMutex.Unlock()
 
 	if p.conn == nil {
-		return fmt.Errorf("WebSocket连接不存在")
+		return fmt.Errorf("WebSocket connection does not exist")
 	}
 	bytes, err := json.Marshal(v)
 	if err != nil {
@@ -231,10 +231,10 @@ func (p *Provider) sendJSON(v interface{}) error {
 }
 
 func (p *Provider) readLoop() {
-	p.logger.Info("Step流式识别协程已启动")
+	p.logger.Info("Step streaming recognition goroutine started")
 	defer func() {
 		if r := recover(); r != nil {
-			p.logger.Error("Step流式识别协程panic: %v", r)
+			p.logger.Error("Step streaming recognition goroutine panic: %v", r)
 		}
 		p.connMutex.Lock()
 		p.isStreaming = false
@@ -242,7 +242,7 @@ func (p *Provider) readLoop() {
 			p.closeConnection()
 		}
 		p.connMutex.Unlock()
-		p.logger.Info("Step流式识别协程已结束")
+		p.logger.Info("Step streaming recognition goroutine ended")
 	}()
 
 	var baseEvent BaseEvent
@@ -259,44 +259,44 @@ func (p *Provider) readLoop() {
 			return
 		}
 		if msgType != websocket.TextMessage {
-			// 忽略非文本帧
+			// Ignore non-text frames
 			continue
 		}
 
 		if err := json.Unmarshal(data, &baseEvent); err != nil {
-			p.setErrorAndStop(fmt.Errorf("解析服务端事件失败: %v", err))
+			p.setErrorAndStop(fmt.Errorf("failed to parse server event: %v", err))
 			return
 		}
 
-		p.logger.Debug("Step流式识别事件类型: %s", baseEvent.Type)
+		p.logger.Debug("Step streaming recognition event type: %s", baseEvent.Type)
 		switch baseEvent.Type {
 		case "error":
 			e := ErrorEvent{}
 			if err := json.Unmarshal(data, &e); err != nil {
-				p.logger.Error("解析服务端事件失败: %v", err)
+				p.logger.Error("failed to parse server event: %v", err)
 				return
 			}
-			p.setErrorAndStop(fmt.Errorf("服务端错误: %v", e.Error.Message))
+			p.setErrorAndStop(fmt.Errorf("server error: %v", e.Error.Message))
 			return
 		case "session.created":
 			e := SessionCreatedEvent{}
 			if err := json.Unmarshal(data, &e); err != nil {
-				p.logger.Error("解析服务端事件失败: %v", err)
+				p.logger.Error("failed to parse server event: %v", err)
 				return
 			}
 			p.logger.Info("type: %s, sessionID: %s", e.Type, e.Session.ID)
 		case "session.updated", "input_audio_buffer.speech_started", "input_audio_buffer.speech_stopped", "input_audio_buffer.committed", "input_audio_buffer.cleared":
-			// 无需特殊处理
+			// No special handling needed
 			continue
 		case "conversation.item.input_audio_transcription.completed":
 			e := ConversationItemInputAudioTranscriptionCompletedEvent{}
 			if err := json.Unmarshal(data, &e); err != nil {
-				p.logger.Error("解析服务端事件失败: %v", err)
+				p.logger.Error("failed to parse server event: %v", err)
 				return
 			}
-			// 读取转写结果
+			// Read transcription result
 			text := e.Transcript
-			p.logger.Debug("[DEBUG] Step识别结果: %s", text)
+			p.logger.Debug("[DEBUG] Step recognition result: %s", text)
 			p.connMutex.Lock()
 			p.result = text
 			p.connMutex.Unlock()
@@ -304,7 +304,7 @@ func (p *Provider) readLoop() {
 			if listener := p.BaseProvider.GetListener(); listener != nil {
 				if text == "" && p.SilenceTime() > 30*time.Second {
 					p.BaseProvider.SilenceCount += 1
-					text = "你没有听清我说话"
+					text = "You did not hear me clearly"
 				} else if text != "" {
 					p.BaseProvider.SilenceCount = 0
 				}
@@ -313,7 +313,7 @@ func (p *Provider) readLoop() {
 				}
 			}
 		default:
-			// 其他事件忽略
+			// Other events ignored
 		}
 	}
 }
@@ -337,7 +337,7 @@ func (p *Provider) setErrorAndStop(err error) {
 func (p *Provider) closeConnection() {
 	defer func() {
 		if r := recover(); r != nil {
-			p.logger.Error("关闭连接时发生错误: %v", r)
+			p.logger.Error("error closing connection: %v", r)
 		}
 	}()
 	if p.conn != nil {
@@ -346,7 +346,7 @@ func (p *Provider) closeConnection() {
 	}
 }
 
-// Reset 重置ASR状态
+// Reset resets ASR state
 func (p *Provider) Reset() error {
 	p.connMutex.Lock()
 	defer p.connMutex.Unlock()
@@ -356,26 +356,26 @@ func (p *Provider) Reset() error {
 	p.result = ""
 	p.err = nil
 
-	// 重置音频处理
+	// Reset audio processing
 	p.InitAudioProcessing()
-	p.logger.Info("Step ASR状态已重置")
+	p.logger.Info("Step ASR state reset")
 	return nil
 }
 
-// Initialize 初始化
+// Initialize initializes
 func (p *Provider) Initialize() error { return nil }
 
-// Cleanup 清理资源
+// Cleanup cleans up resources
 func (p *Provider) Cleanup() error {
 	p.connMutex.Lock()
 	defer p.connMutex.Unlock()
 	p.closeConnection()
-	p.logger.Info("Step ASR资源已清理")
+	p.logger.Info("Step ASR resources cleaned up")
 	return nil
 }
 
 func init() {
-	// 注册阶跃ASR提供者
+	// Register StepFun ASR provider
 	asr.Register("stepfun", func(config *asr.Config, deleteFile bool, logger *utils.Logger) (asr.Provider, error) {
 		return NewProvider(config, deleteFile, logger)
 	})

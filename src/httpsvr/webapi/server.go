@@ -13,7 +13,7 @@ type DefaultCfgService struct {
 	config *configs.Config
 }
 
-// NewDefaultCfgService 构造函数
+// NewDefaultCfgService constructor
 func NewDefaultCfgService(config *configs.Config, logger *utils.Logger) (*DefaultCfgService, error) {
 	service := &DefaultCfgService{
 		logger: logger,
@@ -23,14 +23,14 @@ func NewDefaultCfgService(config *configs.Config, logger *utils.Logger) (*Defaul
 	return service, nil
 }
 
-// Start 实现 CfgService 接口，注册所有 Cfg 相关路由
+// Start registers Cfg service routes
 func (s *DefaultCfgService) Start(ctx context.Context, engine *gin.Engine, apiGroup *gin.RouterGroup) error {
 
 	apiGroup.GET("/cfg", s.handleGet)
 	apiGroup.POST("/cfg", s.handlePost)
 	apiGroup.OPTIONS("/cfg", s.handleOptions)
 
-	s.logger.Info("[Cfg] [服务] HTTP路由注册完成")
+	s.logger.Info("[Cfg] [Service] HTTP routes registered successfully")
 	return nil
 }
 

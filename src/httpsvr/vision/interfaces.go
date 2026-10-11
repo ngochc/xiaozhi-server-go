@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// VisionService 定义 Vision 服务接口
+// VisionService defines Vision service interface
 type VisionService interface {
-	// 将 Vision 的路由注册到 engine 与 apiGroup
+	// Start registers Vision routes to engine and apiGroup
 	Start(ctx context.Context, engine *gin.Engine, apiGroup *gin.RouterGroup) error
 }

@@ -50,7 +50,7 @@ func TestNewDeviceBindsOnlyAfterOnboardingAgentIsExplicitlyCreated(t *testing.T)
 	request.Language = "zh-CN"
 
 	service := &DefaultOTAService{}
-	device := service.CheckAndUpdateDevice(context, config, request, "device-onboarding-001", "client-onboarding-001", "测试设备", "1.0.0")
+	device := service.CheckAndUpdateDevice(context, config, request, "device-onboarding-001", "client-onboarding-001", "Test Device", "1.0.0")
 	if device == nil || device.AgentID != nil || device.UserID == nil || *device.UserID != database.AdminUserID {
 		t.Fatalf("device should remain unbound but use the default user before explicit setup: %#v, response=%s", device, recorder.Body.String())
 	}
@@ -67,7 +67,7 @@ func TestNewDeviceBindsOnlyAfterOnboardingAgentIsExplicitlyCreated(t *testing.T)
 		t.Fatal(err)
 	}
 
-	device = service.CheckAndUpdateDevice(context, config, request, "device-onboarding-002", "client-onboarding-002", "新测试设备", "1.0.0")
+	device = service.CheckAndUpdateDevice(context, config, request, "device-onboarding-002", "client-onboarding-002", "New Test Device", "1.0.0")
 	if device == nil || device.AgentID == nil || *device.AgentID != agent.ID || device.UserID == nil || *device.UserID != database.AdminUserID || device.AuthStatus != "onboarding" {
 		t.Fatalf("new device was not automatically bound after setup: %#v", device)
 	}

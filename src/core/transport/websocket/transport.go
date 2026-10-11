@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// WebSocketTransport WebSocket传输层实现
+// WebSocketTransport WebSocket transport layer implementation
 type WebSocketTransport struct {
 	config            *configs.Config
 	server            *http.Server
@@ -22,20 +22,20 @@ type WebSocketTransport struct {
 	upgrader          *websocket.Upgrader
 }
 
-// NewWebSocketTransport 创建新的WebSocket传输层
+// NewWebSocketTransport creates a new WebSocket transport layer
 func NewWebSocketTransport(config *configs.Config, logger *utils.Logger) *WebSocketTransport {
 	return &WebSocketTransport{
 		config: config,
 		logger: logger,
 		upgrader: &websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				return true // 允许所有来源的连接
+				return true // Allow connections from all origins
 			},
 		},
 	}
 }
 
-// Start 启动WebSocket传输层
+// Start starts WebSocket transport layer
 func (t *WebSocketTransport) Start(ctx context.Context) error {
 	addr := fmt.Sprintf("%s:%d", t.config.Transport.WebSocket.IP, t.config.Transport.WebSocket.Port)
 
@@ -47,27 +47,27 @@ func (t *WebSocketTransport) Start(ctx context.Context) error {
 		Handler: mux,
 	}
 
-	t.logger.Info("启动WebSocket传输层 ws://%s", addr)
+	t.logger.Info("starting WebSocket transport layer at ws://%s", addr)
 
-	// 监听关闭信号
+	// Listen for shutdown signal
 	go func() {
 		<-ctx.Done()
 		t.Stop()
 	}()
 
 	if err := t.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("WebSocket传输层启动失败: %v", err)
+		return fmt.Errorf("failed to start WebSocket transport layer: %v", err)
 	}
 
 	return nil
 }
 
-// Stop 停止WebSocket传输层
+// Stop stops WebSocket transport layer
 func (t *WebSocketTransport) Stop() error {
 	if t.server != nil {
-		t.logger.Info("WebSocket传输层...")
+		t.logger.Info("stopping WebSocket transport layer...")
 
-		// 关闭所有活动连接
+		// Close all active connections
 		t.activeConnections.Range(func(key, value interface{}) bool {
 			if handler, ok := value.(transport.ConnectionHandler); ok {
 				handler.Close()
@@ -81,12 +81,12 @@ func (t *WebSocketTransport) Stop() error {
 	return nil
 }
 
-// SetConnectionHandler 设置连接处理器工厂
+// SetConnectionHandler sets connection handler factory
 func (t *WebSocketTransport) SetConnectionHandler(handler transport.ConnectionHandlerFactory) {
 	t.connHandler = handler
 }
 
-// GetActiveConnectionCount 获取活跃连接数
+// GetActiveConnectionCount gets active connection count
 func (t *WebSocketTransport) GetActiveConnectionCount() (int, int) {
 	count := 0
 	t.activeConnections.Range(func(key, value interface{}) bool {
@@ -96,58 +96,58 @@ func (t *WebSocketTransport) GetActiveConnectionCount() (int, int) {
 	return count, count
 }
 
-// GetType 获取传输类型
+// GetType gets transport type
 func (t *WebSocketTransport) GetType() string {
 	return "websocket"
 }
 
-// handleWebSocket 处理WebSocket连接
+// handleWebSocket handles WebSocket connection
 func (t *WebSocketTransport) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := t.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		t.logger.Error("WebSocket升级失败: %v", err)
+		t.logger.Error("WebSocket upgrade failed: %v", err)
 		return
 	}
 
 	deviceID := r.Header.Get("Device-Id")
 	clientID := r.Header.Get("Client-Id")
 	if deviceID == "" {
-		// 尝试从url中获取
+		// Attempt to get from URL
 		deviceID = r.URL.Query().Get("device-id")
 		r.Header.Set("Device-Id", deviceID)
-		t.logger.Info("尝试从URL获取Device-Id: %v", r.URL)
+		t.logger.Info("attempting to get Device-Id from URL: %v", r.URL)
 	}
 	if clientID == "" {
-		// 尝试从url中获取
+		// Attempt to get from URL
 		clientID = r.URL.Query().Get("client-id")
 		r.Header.Set("Client-Id", clientID)
 	}
 	if clientID == "" {
 		clientID = fmt.Sprintf("%p", conn)
 	}
-	t.logger.Info("[WebSocket] [连接请求 %s/%s]", deviceID, clientID)
+	t.logger.Info("[WebSocket] [connection request %s/%s]", deviceID, clientID)
 	wsConn := NewWebSocketConnection(clientID, conn)
 
 	if t.connHandler == nil {
-		t.logger.Error("连接处理器工厂未设置")
+		t.logger.Error("connection handler factory not set")
 		conn.Close()
 		return
 	}
 
 	handler := t.connHandler.CreateHandler(wsConn, r)
 	if handler == nil {
-		t.logger.Error("创建连接处理器失败")
+		t.logger.Error("failed to create connection handler")
 		conn.Close()
 		return
 	}
 
 	t.activeConnections.Store(clientID, handler)
-	t.logger.Info("[WebSocket] [连接建立 %s] 资源已分配", clientID)
+	t.logger.Info("[WebSocket] [connection established %s] resources allocated", clientID)
 
-	// 启动连接处理，并在结束时清理资源
+	// Start connection handling and cleanup resources on completion
 	go func() {
 		defer func() {
-			// 连接结束时清理
+			// Cleanup on connection end
 			t.activeConnections.Delete(clientID)
 			handler.Close()
 		}()

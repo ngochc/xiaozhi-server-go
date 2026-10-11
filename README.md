@@ -1,37 +1,37 @@
-# 小智语音助手服务端（Go）
+# Xiaozhi Voice Assistant Server (Go)
 
-`xiaozhi-server-go` 是面向个人和家庭场景的小智语音助手服务端。它通过 WebSocket 与兼容的小智客户端通信，将语音识别、对话模型和语音合成串成一段可本地部署的语音会话。
+`xiaozhi-server-go` is a voice assistant server built for personal and home use. It communicates with compatible Xiaozhi clients over WebSocket, bridging speech recognition (ASR), large language models (LLM), and speech synthesis (TTS) into locally deployable voice chat sessions.
 
-> 想快速跑通一台设备？请直接阅读 [快速开始](docs/quick-start.md)。
+> Want to quickly get a device running? Check out the [Quick Start Guide](docs/quick-start.md).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/aa1e2f26-92d3-4d16-a74a-68232f34cca3" alt="小智服务端架构示意图" width="600">
+  <img src="https://github.com/user-attachments/assets/aa1e2f26-92d3-4d16-a74a-68232f34cca3" alt="Xiaozhi Server Architecture Diagram" width="600">
 </p>
 
-本项目兼容小智 WebSocket 协议，可配合 ESP32、Android、Python 等兼容客户端使用。
+This project is compatible with the Xiaozhi WebSocket protocol and supports ESP32, Android, Python, and other compatible clients.
 
-## 已实现功能
+## Implemented Features
 
-| 分类 | 功能 |
+| Category | Features |
 | --- | --- |
-| 设备连接 | WebSocket 连接；PCM / Opus 语音编解码；兼容小智协议客户端 |
-| 语音对话 | 自动、手动、实时三种对话模式；支持语音打断 |
-| 模型接入 | ASR、LLM、TTS、视觉模型均可按 `config.yaml` 选择；内置 OpenAI 兼容接口、Ollama、豆包、Coze、Edge TTS、Deepgram、GoSherpa、讯飞、阶跃等接入实现 |
-| 视觉能力 | 客户端可通过语音触发摄像头图像识别 |
-| 角色与声音 | 预设角色、预设声音与语音指令切换 |
-| 短期记忆 | 已绑定设备重连后可延续短期上下文；按设备与智能体隔离，支持在设备管理页清空 |
-| 扩展能力 | 本地 MCP、设备 MCP 与外部 Stdio MCP；可配置天气、地图等工具 |
-| 设备接入 | OTA 接口、固件文件下载接口与 WebSocket 地址下发 |
-| 运维与数据 | 本地 SQLite 配置存储、日志、Swagger API 文档、Docker 运行方式 |
+| Device Connectivity | WebSocket connection; PCM / Opus audio encoding/decoding; compatible with Xiaozhi protocol clients |
+| Voice Conversations | Auto, Manual, and Real-time dialogue modes; voice interruption support |
+| Model Integrations | ASR, LLM, TTS, and Vision models selectable via `config.yaml`; built-in support for OpenAI-compatible APIs, Ollama, Volcengine Doubao, Coze, Edge TTS, Deepgram, GoSherpa, iFlytek, StepFun, etc. |
+| Vision Capabilities | Camera snapshot image recognition triggered via voice commands |
+| Personas & Voices | Preset personas, preset voice profiles, and voice-command role switching |
+| Short-term Memory | Restores short-term context upon reconnection for bound devices; isolated per device and agent, with clearing supported in the management console |
+| Extensibility | Local MCP, Device MCP, and external Stdio MCP tools; support for weather, maps, etc. |
+| Device Onboarding | OTA endpoint, firmware download endpoint, and WebSocket URL distribution |
+| Operations & Data | Local SQLite configuration storage, logging, Swagger API documentation, Docker deployment |
 
-上述能力以当前代码和配置模板为准；尚在规划或开发中的功能会通过 [Issues](https://github.com/AnimeAIChat/xiaozhi-server-go/issues) 跟踪。
+The features above reflect the current codebase and configuration template. Upcoming features are tracked via [Issues](https://github.com/AnimeAIChat/xiaozhi-server-go/issues).
 
-## 5 分钟快速开始
+## 5-Minute Quick Start
 
-完整说明见 [docs/quick-start.md](docs/quick-start.md)。以下为最短路径：
+See [docs/quick-start.md](docs/quick-start.md) for full instructions. Here is the shortest path:
 
-1. 从 [Releases](https://github.com/AnimeAIChat/xiaozhi-server-go/releases) 下载与系统匹配的服务端程序，并将 `config.yaml` 放到同一目录。
-2. 复制为私有配置文件并填写至少一组可用的 ASR、LLM、TTS 配置：
+1. Download the prebuilt server binary matching your operating system from [Releases](https://github.com/AnimeAIChat/xiaozhi-server-go/releases) and place `config.yaml` in the same directory.
+2. Copy the template to a private configuration file and fill in at least one working ASR, LLM, and TTS configuration:
 
    ```powershell
    Copy-Item config.yaml .config.yaml
@@ -41,15 +41,15 @@
    cp config.yaml .config.yaml
    ```
 
-3. 将 `web.websocket` 配置为设备能够访问的地址，例如 `ws://192.168.1.10:8000`；不要使用 `localhost` 作为设备地址。
-4. 启动下载的程序，浏览器打开 `http://127.0.0.1:8080`。局域网设备使用 `http://<服务器局域网 IP>:8080/api/ota/` 作为 OTA 地址。
-5. 让设备联网并发起一次语音对话；服务端日志会依次显示连接、识别、模型回答和播报过程。
+3. Set `web.websocket` to an address accessible by your device, such as `ws://192.168.1.10:8000` (do not use `localhost` for client devices).
+4. Run the executable and open `http://127.0.0.1:8080` in your browser. For local network devices, use `http://<server-lan-ip>:8080/api/ota/` as the OTA address.
+5. Connect your device to the network and initiate a voice conversation. The server logs will display connection, recognition, model response, and audio playback events.
 
-如果目录中没有 `.config.yaml`，首次启动会从 `config.yaml` 生成私有配置文件后停止；填写模型配置后重新启动即可。成功启动后，配置会保存到同目录的 `config.db`。后续修改请通过管理接口保存，或在备份后重新创建运行目录。详情见 [配置与排错](docs/quick-start.md#配置与排错)。
+If `.config.yaml` is missing, the server will generate a copy from `config.yaml` on first launch and exit. Simply edit the model credentials and restart. Once started successfully, configuration is stored in `config.db`. Subsequent edits can be performed via the web console or by recreating the directory after backing up. See [Configuration & Troubleshooting](docs/quick-start.md#configuration--troubleshooting) for details.
 
-## 配置要点
+## Configuration Highlights
 
-配置模板：[`config.yaml`](config.yaml)。建议始终保留原有字段，仅替换示例值。
+Configuration template: [`config.yaml`](config.yaml). It is recommended to retain existing fields and only edit values.
 
 ```yaml
 server:
@@ -57,7 +57,7 @@ server:
 
 web:
   port: 8080
-  # 供局域网设备连接的地址，替换成服务器局域网 IP 或域名
+  # Address for local network devices; replace with your server LAN IP or domain
   websocket: ws://192.168.1.10:8000
 
 selected_module:
@@ -67,14 +67,14 @@ selected_module:
   VLLLM: ChatGLMVLLM
 ```
 
-- `selected_module` 中的名称必须与下方 `ASR`、`TTS`、`LLM`、`VLLLM` 分组中的配置名称一致。
-- 凭据只保存在本机的 `.config.yaml` 或配置数据库中。请勿将 `.config.yaml`、`config.db`、日志或 MCP 密钥提交到仓库。
-- 设备与服务端不在同一台机器时，需要允许 TCP `8000` 和 `8080` 通过系统防火墙；设备与服务端应能相互访问。
-- 本项目当前使用 WebSocket 接入设备，`transport.websocket.enabled` 应保持为 `true`。
+- Names in `selected_module` must match provider keys defined in `ASR`, `TTS`, `LLM`, and `VLLLM` sections.
+- Credentials are stored only in your local `.config.yaml` or SQLite database. Never commit `.config.yaml`, `config.db`, logs, or MCP secrets to git.
+- When client devices and server are on different machines, allow TCP `8000` and `8080` through your system firewall.
+- WebSocket is the default client connection transport; ensure `transport.websocket.enabled` remains `true`.
 
-### 使用 DSH 对话桥接
+### Using DSH Dialogue Bridge
 
-先启动独立的 `@xuanfeng/dsh-xiaozhi-bridge` 服务，再在私有 `.config.yaml`（或管理端的 LLM Provider 配置）中新增并选中以下 Provider：
+Start the `@xuanfeng/dsh-xiaozhi-bridge` service first, then add and select the following provider in your `.config.yaml` (or via the Admin UI):
 
 ```yaml
 selected_module:
@@ -83,17 +83,17 @@ selected_module:
 LLM:
   DSHBridge:
     type: dsh
-    # DSH bridge 的 WebSocket 地址，不是 Harness 的 HTTP 地址
+    # DSH bridge WebSocket address (not HTTP Harness address)
     url: ws://127.0.0.1:17980/xiaozhi
-    # 与桥接服务 XIAOZHI_BRIDGE_TOKEN 相同；请只写入私有配置
-    api_key: 请填写桥接令牌
+    # Must match bridge service XIAOZHI_BRIDGE_TOKEN
+    api_key: your_bridge_token
 ```
 
-Provider 会将小智当前连接的 `session_id` 作为桥接 `device_id`，并只发送本轮最新的用户文本；DSH 侧负责会话历史、Harness 工具和文本流。桥接发送的 `assistant_delta` 与即时兜底文本会直接进入现有 TTS 流程。当前小智服务端的 LLM 接口是按请求读取的，后台任务完成后的主动通知需要下一阶段在连接处理器中增加设备推送通道。
+The provider uses Xiaozhi's `session_id` as the bridge `device_id` and forwards the latest user turn. DSH handles conversation history, Harness tools, and text streaming. The stream's `assistant_delta` and fallback responses feed directly into TTS synthesis.
 
-## 源码运行
+## Running from Source
 
-源码运行适合开发与调试。需要 Go `1.24.2`（项目指定的 toolchain）以及可用的 C 编译器供 SQLite 驱动构建；Opus 依赖已随仓库提供，目前使用纯go实现，无需单独安装系统 Opus 库。
+Running from source is ideal for development and debugging. Requires Go `1.24.2` or later and a working C compiler for the SQLite driver. Opus audio processing is implemented in pure Go and requires no separate system Opus library.
 
 ```bash
 git clone https://github.com/AnimeAIChat/xiaozhi-server-go.git
@@ -102,7 +102,7 @@ cp config.yaml .config.yaml
 go run ./src/main.go
 ```
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 git clone https://github.com/AnimeAIChat/xiaozhi-server-go.git
@@ -111,59 +111,53 @@ Copy-Item config.yaml .config.yaml
 go run ./src/main.go
 ```
 
-如果 Windows 上提示找不到 C 编译器，请安装 MSYS2 的 UCRT64 或 MINGW64 工具链，并确保 `gcc` 位于 `PATH` 后重新执行。不要在配置文件中填写真实密钥后提交或分享该文件。
+If Windows reports a missing C compiler, install MSYS2 UCRT64 or MINGW64 toolchain, ensure `gcc` is in your `PATH`, and retry. Do not commit or share config files containing real secrets.
 
-编译程序：
+Build the binary:
 
 ```bash
 go build -o xiaozhi-server ./src/main.go
 ```
 
-## Docker 运行
+## Docker Deployment
 
-仓库提供 [`docker-compose.yml`](docker-compose.yml)，用于运行已下载的 Linux 版本程序。将下列文件放入同一目录后，按实际文件名修改 `command`：
+A [`docker-compose.yml`](docker-compose.yml) is included for running prebuilt Linux releases. Place the following files in the same directory and set `command` in `docker-compose.yml` to match your binary name:
 
-- Linux 服务端程序；
-- `.config.yaml`；
-- `docker-compose.yml`。
+- Linux server binary
+- `.config.yaml`
+- `docker-compose.yml`
 
-然后执行：
+Then run:
 
 ```bash
 docker compose up -d
 docker compose logs -f
 ```
 
-需要将 `8000` 与 `8080` 映射到宿主机，并把 `.config.yaml` 中的 `web.websocket` 写为设备能够访问的宿主机 IP 或域名。
+Ensure ports `8000` and `8080` are forwarded to the host, and set `web.websocket` in `.config.yaml` to the host IP or domain reachable by devices.
 
-## MCP 配置
+## MCP Configuration
 
-MCP 使用方式、外部 Stdio MCP 示例和设备 MCP 说明见 [src/core/mcp/README.md](src/core/mcp/README.md)。外部 MCP 配置文件为 `.mcp_server_settings.json`，其中可能含有服务密钥，应只保存在本机。
+For MCP tool usage, external Stdio MCP examples, and device MCP details, see [src/core/mcp/README.md](src/core/mcp/README.md). External MCP configurations are stored in `.mcp_server_settings.json`, which should also remain private.
 
-## 接口与排错
+## Endpoints & Troubleshooting
 
-- Web 控制台：`http://127.0.0.1:8080`
-- Swagger：`http://127.0.0.1:8080/swagger/index.html`
-- OTA 健康检查：`http://127.0.0.1:8080/api/ota/`
-- 运行日志：`logs/server.log`
-- 常见问题与一台设备的验证流程：[docs/quick-start.md](docs/quick-start.md)
-- 升级、回滚与 Release 包内容：[docs/release.md](docs/release.md)
-- 短期记忆的边界与清理方式：[docs/short-term-memory.md](docs/short-term-memory.md)
+- Web Console: `http://127.0.0.1:8080`
+- Swagger API Docs: `http://127.0.0.1:8080/swagger/index.html`
+- OTA Health Check: `http://127.0.0.1:8080/api/ota/`
+- Runtime Logs: `logs/server.log`
+- Device setup & FAQ: [docs/quick-start.md](docs/quick-start.md)
+- Upgrades & releases: [docs/release.md](docs/release.md)
+- Short-term memory architecture: [docs/short-term-memory.md](docs/short-term-memory.md)
 
-## 更多功能
+## Commercial Edition
 
-小智商业版在相同协议与模型接入基础上，提供更多设备管理、知识库、声音复刻、定制音色、工作流和部署能力。若希望了解这些功能，可通过下方微信二维码联系。
+The commercial edition provides expanded capabilities on top of the same protocol and models, including multi-tenant device management, knowledge bases, voice cloning, customized voices, workflow orchestration, and distributed high-availability deployment.
 
-## 社区与反馈
+## Community & Feedback
 
-欢迎提交 Issue、PR 或功能建议。
-
-<img src="https://github.com/Eric0308/assert/blob/main/xiaozhi/qr.jpg" width="450" alt="微信交流群二维码">
-<img src="https://github.com/user-attachments/assets/074c6aec-cfb5-4a68-8fc2-2d08679e366b" width="450" alt="QQ群二维码">
-
-也可以与我联系
-<img width="808" height="707" alt="d91ed718ac658f7cee8598ec23c08b60" src="https://github.com/user-attachments/assets/d9d48e67-8ddc-4512-bf4d-de16cc30588f" />
+Issues, pull requests, and feature suggestions are welcome on GitHub!
 
 ## License
 
-本仓库遵循 `Xiaozhi-server-go Open Source License`（基于 Apache 2.0 增强版）。
+This repository is licensed under the `Xiaozhi-server-go Open Source License` (based on an enhanced Apache 2.0).

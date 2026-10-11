@@ -7,35 +7,35 @@ import (
 	"xiaozhi-server-go/src/core/mcp"
 )
 
-// Transport 传输层接口
+// Transport transport layer interface
 type Transport interface {
-	// 启动传输服务
+	// Start transport service
 	Start(ctx context.Context) error
-	// 停止传输服务
+	// Stop transport service
 	Stop() error
-	// 设置连接处理器工厂
+	// Set connection handler factory
 	SetConnectionHandler(handler ConnectionHandlerFactory)
-	// 获取活跃连接数
+	// Get active connection count
 	GetActiveConnectionCount() (int, int)
-	// 获取传输类型
+	// Get transport type
 	GetType() string
 }
 
 type Connection = core.Connection
 
-// ConnectionHandler 连接处理器接口
+// ConnectionHandler connection handler interface
 type ConnectionHandler interface {
-	// 处理连接
+	// Handle connection
 	Handle()
-	// 关闭处理器
+	// Close handler
 	Close()
-	// 获取会话ID
+	// Get session ID
 	GetSessionID() string
 }
 
-// ConnectionHandlerFactory 连接处理器工厂接口
+// ConnectionHandlerFactory connection handler factory interface
 type ConnectionHandlerFactory interface {
-	// 创建连接处理器
+	// Create connection handler
 	CreateHandler(conn Connection, req *http.Request) ConnectionHandler
 }
 

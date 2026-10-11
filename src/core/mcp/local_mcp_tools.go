@@ -14,22 +14,22 @@ func (c *LocalClient) AddToolExit() error {
 		Properties: map[string]any{
 			"say_goodbye": map[string]any{
 				"type":        "string",
-				"description": "用户友好结束对话的告别语",
+				"description": "Friendly farewell phrase to end the conversation",
 			},
 		},
 		Required: []string{"say_goodbye"},
 	}
 
 	c.AddTool("exit",
-		"当用户想结束对话或需要退出系统时调用",
+		"Call when the user wants to end the conversation or exit the system",
 		InputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
-			c.logger.Info("用户请求退出对话，告别语：%s", args["say_goodbye"])
+			c.logger.Info("User requested exit, farewell: %s", args["say_goodbye"])
 			res := types.ActionResponse{
-				Action: types.ActionTypeCallHandler, // 动作类型
+				Action: types.ActionTypeCallHandler, // Action type
 				Result: types.ActionResponseCall{
-					FuncName: "mcp_handler_exit",  // 函数名
-					Args:     args["say_goodbye"], // 函数参数
+					FuncName: "mcp_handler_exit",  // Function name
+					Args:     args["say_goodbye"], // Function argument
 				},
 			}
 			return res, nil
@@ -46,16 +46,16 @@ func (c *LocalClient) AddToolTime() error {
 	}
 
 	c.AddTool("get_time",
-		"获取今天日期或者当前时间信息时调用",
+		"Call when the user asks for today's date or the current time",
 		InputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
 			now := time.Now()
-			time := now.Format("2006-01-02 15点04分05秒")
+			time := now.Format("2006-01-02 15:04:05")
 			week := now.Weekday().String()
-			str := "当前时间是 " + time + "，今天是" + week + "。"
+			str := "Current time is " + time + ", today is " + week + "."
 			res := types.ActionResponse{
-				Action: types.ActionTypeReqLLM, // 动作类型
-				Result: str,                    // 函数参数
+				Action: types.ActionTypeReqLLM, // Action type
+				Result: str,                    // Function result
 			}
 			return res, nil
 		})
@@ -85,23 +85,23 @@ func (c *LocalClient) AddToolChangeRole() error {
 		Properties: map[string]any{
 			"role": map[string]any{
 				"type":        "string",
-				"description": "新的角色名称",
+				"description": "New persona/role name",
 			},
 		},
 		Required: []string{"role"},
 	}
 
 	c.AddTool("change_role",
-		"当用户想切换角色/模型性格/助手名字时调用,可选的角色有：["+roleNames+"]",
+		"Call when user wants to switch persona/role/assistant name. Available roles: ["+roleNames+"]",
 		InputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
 			role := args["role"].(string)
 			res := types.ActionResponse{
-				Action: types.ActionTypeCallHandler, // 动作类型
+				Action: types.ActionTypeCallHandler, // Action type
 				Result: types.ActionResponseCall{
-					FuncName: "mcp_handler_change_role", // 函数名
+					FuncName: "mcp_handler_change_role", // Function name
 					Args: map[string]string{
-						"role":   role, // 函数参数
+						"role":   role, // Function parameter
 						"prompt": prompts[role],
 					},
 				},
@@ -128,22 +128,22 @@ func (c *LocalClient) AddToolChangeVoice() error {
 		Properties: map[string]any{
 			"voice": map[string]any{
 				"type":        "string",
-				"description": "新的语音名称，音色描述中的第一部分",
+				"description": "New voice name, the first part of the voice description",
 			},
 		},
 		Required: []string{"voice"},
 	}
 
 	c.AddTool("change_voice",
-		"当用户想要更换角色语音或音色时调用，当前支持的音色有: "+voiceDes,
+		"Call when user wants to change persona voice. Supported voices: "+voiceDes,
 		InputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
 			voice := args["voice"].(string)
 			res := types.ActionResponse{
-				Action: types.ActionTypeCallHandler, // 动作类型
+				Action: types.ActionTypeCallHandler, // Action type
 				Result: types.ActionResponseCall{
-					FuncName: "mcp_handler_change_voice", // 函数名
-					Args:     voice,                      // 函数参数
+					FuncName: "mcp_handler_change_voice", // Function name
+					Args:     voice,                      // Function argument
 				},
 			}
 			return res, nil
@@ -158,22 +158,22 @@ func (c *LocalClient) AddToolPlayMusic() error {
 		Properties: map[string]any{
 			"song_name": map[string]any{
 				"type":        "string",
-				"description": "歌曲名称，如果用户没有指定具体歌名则为'random', 明确指定的时返回音乐的名字 示例: ```用户:播放两只老虎\n参数：两只老虎``` ```用户:播放音乐 \n参数：random ```",
+				"description": "Song name, or 'random' if user does not specify a specific song. Example: User: play music -> Parameter: random",
 			},
 		},
 		Required: []string{"song_name"},
 	}
 
 	c.AddTool("play_music",
-		"当用户想要播放音乐/听歌/唱歌时调用",
+		"Call when the user wants to play music or listen to songs",
 		InputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
 			song_name := args["song_name"].(string)
 			res := types.ActionResponse{
-				Action: types.ActionTypeCallHandler, // 动作类型
+				Action: types.ActionTypeCallHandler, // Action type
 				Result: types.ActionResponseCall{
-					FuncName: "mcp_handler_play_music", // 函数名
-					Args:     song_name,                // 函数参数
+					FuncName: "mcp_handler_play_music", // Function name
+					Args:     song_name,                // Function argument
 				},
 			}
 			return res, nil
@@ -188,32 +188,32 @@ func (c *LocalClient) AddToolSwitchAgent() error {
 		Properties: map[string]any{
 			"agent_id": map[string]any{
 				"type":        "number",
-				"description": "要切换到的智能体ID",
+				"description": "Target agent ID to switch to",
 			},
 			"agent_name": map[string]any{
 				"type":        "string",
-				"description": "智能体名称",
+				"description": "Agent name",
 			},
 		},
 		Required: []string{},
 	}
 
 	c.AddTool("switch_agent",
-		"仅初始设置助手使用：当用户明确说‘切换到{name}智能体’或‘切换智能体到{name}’时调用。用户未明确名称或ID时，先询问确认。调用时必须提供agent_id（数字）或agent_name（字符串）其中之一。",
+		"Used by setup assistant: call when user wants to switch to agent by name or ID. Must provide agent_id or agent_name.",
 		InputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
-			// 验证至少提供了一个参数
+			// Verify at least one parameter is provided
 			if _, hasID := args["agent_id"]; !hasID {
 				if _, hasName := args["agent_name"]; !hasName {
-					c.logger.Warn("switch_agent: 必须提供 agent_id 或 agent_name 其中之一")
+					c.logger.Warn("switch_agent: must provide either agent_id or agent_name")
 					return types.ActionResponse{
 						Action: types.ActionTypeReqLLM,
-						Result: "切换智能体需要提供智能体ID或名称",
+						Result: "Agent ID or name is required to switch agent",
 					}, nil
 				}
 			}
 
-			// 将完整的参数传给连接处理器的 handler，由 handler 解析并执行切换
+			// Pass parameters to handler to execute switch
 			res := types.ActionResponse{
 				Action: types.ActionTypeCallHandler,
 				Result: types.ActionResponseCall{
@@ -230,7 +230,7 @@ func (c *LocalClient) AddToolSwitchAgent() error {
 func (c *LocalClient) AddToolListAgents() error {
 	inputSchema := ToolInputSchema{Type: "object", Properties: map[string]any{}, Required: []string{}}
 	return c.AddTool("list_agents",
-		"仅初始设置助手使用：当用户询问有哪些可切换智能体时调用，返回预设智能体列表。",
+		"Used by setup assistant: call when user asks what agents are available to switch to.",
 		inputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
 			return types.ActionResponse{Action: types.ActionTypeCallHandler, Result: types.ActionResponseCall{
@@ -243,16 +243,16 @@ func (c *LocalClient) AddToolCreateAgent() error {
 	inputSchema := ToolInputSchema{
 		Type: "object",
 		Properties: map[string]any{
-			"name":        map[string]any{"type": "string", "description": "新智能体名称"},
-			"llm":         map[string]any{"type": "string", "description": "已配置的 LLM 提供者名称；未提供时使用当前默认模型"},
-			"voice":       map[string]any{"type": "string", "description": "TTS 音色 ID；未提供时使用当前默认音色"},
-			"prompt":      map[string]any{"type": "string", "description": "智能体角色提示词"},
-			"description": map[string]any{"type": "string", "description": "智能体的简短用途说明"},
+			"name":        map[string]any{"type": "string", "description": "New agent name"},
+			"llm":         map[string]any{"type": "string", "description": "Configured LLM provider name; uses default if omitted"},
+			"voice":       map[string]any{"type": "string", "description": "TTS voice ID; uses default if omitted"},
+			"prompt":      map[string]any{"type": "string", "description": "Agent system prompt"},
+			"description": map[string]any{"type": "string", "description": "Short description of agent purpose"},
 		},
 		Required: []string{"name"},
 	}
 	return c.AddTool("create_agent",
-		"仅初始设置助手使用：用户明确要求创建智能体、并提供名称后调用。模型或音色不明确时先询问，或明确说明会使用默认值。",
+		"Used by setup assistant: call when user requests creating a new agent and provides a name.",
 		inputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
 			return types.ActionResponse{Action: types.ActionTypeCallHandler, Result: types.ActionResponseCall{
@@ -265,17 +265,17 @@ func (c *LocalClient) AddToolUpdateAgent() error {
 	inputSchema := ToolInputSchema{
 		Type: "object",
 		Properties: map[string]any{
-			"agent_name":  map[string]any{"type": "string", "description": "要修改的智能体名称"},
-			"new_name":    map[string]any{"type": "string", "description": "修改后的名称"},
-			"llm":         map[string]any{"type": "string", "description": "已配置的 LLM 提供者名称"},
-			"voice":       map[string]any{"type": "string", "description": "TTS 音色 ID"},
-			"prompt":      map[string]any{"type": "string", "description": "完整替换后的角色提示词"},
-			"description": map[string]any{"type": "string", "description": "完整替换后的用途说明"},
+			"agent_name":  map[string]any{"type": "string", "description": "Target agent name to modify"},
+			"new_name":    map[string]any{"type": "string", "description": "New name for agent"},
+			"llm":         map[string]any{"type": "string", "description": "Configured LLM provider name"},
+			"voice":       map[string]any{"type": "string", "description": "TTS voice ID"},
+			"prompt":      map[string]any{"type": "string", "description": "Replacement persona prompt"},
+			"description": map[string]any{"type": "string", "description": "Replacement description"},
 		},
 		Required: []string{"agent_name"},
 	}
 	return c.AddTool("update_agent",
-		"仅初始设置助手使用：用户明确要求修改某个其他智能体的名称、LLM、音色或角色提示词时调用。目标或改动不清楚时必须先确认。",
+		"Used by setup assistant: call when user requests modifying an agent name, LLM, voice, or prompt.",
 		inputSchema,
 		func(ctx context.Context, args map[string]any) (interface{}, error) {
 			return types.ActionResponse{Action: types.ActionTypeCallHandler, Result: types.ActionResponseCall{

@@ -7,8 +7,8 @@ import (
 )
 
 /*
- 用于存储客户端认证信息
- ota请求下发认证信息，客户端mqtt连接后，通过clientid进行认证
+Used to store client authentication credentials.
+Distributed via OTA request; used for client authentication after connecting.
 */
 
 type AuthClient struct {

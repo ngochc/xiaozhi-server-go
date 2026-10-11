@@ -15,16 +15,16 @@ import (
 
 func InitProviders(db *gorm.DB, config *configs.Config) error {
 	if err := InitLLMProviders(db, config); err != nil {
-		return fmt.Errorf("初始化LLM提供者失败: %v", err)
+		return fmt.Errorf("failed to initialize LLM providers: %v", err)
 	}
 	if err := InitASRProviders(db, config); err != nil {
-		return fmt.Errorf("初始化ASR提供者失败: %v", err)
+		return fmt.Errorf("failed to initialize ASR providers: %v", err)
 	}
 	if err := InitTTSProviders(db, config); err != nil {
-		return fmt.Errorf("初始化TTS提供者失败: %v", err)
+		return fmt.Errorf("failed to initialize TTS providers: %v", err)
 	}
 	if err := InitVLLLMProviders(db, config); err != nil {
-		return fmt.Errorf("初始化VLLLM提供者失败: %v", err)
+		return fmt.Errorf("failed to initialize VLLM providers: %v", err)
 	}
 	return nil
 }
@@ -37,7 +37,7 @@ func InitTTSProviders(db *gorm.DB, config *configs.Config) error {
 	for name, provider := range config.TTS {
 		providerJson, err := json.Marshal(provider)
 		if err != nil {
-			return fmt.Errorf("序列化TTS提供者 %s 配置失败: %v", name, err)
+			return fmt.Errorf("failed to serialize TTS provider %s config: %v", name, err)
 		}
 		ttsConfig := models.TTSConfig{
 			Name: name,
@@ -46,7 +46,7 @@ func InitTTSProviders(db *gorm.DB, config *configs.Config) error {
 		}
 
 		if err := db.Where("name = ?", name).FirstOrCreate(&ttsConfig).Error; err != nil {
-			return fmt.Errorf("插入或更新TTS提供者 %s 失败: %v", name, err)
+			return fmt.Errorf("failed to insert/update TTS provider %s: %v", name, err)
 		}
 	}
 
@@ -60,16 +60,16 @@ func InitLLMProviders(db *gorm.DB, config *configs.Config) error {
 	for name, provider := range config.LLM {
 		providerJson, err := json.Marshal(provider)
 		if err != nil {
-			return fmt.Errorf("序列化LLM提供者 %s 配置失败: %v", name, err)
+			return fmt.Errorf("failed to serialize LLM provider %s config: %v", name, err)
 		}
 		llmConfig := models.LLMConfig{
 			Name: name,
 			Type: provider.Type,
 			Data: datatypes.JSON(providerJson),
 		}
-		// 比较，然后确认创建还是更新，name相同就更新
+		// Compare and create or update by name
 		if err := db.Where("name = ?", name).FirstOrCreate(&llmConfig).Error; err != nil {
-			return fmt.Errorf("插入或更新LLM提供者 %s 失败: %v", name, err)
+			return fmt.Errorf("failed to insert/update LLM provider %s: %v", name, err)
 		}
 	}
 
@@ -84,7 +84,7 @@ func InitASRProviders(db *gorm.DB, config *configs.Config) error {
 	for name, provider := range config.ASR {
 		providerJson, err := json.Marshal(provider)
 		if err != nil {
-			return fmt.Errorf("序列化ASR提供者 %s 配置失败: %v", name, err)
+			return fmt.Errorf("failed to serialize ASR provider %s config: %v", name, err)
 		}
 		providerType := ""
 		if typeVal, ok := provider["type"]; ok {
@@ -100,7 +100,7 @@ func InitASRProviders(db *gorm.DB, config *configs.Config) error {
 		}
 
 		if err := db.Where("name = ?", name).FirstOrCreate(&asrConfig).Error; err != nil {
-			return fmt.Errorf("插入或更新ASR提供者 %s 失败: %v", name, err)
+			return fmt.Errorf("failed to insert/update ASR provider %s: %v", name, err)
 		}
 	}
 
@@ -114,17 +114,17 @@ func InitVLLLMProviders(db *gorm.DB, config *configs.Config) error {
 	for name, provider := range config.VLLLM {
 		providerJson, err := json.Marshal(provider)
 		if err != nil {
-			return fmt.Errorf("序列化VLLLM提供者 %s 配置失败: %v", name, err)
+			return fmt.Errorf("failed to serialize VLLM provider %s config: %v", name, err)
 		}
 
 		vlllmConfig := models.VLLLMConfig{
 			Name: name,
-			Type: provider.Type, // 复用LLM的类型
+			Type: provider.Type, // Reuses LLM type
 			Data: datatypes.JSON(providerJson),
 		}
 
 		if err := db.Where("name = ?", name).FirstOrCreate(&vlllmConfig).Error; err != nil {
-			return fmt.Errorf("插入或更新VLLLM提供者 %s 失败: %v", name, err)
+			return fmt.Errorf("failed to insert/update VLLM provider %s: %v", name, err)
 		}
 	}
 
@@ -156,18 +156,18 @@ func GetAllProviders(userID uint) map[string]string {
 func RemoveSensitiveFields(data datatypes.JSON) (string, error) {
 	configData := make(map[string]interface{})
 	if err := json.Unmarshal(data, &configData); err != nil {
-		return "", fmt.Errorf("反序列化ASR提供者数据失败: %v", err)
+		return "", fmt.Errorf("failed to deserialize ASR provider data: %v", err)
 	}
-	// 移除敏感字段
+	// Remove sensitive fields
 	delete(configData, "token")
 	delete(configData, "access_token")
 	delete(configData, "api_key")
 	delete(configData, "appid")
 
-	// 将处理后的数据重新序列化为JSON字符串
+	// Reserialize sanitized data to JSON string
 	configJson, err := json.Marshal(configData)
 	if err != nil {
-		return "", fmt.Errorf("序列化处理后的ASR提供者数据失败: %v", err)
+		return "", fmt.Errorf("failed to serialize sanitized ASR provider data: %v", err)
 	}
 	return string(configJson), nil
 }
@@ -224,13 +224,13 @@ func GetProviderByType(providerType string, userID uint) (map[string]string, err
 }
 
 func GetProviderByTypeInternal(providerType string, userID uint, bRemoveSensitive bool) (map[string]string, error) {
-	// 根据提供者类型返回对应的提供者列表
+	// Return providers list by provider type
 	switch providerType {
 	case "ASR":
-		// 取数据库中ASR提供者的名称列表
+		// Query ASR provider names from database
 		var asrConfigs []models.ASRConfig
 		if err := DB.Find(&asrConfigs).Error; err != nil {
-			return nil, fmt.Errorf("查询ASR提供者失败: %v", err)
+			return nil, fmt.Errorf("failed to query ASR providers: %v", err)
 		}
 		asrs := make(map[string]string)
 		for _, config := range asrConfigs {
@@ -246,10 +246,10 @@ func GetProviderByTypeInternal(providerType string, userID uint, bRemoveSensitiv
 		}
 		return asrs, nil
 	case "TTS":
-		// 取数据库中TTS提供者的名称列表
+		// Query TTS provider names from database
 		var ttsConfigs []models.TTSConfig
 		if err := DB.Find(&ttsConfigs).Error; err != nil {
-			return nil, fmt.Errorf("查询TTS提供者失败: %v", err)
+			return nil, fmt.Errorf("failed to query TTS providers: %v", err)
 		}
 		tts := make(map[string]string)
 		for _, config := range ttsConfigs {
@@ -264,10 +264,10 @@ func GetProviderByTypeInternal(providerType string, userID uint, bRemoveSensitiv
 		}
 		return tts, nil
 	case "LLM":
-		// 取数据库中LLM提供者的名称列表
+		// Query LLM provider names from database
 		var llmConfigs []models.LLMConfig
 		if err := DB.Find(&llmConfigs).Error; err != nil {
-			return nil, fmt.Errorf("查询LLM提供者失败: %v", err)
+			return nil, fmt.Errorf("failed to query LLM providers: %v", err)
 		}
 		llms := make(map[string]string)
 		for _, config := range llmConfigs {
@@ -283,10 +283,10 @@ func GetProviderByTypeInternal(providerType string, userID uint, bRemoveSensitiv
 		}
 		return llms, nil
 	case "VLLLM":
-		// 取数据库中VLLLM提供者的名称列表
+		// Query VLLM provider names from database
 		var vlllmConfigs []models.VLLLMConfig
 		if err := DB.Find(&vlllmConfigs).Error; err != nil {
-			return nil, fmt.Errorf("查询VLLLM提供者失败: %v", err)
+			return nil, fmt.Errorf("failed to query VLLM providers: %v", err)
 		}
 		vlllms := make(map[string]string)
 		for _, config := range vlllmConfigs {
@@ -302,11 +302,11 @@ func GetProviderByTypeInternal(providerType string, userID uint, bRemoveSensitiv
 		}
 		return vlllms, nil
 	default:
-		return nil, fmt.Errorf("未知的提供者类型: %s", providerType)
+		return nil, fmt.Errorf("unknown provider type: %s", providerType)
 	}
 }
 
-// CreateProvider 创建新的提供者
+// CreateProvider creates a new provider
 func normalizeProviderDataType(name, providerType string, data datatypes.JSON) string {
 	if providerType == "" {
 		return string(data)
@@ -320,7 +320,7 @@ func normalizeProviderDataType(name, providerType string, data datatypes.JSON) s
 	dataType, _ := config["type"].(string)
 	if dataType != "" && dataType != providerType && utils.DefaultLogger != nil {
 		utils.DefaultLogger.Warn(
-			"[Provider] 配置类型不一致，已使用数据库type字段: name=%s db_type=%s data_type=%s",
+			"[Provider] Config type mismatch, used database type field: name=%s db_type=%s data_type=%s",
 			name,
 			providerType,
 			dataType,
@@ -335,8 +335,8 @@ func normalizeProviderDataType(name, providerType string, data datatypes.JSON) s
 	return string(normalized)
 }
 
-// normalizeProviderNumericData 兼容旧版网页将数值字段存成字符串的配置。
-// 读取时规范化，既避免启动失败，也让下一次保存写入标准 JSON 数字。
+// normalizeProviderNumericData normalizes numeric fields stored as strings in legacy configs.
+// Ensures normalization on read and clean numeric JSON on subsequent writes.
 func normalizeProviderNumericData(providerType string, data datatypes.JSON) string {
 	if providerType != "LLM" && providerType != "VLLLM" {
 		return string(data)
@@ -385,22 +385,22 @@ func normalizeProviderInput(providerType string, data interface{}) interface{} {
 }
 
 func CreateProvider(providerType, name string, data interface{}, createUserID uint) error {
-	// 个人开源版所有 Provider 都归属唯一的本地默认用户。
+	// Personal edition: all providers belong to single local admin user.
 	createUserID = AdminUserID
 	data = normalizeProviderInput(providerType, data)
 	providerJson, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("序列化提供者数据失败: %v", err)
+		return fmt.Errorf("failed to serialize provider data: %v", err)
 	}
 
-	// 从providerJson中获取type字段
+	// Extract type field from providerJson
 	var providerSubType string
 	if typeVal, ok := data.(map[string]interface{})["type"]; ok {
 		if typeStr, ok := typeVal.(string); ok {
 			providerSubType = typeStr
 		}
 	} else {
-		return fmt.Errorf("提供者数据中缺少type字段")
+		return fmt.Errorf("missing type field in provider data")
 	}
 
 	switch providerType {
@@ -437,16 +437,16 @@ func CreateProvider(providerType, name string, data interface{}, createUserID ui
 		}
 		return DB.Create(&config).Error
 	default:
-		return fmt.Errorf("未知的提供者类型: %s", providerType)
+		return fmt.Errorf("unknown provider type: %s", providerType)
 	}
 }
 
-// UpdateProvider 更新提供者
+// UpdateProvider updates a provider
 func UpdateProvider(providerType, name string, data interface{}, userID uint) error {
 	data = normalizeProviderInput(providerType, data)
 	providerJson, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("序列化提供者数据失败: %v", err)
+		return fmt.Errorf("failed to serialize provider data: %v", err)
 	}
 
 	switch providerType {
@@ -459,7 +459,7 @@ func UpdateProvider(providerType, name string, data interface{}, userID uint) er
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return fmt.Errorf("ASR提供者 %s 不存在或无权限更新", name)
+			return fmt.Errorf("ASR provider %s does not exist or permission denied", name)
 		}
 		return nil
 	case "TTS":
@@ -471,7 +471,7 @@ func UpdateProvider(providerType, name string, data interface{}, userID uint) er
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return fmt.Errorf("TTS提供者 %s 不存在或无权限更新", name)
+			return fmt.Errorf("TTS provider %s does not exist or permission denied", name)
 		}
 		return nil
 	case "LLM":
@@ -483,7 +483,7 @@ func UpdateProvider(providerType, name string, data interface{}, userID uint) er
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return fmt.Errorf("LLM提供者 %s 不存在或无权限更新", name)
+			return fmt.Errorf("LLM provider %s does not exist or permission denied", name)
 		}
 		return nil
 	case "VLLLM":
@@ -495,16 +495,16 @@ func UpdateProvider(providerType, name string, data interface{}, userID uint) er
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return fmt.Errorf("VLLLM提供者 %s 不存在或无权限更新", name)
+			return fmt.Errorf("VLLM provider %s does not exist or permission denied", name)
 		}
 		return nil
 	default:
-		return fmt.Errorf("未知的提供者类型: %s", providerType)
+		return fmt.Errorf("unknown provider type: %s", providerType)
 	}
 }
 
-// DeleteProvider 删除提供者
-var ErrNoPermission = errors.New("没有权限执行此操作")
+// DeleteProvider deletes a provider
+var ErrNoPermission = errors.New("permission denied")
 
 func DeleteProvider(providerType, name string, userID uint) error {
 	switch providerType {
@@ -557,11 +557,11 @@ func DeleteProvider(providerType, name string, userID uint) error {
 		}
 		return DB.Delete(&cfg).Error
 	default:
-		return fmt.Errorf("未知的提供者类型: %s", providerType)
+		return fmt.Errorf("unknown provider type: %s", providerType)
 	}
 }
 
-// GetProviderByName 根据名称获取特定提供者
+// GetProviderByName retrieves a specific provider by name
 func GetProviderByName(providerType, name string) (string, error) {
 	switch providerType {
 	case "ASR":
@@ -589,6 +589,6 @@ func GetProviderByName(providerType, name string) (string, error) {
 		}
 		return RemoveSensitiveFields(config.Data)
 	default:
-		return "", fmt.Errorf("未知的提供者类型: %s", providerType)
+		return "", fmt.Errorf("unknown provider type: %s", providerType)
 	}
 }

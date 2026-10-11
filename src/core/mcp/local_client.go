@@ -37,7 +37,7 @@ func (c *LocalClient) RegisterTools() {
 		c.logger.Error("RegisterTools: config is nil")
 		return
 	}
-	// 初始设置助手必须能完成设备接管、智能体创建与配置，不依赖旧配置中的 LocalMCPFun 开关。
+	// Onboarding assistant must handle device takeover, agent creation and config independently of legacy LocalMCPFun.
 	if err := c.AddToolSwitchAgent(); err != nil {
 		c.logger.Debug("RegisterTools: switch_agent: %v", err)
 	}
@@ -89,7 +89,7 @@ func (c *LocalClient) RegisterTools() {
 	}
 }
 
-// Start 启动本地MCP客户端
+// Start starts local MCP client
 func (c *LocalClient) Start(ctx context.Context) error {
 	c.ctx = ctx
 	c.RegisterTools()
@@ -97,16 +97,16 @@ func (c *LocalClient) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop 停止本地MCP客户端
+// Stop stops local MCP client
 func (c *LocalClient) Stop() {
-	// 本地客户端不需要停止任何服务，直接返回
+	// Local client requires no teardown, returns immediately
 }
 
-// HasTool 检查本地客户端是否有指定名称的工具
+// HasTool checks if local client has tool with name
 func (c *LocalClient) HasTool(name string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	// 如果有local_前缀，则去掉前缀
+	// Strip local_ prefix if present
 	if len(name) > 6 && name[:6] == "local_" {
 		name = name[6:]
 	}
@@ -119,7 +119,7 @@ func (c *LocalClient) HasTool(name string) bool {
 	return false
 }
 
-// GetAvailableTools 获取本地客户端的所有可用工具
+// GetAvailableTools gets all available tools on local client
 func (c *LocalClient) GetAvailableTools() []openai.Tool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -143,17 +143,17 @@ func (c *LocalClient) GetAvailableTools() []openai.Tool {
 	return result
 }
 
-// CallTool 调用本地客户端的指定工具
+// CallTool calls specified tool on local client
 func (c *LocalClient) CallTool(
 	ctx context.Context,
 	name string,
 	args map[string]interface{},
 ) (interface{}, error) {
-	// 检查工具是否存在
+	// Check if tool exists
 	if !c.HasTool(name) {
 		return nil, fmt.Errorf("tool %s not found", name)
 	}
-	// 如果有local_前缀，则去掉前缀
+	// Strip local_ prefix if present
 	if len(name) > 6 && name[:6] == "local_" {
 		name = name[6:]
 	}
@@ -170,15 +170,15 @@ func (c *LocalClient) CallTool(
 	return handler(ctx, args)
 }
 
-// IsReady 检查本地客户端是否已准备就绪
+// IsReady checks if local client is ready
 func (c *LocalClient) IsReady() bool {
-	// 本地客户端始终就绪
+	// Local client is always ready
 	return true
 }
 
-// ResetConnection 重置本地客户端的连接状态
+// ResetConnection resets local client connection state
 func (c *LocalClient) ResetConnection() error {
-	// 本地客户端没有连接状态，直接返回nil
+	// Local client has no connection state, returns nil
 	return nil
 }
 

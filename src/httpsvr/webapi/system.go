@@ -15,7 +15,7 @@ type DefaultAdminService struct {
 	config *configs.Config
 }
 
-// NewDefaultAdminService 构造函数
+// NewDefaultAdminService constructor
 func NewDefaultAdminService(
 	config *configs.Config,
 	logger *utils.Logger,
@@ -28,7 +28,7 @@ func NewDefaultAdminService(
 	return service, nil
 }
 
-// Start 实现 AdminService 接口，注册所有 Admin 相关路由
+// Start registers Admin service routes
 func (s *DefaultAdminService) Start(
 	ctx context.Context,
 	engine *gin.Engine,
@@ -36,9 +36,9 @@ func (s *DefaultAdminService) Start(
 ) error {
 	apiGroup.GET("/admin", s.handleGet)
 
-	// 需要登录和管理员权限的分组
+	// Protected routes requiring admin permissions
 	adminGroup := apiGroup.Group("")
-	// 查看模型不需要管理员权限
+	// Public read access for model inspection
 	adminGroup.Use(AuthMiddleware())
 	{
 		adminGroup.GET("/admin/system", s.handleSystemGet)
@@ -60,7 +60,7 @@ func (s *DefaultAdminService) Start(
 		adminGroup.DELETE("/admin/system/providers/:type/:name", s.handleSystemProvidersDelete)
 	}
 
-	s.logger.Info("Admin HTTP服务路由注册完成")
+	s.logger.Info("Admin HTTP routes registered successfully")
 	return nil
 }
 
@@ -77,15 +77,15 @@ type SystemConfig struct {
 	SelectedLLM     string   `                  json:"selectedLLM"`
 	SelectedVLLLM   string   `                  json:"selectedVLLLM"`
 	Prompt          string   ` json:"prompt"`
-	QuickReplyWords []string `                  json:"quickReplyWords"` // 存储为 JSON 数组
+	QuickReplyWords []string `                  json:"quickReplyWords"` // Stored as JSON array
 }
 
-// handleSystemGet 获取系统配置
-// @Summary 获取系统配置
-// @Description 获取当前系统配置
+// handleSystemGet retrieves system configuration
+// @Summary Retrieve system configuration
+// @Description Get current system configuration
 // @Tags System
 // @Produce json
-// @Success 200 {object} map[string]interface{} "系统配置信息"
+// @Success 200 {object} map[string]interface{} "System configuration information"
 // @Router /admin/system [get]
 func (s *DefaultAdminService) handleSystemGet(c *gin.Context) {
 	var config SystemConfig
@@ -106,7 +106,7 @@ func (s *DefaultAdminService) handleSystemGet(c *gin.Context) {
 	data["ttsList"] = ttsList
 	data["vllmList"] = vllmList
 
-	// fmt.Println("JSON字符串:", data)
+	// fmt.Println("JSON string:", data)
 	c.JSON(200, gin.H{
 		"status":  "ok",
 		"message": "System configuration retrieved successfully",
@@ -114,20 +114,20 @@ func (s *DefaultAdminService) handleSystemGet(c *gin.Context) {
 	})
 }
 
-// handleSystemGet 获取系统配置
-// @Summary 获取系统配置
-// @Description 获取当前系统配置
+// handleSystemGet retrieves system configuration
+// @Summary Retrieve system configuration
+// @Description Get current system configuration
 // @Tags System
 // @Produce json
-// @Success 200 {object} map[string]interface{} "系统配置信息"
+// @Success 200 {object} map[string]interface{} "System configuration information"
 // @Router /admin/system [get]
 func (s *DefaultAdminService) handleSystemPost(c *gin.Context) {
-	// 定义请求结构体
+	// Define request struct
 	var requestData struct {
 		Data string `json:"data"`
 	}
 
-	// 绑定JSON数据到结构体
+	// Bind JSON data to struct
 	if err := c.ShouldBindJSON(&requestData); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
@@ -137,7 +137,7 @@ func (s *DefaultAdminService) handleSystemPost(c *gin.Context) {
 		return
 	}
 
-	// 检查data字段是否为空
+	// Check if data field is empty
 	if requestData.Data == "" {
 		c.JSON(400, gin.H{
 			"status":  "error",
@@ -149,7 +149,7 @@ func (s *DefaultAdminService) handleSystemPost(c *gin.Context) {
 
 	s.logger.Info("Received system configuration data: %s", requestData.Data)
 
-	// 解析data字段中的JSON字符串到SystemConfig结构体
+	// Parse JSON string in data field into SystemConfig struct
 	var config SystemConfig
 	if err := json.Unmarshal([]byte(requestData.Data), &config); err != nil {
 		c.JSON(400, gin.H{

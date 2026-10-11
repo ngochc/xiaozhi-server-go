@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config 主配置结构
+// Config represents the primary server configuration.
 type Config struct {
 	Server struct {
 		IP    string `yaml:"ip" json:"ip"`
@@ -19,7 +19,7 @@ type Config struct {
 			Enabled bool `yaml:"enabled" json:"enabled"`
 			Store   struct {
 				Type   string `yaml:"type" json:"type"`     // memory/file/redis
-				Expiry int    `yaml:"expiry" json:"expiry"` // 过期时间(小时)
+				Expiry int    `yaml:"expiry" json:"expiry"` // Expiry in hours
 			} `yaml:"store" json:"store"`
 			AllowedDevices []string `yaml:"allowed_devices" json:"allowed_devices"`
 			Tokens         []string `yaml:"tokens" json:"tokens"`
@@ -27,7 +27,7 @@ type Config struct {
 		ServerVersion string `yaml:"server_version" json:"server_version"`
 	} `yaml:"server" json:"server"`
 
-	// 传输层配置
+	// Transport configuration
 	Transport struct {
 		WebSocket struct {
 			Enabled bool   `yaml:"enabled" json:"enabled"`
@@ -44,7 +44,7 @@ type Config struct {
 			} `yaml:"mqtt" json:"mqtt"`
 			UDP struct {
 				IP                string `yaml:"ip" json:"ip"`
-				ShowPort          int    `yaml:"show_port" json:"show_port"` // 显示端口
+				ShowPort          int    `yaml:"show_port" json:"show_port"` // Display port
 				Port              int    `yaml:"port" json:"port"`
 				SessionTimeout    string `yaml:"session_timeout" json:"session_timeout"`
 				MaxPacketSize     int    `yaml:"max_packet_size" json:"max_packet_size"`
@@ -66,17 +66,17 @@ type Config struct {
 		StaticDir    string `yaml:"static_dir" json:"static_dir"`
 		Websocket    string `yaml:"websocket" json:"websocket"`
 		VisionURL    string `yaml:"vision" json:"vision"`
-		ActivateText string `yaml:"activate_text" json:"activate_text"` // 发送激活码时携带的文本
+		ActivateText string `yaml:"activate_text" json:"activate_text"` // Text delivered with activation code
 	} `yaml:"web" json:"web"`
 
 	DefaultPrompt   string        `yaml:"prompt"             json:"prompt"`
-	Roles           []Role        `yaml:"roles"              json:"roles"` // 角色列表
+	Roles           []Role        `yaml:"roles"              json:"roles"` // Roles list
 	DeleteAudio     bool          `yaml:"delete_audio"       json:"delete_audio"`
 	QuickReply      bool          `yaml:"quick_reply"        json:"quick_reply"`
 	QuickReplyWords []string      `yaml:"quick_reply_words"  json:"quick_reply_words"`
-	LocalMCPFun     []LocalMCPFun `yaml:"local_mcp_fun"      json:"local_mcp_fun"` // 本地MCP函数映射
-	SaveTTSAudio    bool          `yaml:"save_tts_audio"  json:"save_tts_audio"`   // 是否保存TTS音频文件
-	SaveUserAudio   bool          `yaml:"save_user_audio" json:"save_user_audio"`  // 是否保存用户音频文件
+	LocalMCPFun     []LocalMCPFun `yaml:"local_mcp_fun"      json:"local_mcp_fun"` // Local MCP functions
+	SaveTTSAudio    bool          `yaml:"save_tts_audio"  json:"save_tts_audio"`   // Save outbound TTS audio
+	SaveUserAudio   bool          `yaml:"save_user_audio" json:"save_user_audio"`  // Save inbound user audio
 
 	SelectedModule map[string]string `yaml:"selected_module" json:"selected_module"`
 
@@ -88,80 +88,79 @@ type Config struct {
 	CMDExit []string `yaml:"CMD_exit" json:"CMD_exit"`
 }
 
-// ErrInitialConfigCreated 表示首次启动已生成私有配置，用户需要填写必填项后再次启动。
-// 这时不应把占位配置写入数据库，否则后续修改 .config.yaml 不会生效。
-var ErrInitialConfigCreated = errors.New("首次启动已创建私有配置文件")
+// ErrInitialConfigCreated indicates that the initial private config was generated on first launch.
+var ErrInitialConfigCreated = errors.New("initial configuration file generated on first start")
 
 type LocalMCPFun struct {
-	Name        string `yaml:"name"         json:"name"`        // 函数名称
-	Description string `yaml:"description"  json:"description"` // 函数描述
-	Enabled     bool   `yaml:"enabled"      json:"enabled"`     // 是否启用
+	Name        string `yaml:"name"         json:"name"`        // Function name
+	Description string `yaml:"description"  json:"description"` // Function description
+	Enabled     bool   `yaml:"enabled"      json:"enabled"`     // Enabled status
 }
 
 type Role struct {
-	Name        string `yaml:"name"         json:"name"`        // 角色名称
-	Description string `yaml:"description"  json:"description"` // 角色描述
-	Enabled     bool   `yaml:"enabled"      json:"enabled"`     // 是否启用
+	Name        string `yaml:"name"         json:"name"`        // Role name
+	Description string `yaml:"description"  json:"description"` // Role description
+	Enabled     bool   `yaml:"enabled"      json:"enabled"`     // Enabled status
 }
 
-// ASRConfig ASR配置结构
+// ASRConfig represents speech recognition provider configuration.
 type ASRConfig map[string]interface{}
 
 type VoiceInfo struct {
-	Name        string `yaml:"name"         json:"name"`         // 语音名称，对应tts的音色字符串，如 zh_female_wanwanxiaohe_moon_bigtts
-	Language    string `yaml:"language"     json:"language"`     // 语言，标记语种，用于前端选择
-	DisplayName string `yaml:"display_name" json:"display_name"` // 显示名称，前端显示用，如湾湾小何
-	Sex         string `yaml:"sex"          json:"sex"`          // 性别，男/女
-	Description string `yaml:"description"  json:"description"`  // 音色的描述信息
-	AudioURL    string `yaml:"audio_url"    json:"audio_url"`    // 音频URL，用于试听
+	Name        string `yaml:"name"         json:"name"`         // Voice identifier
+	Language    string `yaml:"language"     json:"language"`     // Language tag
+	DisplayName string `yaml:"display_name" json:"display_name"` // Display name for UI
+	Sex         string `yaml:"sex"          json:"sex"`          // Gender (male/female)
+	Description string `yaml:"description"  json:"description"`  // Voice description
+	AudioURL    string `yaml:"audio_url"    json:"audio_url"`    // Sample audio URL
 }
 
-// TTSConfig TTS配置结构
+// TTSConfig represents speech synthesis provider configuration.
 type TTSConfig struct {
-	Type            string      `yaml:"type"             json:"type"`             // TTS类型
-	Voice           string      `yaml:"voice"            json:"voice"`            // 语音名称
-	Format          string      `yaml:"format"           json:"format"`           // 输出格式
-	OutputDir       string      `yaml:"output_dir"       json:"output_dir"`       // 输出目录
-	AppID           string      `yaml:"appid"            json:"appid"`            // 应用ID
-	Token           string      `yaml:"token"            json:"token"`            // API密钥
-	Cluster         string      `yaml:"cluster"          json:"cluster"`          // 集群信息
-	SupportedVoices []VoiceInfo `yaml:"supported_voices" json:"supported_voices"` // 支持的语音列表
+	Type            string      `yaml:"type"             json:"type"`             // TTS type
+	Voice           string      `yaml:"voice"            json:"voice"`            // Voice identifier
+	Format          string      `yaml:"format"           json:"format"`           // Output format
+	OutputDir       string      `yaml:"output_dir"       json:"output_dir"`       // Output directory
+	AppID           string      `yaml:"appid"            json:"appid"`            // Application ID
+	Token           string      `yaml:"token"            json:"token"`            // API Token / Secret
+	Cluster         string      `yaml:"cluster"          json:"cluster"`          // Cluster endpoint
+	SupportedVoices []VoiceInfo `yaml:"supported_voices" json:"supported_voices"` // List of supported voices
 }
 
-// LLMConfig LLM配置结构
+// LLMConfig represents large language model provider configuration.
 type LLMConfig struct {
-	Type        string                 `yaml:"type"        json:"type"`        // LLM类型
-	ModelName   string                 `yaml:"model_name"  json:"model_name"`  // 模型名称
-	BaseURL     string                 `yaml:"url"         json:"url"`         // API地址
-	APIKey      string                 `yaml:"api_key"     json:"api_key"`     // API密钥
-	Temperature float64                `yaml:"temperature" json:"temperature"` // 温度参数
-	MaxTokens   int                    `yaml:"max_tokens"  json:"max_tokens"`  // 最大令牌数
-	TopP        float64                `yaml:"top_p"       json:"top_p"`       // TopP参数
-	Extra       map[string]interface{} `yaml:",inline"     json:"extra"`       // 额外配置
+	Type        string                 `yaml:"type"        json:"type"`        // LLM type
+	ModelName   string                 `yaml:"model_name"  json:"model_name"`  // Model name
+	BaseURL     string                 `yaml:"url"         json:"url"`         // API Base URL
+	APIKey      string                 `yaml:"api_key"     json:"api_key"`     // API Key
+	Temperature float64                `yaml:"temperature" json:"temperature"` // Temperature
+	MaxTokens   int                    `yaml:"max_tokens"  json:"max_tokens"`  // Max tokens
+	TopP        float64                `yaml:"top_p"       json:"top_p"`       // Top P
+	Extra       map[string]interface{} `yaml:",inline"     json:"extra"`       // Extra parameters
 }
 
-// SecurityConfig 图片安全配置结构
+// SecurityConfig represents image security scanning settings.
 type SecurityConfig struct {
-	MaxFileSize       int64    `yaml:"max_file_size"      json:"max_file_size"`      // 最大文件大小（字节）
-	MaxPixels         int64    `yaml:"max_pixels"         json:"max_pixels"`         // 最大像素数量
-	MaxWidth          int      `yaml:"max_width"          json:"max_width"`          // 最大宽度
-	MaxHeight         int      `yaml:"max_height"         json:"max_height"`         // 最大高度
-	AllowedFormats    []string `yaml:"allowed_formats"    json:"allowed_formats"`    // 允许的图片格式
-	EnableDeepScan    bool     `yaml:"enable_deep_scan"   json:"enable_deep_scan"`   // 启用深度安全扫描
-	ValidationTimeout string   `yaml:"validation_timeout" json:"validation_timeout"` // 验证超时时间
+	MaxFileSize       int64    `yaml:"max_file_size"      json:"max_file_size"`      // Max file size in bytes
+	MaxPixels         int64    `yaml:"max_pixels"         json:"max_pixels"`         // Max pixels
+	MaxWidth          int      `yaml:"max_width"          json:"max_width"`          // Max width
+	MaxHeight         int      `yaml:"max_height"         json:"max_height"`         // Max height
+	AllowedFormats    []string `yaml:"allowed_formats"    json:"allowed_formats"`    // Allowed image formats
+	EnableDeepScan    bool     `yaml:"enable_deep_scan"   json:"enable_deep_scan"`   // Enable deep security scan
+	ValidationTimeout string   `yaml:"validation_timeout" json:"validation_timeout"` // Timeout duration
 }
 
-// VLLMConfig VLLLM配置结构（视觉语言大模型）
+// VLLMConfig represents vision language model provider configuration.
 type VLLMConfig struct {
-	Type        string                 `yaml:"type"        json:"type"`        // API类型，复用LLM的类型
-	ModelName   string                 `yaml:"model_name"  json:"model_name"`  // 模型名称，使用支持视觉的模型
-	BaseURL     string                 `yaml:"url"         json:"url"`         // API地址
-	APIKey      string                 `yaml:"api_key"     json:"api_key"`     // API密钥
-	Temperature float64                `yaml:"temperature" json:"temperature"` // 温度参数
-	MaxTokens   int                    `yaml:"max_tokens"  json:"max_tokens"`  // 最大令牌数
-	TopP        float64                `yaml:"top_p"       json:"top_p"`       // TopP参数
-	Security    SecurityConfig         `yaml:"security"    json:"security"`    // 图片安全配置
-	Extra       map[string]interface{} `yaml:",inline"     json:"extra"`       // 额外配置
+	Type        string                 `yaml:"type"        json:"type"`        // API type
+	ModelName   string                 `yaml:"model_name"  json:"model_name"`  // Vision model name
+	BaseURL     string                 `yaml:"url"         json:"url"`         // API Base URL
+	APIKey      string                 `yaml:"api_key"     json:"api_key"`     // API Key
+	Temperature float64                `yaml:"temperature" json:"temperature"` // Temperature
+	MaxTokens   int                    `yaml:"max_tokens"  json:"max_tokens"`  // Max tokens
+	TopP        float64                `yaml:"top_p"       json:"top_p"`       // Top P
+	Security    SecurityConfig         `yaml:"security"    json:"security"`    // Security settings
+	Extra       map[string]interface{} `yaml:",inline"     json:"extra"`       // Extra parameters
 }
 
 var (
@@ -182,14 +181,12 @@ func (cfg *Config) SaveToDB(dbi ConfigDBInterface) error {
 	return dbi.UpdateServerConfig(data)
 }
 
-// LoadConfig 加载配置
-// 完全从数据库加载配置，如果数据库为空则使用默认配置并初始化数据库
+// LoadConfig loads the server configuration.
 func LoadConfig(dbi ConfigDBInterface) (*Config, string, error) {
 	bUseDatabaseCfg := true
-	// 尝试从数据库加载配置
 	cfgStr, err := dbi.LoadServerConfig()
 	if err != nil {
-		fmt.Println("加载服务器配置失败:", err)
+		fmt.Println("Failed to load server configuration from DB:", err)
 		return nil, "", err
 	}
 
@@ -206,8 +203,7 @@ func LoadConfig(dbi ConfigDBInterface) (*Config, string, error) {
 		}
 	}
 
-	// 首次启动始终创建私有配置文件。若发行包中提供了 config.yaml，则以它为模板；
-	// 若没有模板，则写入内置默认配置。这样凭据不会被误写回公开模板文件。
+	// First start initializes private .config.yaml
 	path = ".config.yaml"
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -217,14 +213,14 @@ func LoadConfig(dbi ConfigDBInterface) (*Config, string, error) {
 			data, err = yaml.Marshal(config)
 		}
 		if err != nil {
-			return nil, path, fmt.Errorf("读取首次启动配置失败: %w", err)
+			return nil, path, fmt.Errorf("failed to read initial configuration: %w", err)
 		}
 		if err := os.WriteFile(path, data, 0o600); err != nil {
-			return nil, path, fmt.Errorf("创建私有配置文件失败: %w", err)
+			return nil, path, fmt.Errorf("failed to create private configuration file: %w", err)
 		}
-		return nil, path, fmt.Errorf("%w %s；请填写模型服务配置后重新启动服务", ErrInitialConfigCreated, path)
+		return nil, path, fmt.Errorf("%w at %s; please configure model services before restarting the server", ErrInitialConfigCreated, path)
 	} else if err != nil {
-		return nil, path, fmt.Errorf("读取私有配置文件失败: %w", err)
+		return nil, path, fmt.Errorf("failed to read private configuration file: %w", err)
 	}
 
 	if err := yaml.Unmarshal(data, config); err != nil {
@@ -233,7 +229,7 @@ func LoadConfig(dbi ConfigDBInterface) (*Config, string, error) {
 
 	err = dbi.InitServerConfig(string(data))
 	if err != nil {
-		fmt.Println("初始化服务器配置到数据库失败:", err)
+		fmt.Println("Failed to initialize server configuration in database:", err)
 	}
 	config = CheckAndModifyConfig(config)
 	Cfg = config
@@ -241,10 +237,9 @@ func LoadConfig(dbi ConfigDBInterface) (*Config, string, error) {
 }
 
 func LoadProvidersFromDB(dbi ConfigDBInterface, cfg *Config) {
-	// 加载ASR提供者配置
+	// Load ASR providers
 	asrData := dbi.LoadProviderData("ASR", 0)
 	if asrData != nil {
-		//fmt.Println("ASR Providers:", asrData)
 		cfg.ASR = make(map[string]ASRConfig)
 		for name, dataStr := range asrData {
 			var asrConfig ASRConfig
@@ -253,10 +248,9 @@ func LoadProvidersFromDB(dbi ConfigDBInterface, cfg *Config) {
 			}
 		}
 	}
-	// 加载TTS提供者配置
+	// Load TTS providers
 	ttsData := dbi.LoadProviderData("TTS", 0)
 	if ttsData != nil {
-		//fmt.Println("TTS Providers:", ttsData)
 		cfg.TTS = make(map[string]TTSConfig)
 		for name, dataStr := range ttsData {
 			var ttsConfig TTSConfig
@@ -265,10 +259,9 @@ func LoadProvidersFromDB(dbi ConfigDBInterface, cfg *Config) {
 			}
 		}
 	}
-	// 加载LLM提供者配置
+	// Load LLM providers
 	llmData := dbi.LoadProviderData("LLM", 0)
 	if llmData != nil {
-		//fmt.Println("LLM Providers:", llmData)
 		cfg.LLM = make(map[string]LLMConfig)
 		for name, dataStr := range llmData {
 			var llmConfig LLMConfig
@@ -277,10 +270,9 @@ func LoadProvidersFromDB(dbi ConfigDBInterface, cfg *Config) {
 			}
 		}
 	}
-	// 加载VLLLM提供者配置
+	// Load VLLM providers
 	vllmData := dbi.LoadProviderData("VLLLM", 0)
 	if vllmData != nil {
-		//fmt.Println("VLLLM Providers:", vllmData)
 		cfg.VLLLM = make(map[string]VLLMConfig)
 		for name, dataStr := range vllmData {
 			var vllmConfig VLLMConfig
@@ -293,18 +285,16 @@ func LoadProvidersFromDB(dbi ConfigDBInterface, cfg *Config) {
 }
 
 func CheckAndModifyConfig(cfg *Config) *Config {
-	// 检查Cfg.LocalMCPFun全部小写并去除空格
 	if cfg.LocalMCPFun == nil {
 		cfg.LocalMCPFun = []LocalMCPFun{}
 	}
-	fmt.Printf("检查配置: LocalMCPFun cnt %d\n", len(cfg.LocalMCPFun))
+	fmt.Printf("Config Check: LocalMCPFun count %d\n", len(cfg.LocalMCPFun))
 	if len(cfg.LocalMCPFun) < 10 {
 		for i := 0; i < len(cfg.LocalMCPFun); i++ {
 			cfg.LocalMCPFun[i].Name = strings.ToLower(strings.TrimSpace(cfg.LocalMCPFun[i].Name))
 			cfg.LocalMCPFun[i].Description = strings.ToLower(strings.TrimSpace(cfg.LocalMCPFun[i].Description))
 		}
 	}
-	// 检查默认配置的ASR,LLM,TTS和VLLLM是否存在
 	if cfg.SelectedModule == nil {
 		cfg.SelectedModule = map[string]string{}
 	}
@@ -320,26 +310,25 @@ func CheckAndModifyConfig(cfg *Config) *Config {
 	if cfg.TTS == nil {
 		cfg.TTS = map[string]TTSConfig{}
 	}
-	fmt.Printf("检查配置: LLM:%d, VLLLM:%d, ASR:%d, TTS:%d\n", len(cfg.LLM), len(cfg.VLLLM), len(cfg.ASR), len(cfg.TTS))
-	fmt.Println("检查配置: SelectedModule", cfg.SelectedModule)
-	// 如果SelectedModule没有选择或者选择的不存在，则选择第一个
+	fmt.Printf("Config Check: LLM:%d, VLLLM:%d, ASR:%d, TTS:%d\n", len(cfg.LLM), len(cfg.VLLLM), len(cfg.ASR), len(cfg.TTS))
+	fmt.Println("Config Check: SelectedModule", cfg.SelectedModule)
+
 	llmName, ok := cfg.SelectedModule["LLM"]
 	_, exists := cfg.LLM[llmName]
 	if !ok || llmName == "" || !exists {
-		// 选择LLM中有的作为默认
 		for name := range cfg.LLM {
 			cfg.SelectedModule["LLM"] = name
-			fmt.Println("未设置默认LLM或设置的LLM不存在，已设置为", name)
+			fmt.Println("Default LLM unset or not found; assigned to", name)
 			break
 		}
 	}
 	defaulCfg := NewDefaultInitConfig()
 	if len(cfg.LLM) == 0 {
-		fmt.Println("警告: 当前没有可用的LLM提供者，使用默认配置！")
+		fmt.Println("Warning: No LLM provider found, using default configuration!")
 		cfg.LLM = defaulCfg.LLM
 		for name := range cfg.LLM {
 			cfg.SelectedModule["LLM"] = name
-			fmt.Println("已设置默认LLM为", name)
+			fmt.Println("Set default LLM to", name)
 			break
 		}
 	}
@@ -347,41 +336,38 @@ func CheckAndModifyConfig(cfg *Config) *Config {
 	vlllmName, ok := cfg.SelectedModule["VLLLM"]
 	_, exists = cfg.VLLLM[vlllmName]
 	if !ok || vlllmName == "" || !exists {
-		// 选择VLLLM中有的作为默认
 		for name := range cfg.VLLLM {
 			cfg.SelectedModule["VLLLM"] = name
-			fmt.Println("未设置默认VLLLM或设置的VLLLM不存在，已设置为", name)
+			fmt.Println("Default VLLM unset or not found; assigned to", name)
 			break
 		}
 	}
 	if len(cfg.VLLLM) == 0 {
-		fmt.Println("警告: 当前没有可用的VLLLM提供者，使用默认配置！")
+		fmt.Println("Warning: No VLLM provider found, using default configuration!")
 		cfg.VLLLM = defaulCfg.VLLLM
 		for name := range cfg.VLLLM {
 			cfg.SelectedModule["VLLLM"] = name
-			fmt.Println("已设置默认VLLLM为", name)
+			fmt.Println("Set default VLLM to", name)
 			break
 		}
 	}
 
 	asrName, ok := cfg.SelectedModule["ASR"]
 	_, exists = cfg.ASR[asrName]
-	// ASRConfig 是 map[string]interface{}，只判断 key 是否存在和 name 非空
 	if !ok || asrName == "" || !exists {
-		// 选择ASR中有的作为默认
 		for name := range cfg.ASR {
 			cfg.SelectedModule["ASR"] = name
-			fmt.Println("未设置默认ASR或设置的ASR不存在，已设置为", name)
+			fmt.Println("Default ASR unset or not found; assigned to", name)
 			break
 		}
 	}
 
 	if len(cfg.ASR) == 0 {
-		fmt.Println("警告: 当前没有可用的ASR提供者，使用默认配置！")
+		fmt.Println("Warning: No ASR provider found, using default configuration!")
 		cfg.ASR = defaulCfg.ASR
 		for name := range cfg.ASR {
 			cfg.SelectedModule["ASR"] = name
-			fmt.Println("已设置默认ASR为", name)
+			fmt.Println("Set default ASR to", name)
 			break
 		}
 	}
@@ -389,20 +375,19 @@ func CheckAndModifyConfig(cfg *Config) *Config {
 	ttsName, ok := cfg.SelectedModule["TTS"]
 	_, exists = cfg.TTS[ttsName]
 	if !ok || ttsName == "" || !exists {
-		// 选择TTS中有的作为默认
 		for name := range cfg.TTS {
 			cfg.SelectedModule["TTS"] = name
-			fmt.Println("未设置默认TTS或设置的TTS不存在，已设置为", name)
+			fmt.Println("Default TTS unset or not found; assigned to", name)
 			break
 		}
 	}
 
 	if len(cfg.TTS) == 0 {
-		fmt.Println("警告: 当前没有可用的TTS提供者，使用默认配置！")
+		fmt.Println("Warning: No TTS provider found, using default configuration!")
 		cfg.TTS = defaulCfg.TTS
 		for name := range cfg.TTS {
 			cfg.SelectedModule["TTS"] = name
-			fmt.Println("已设置默认TTS为", name)
+			fmt.Println("Set default TTS to", name)
 			break
 		}
 	}

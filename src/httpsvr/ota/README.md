@@ -1,28 +1,28 @@
-# OTA模块
+# OTA Module
 
-## 目录结构
-- `ota.go`：OTA服务默认实现
-- `interfaces.go`：OTA服务接口定义
-- `server.go`：OTA HTTP服务实现
-- `README.md`：模块说明文档
+## Directory Structure
+- `ota.go`: Default OTA service implementation
+- `interfaces.go`: OTA service interface definitions
+- `server.go`: OTA HTTP service handler
+- `README.md`: Module documentation
 
-## 用法说明
-1. 在主程序中引入OTA服务模块。
-2. 初始化OTA服务。
-3. 配置`UpdateURL`参数，指定WebSocket地址。
+## Usage
+1. Import the OTA service package in your main program.
+2. Initialize the OTA service.
+3. Configure the `UpdateURL` parameter to specify the WebSocket address.
 
-## OTA接口说明
-- `GET /api/ota/`：返回OTA接口运行状态及WebSocket地址。
-- `POST /api/ota/`：接收设备请求，返回服务器时间、固件信息和WebSocket地址。
+## OTA Endpoints
+- `GET /api/ota/`: Returns OTA service health status and WebSocket URL.
+- `POST /api/ota/`: Receives device handshake/registration and returns server time, firmware info, and WebSocket URL.
 
-## OTA接口测试（Apifox）
+## API Testing (Apifox / Postman / curl)
 
-你可以使用 [Apifox](https://apifox.com/) 对OTA接口进行测试。
+You can test the OTA interface using tools like curl or Apifox:
 
-### 1. 测试GET接口
-- 方法：GET
-- URL：`http://localhost:8080/api/ota/`
-- 预期返回：
+### 1. Test GET Endpoint
+- Method: GET
+- URL: `http://localhost:8080/api/ota/`
+- Expected Response:
 ```json
 {
   "status": "ok",
@@ -30,17 +30,17 @@
 }
 ```
 
-### 2. 测试POST接口
-- 方法：POST
-- URL：`http://localhost:8080/api/ota/`
-- Body类型：JSON
-- 示例请求体：
+### 2. Test POST Endpoint
+- Method: POST
+- URL: `http://localhost:8080/api/ota/`
+- Content-Type: application/json
+- Sample Body:
 ```json
 {
   "device_id": "your_device_id"
 }
 ```
-- 预期返回：
+- Expected Response:
 ```json
 {
   "server_time": "2024-01-01T12:00:00Z",
@@ -49,10 +49,8 @@
 }
 ```
 
-### 3. 下载 
-- URL：`http://localhost:8080/ota_bin/{*.bin}`
+### 3. Firmware Download
+- URL: `http://localhost:8080/ota_bin/{*.bin}`
 
-### 4. 跨域说明
-OTA服务已支持CORS，便于前端或第三方工具直接调用。
-
-如需进一步定制接口或返回内容，请根据实际需求修改`server.go`。
+### 4. CORS Support
+CORS is enabled globally to facilitate browser and third-party tooling access.

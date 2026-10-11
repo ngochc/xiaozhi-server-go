@@ -40,7 +40,7 @@ func TestMissingProviderTestFields(t *testing.T) {
 			kind:    "ASR",
 			subType: "custom",
 			config:  map[string]interface{}{},
-			want:    []string{"当前类型暂不支持测试"},
+			want:    []string{"testing is not supported for this provider type"},
 		},
 	}
 
@@ -57,19 +57,19 @@ func TestMissingProviderTestFields(t *testing.T) {
 func TestCollectLiveResponse(t *testing.T) {
 	t.Run("collects streamed response", func(t *testing.T) {
 		response := make(chan string, 2)
-		response <- "连接"
-		response <- "成功"
+		response <- "Connection "
+		response <- "successful"
 		close(response)
 
 		got, err := collectLiveResponse(context.Background(), response)
-		if err != nil || got != "连接成功" {
+		if err != nil || got != "Connection successful" {
 			t.Fatalf("collectLiveResponse() = %q, %v", got, err)
 		}
 	})
 
 	t.Run("returns provider error", func(t *testing.T) {
 		response := make(chan string, 1)
-		response <- "【OpenAI服务响应异常: unauthorized】"
+		response <- "【OpenAI service response error: unauthorized】"
 		close(response)
 
 		_, err := collectLiveResponse(context.Background(), response)

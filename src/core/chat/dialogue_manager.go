@@ -10,7 +10,7 @@ import (
 
 type Message = types.Message
 
-// DialogueManager 管理对话上下文和历史
+// DialogueManager manages dialogue context and history
 type DialogueManager struct {
 	logger   *utils.Logger
 	dialogue []Message
@@ -21,7 +21,7 @@ type DialogueManager struct {
 	maxEstimatedTokens int
 }
 
-// NewDialogueManager 创建对话管理器实例
+// NewDialogueManager creates dialogue manager instance
 func NewDialogueManager(logger *utils.Logger, memory MemoryInterface) *DialogueManager {
 	dm := &DialogueManager{
 		logger:   logger,
@@ -35,7 +35,7 @@ func NewDialogueManager(logger *utils.Logger, memory MemoryInterface) *DialogueM
 	saved, err := memory.QueryMemory("")
 	if err == nil && saved != "" {
 		if err := json.Unmarshal([]byte(saved), &dm.dialogue); err != nil && logger != nil {
-			logger.Warn("加载短期记忆失败，将使用空会话: %v", err)
+			logger.Warn("failed to load short-term memory, using empty session: %v", err)
 		}
 	}
 	return dm
@@ -49,13 +49,13 @@ func (dm *DialogueManager) SetSystemMessage(systemMessage string) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 
-	// 如果对话中已经有系统消息，则不再添加
+	// If dialogue already contains system message, do not add
 	if len(dm.dialogue) > 0 && dm.dialogue[0].Role == "system" {
 		dm.dialogue[0].Content = systemMessage
 		return
 	}
 
-	// 添加新的系统消息到对话开头
+	// Add new system message to beginning of dialogue
 	dm.dialogue = append([]Message{
 		{Role: "system", Content: systemMessage},
 	}, dm.dialogue...)
@@ -68,14 +68,14 @@ func (dm *DialogueManager) RemoveSecondMessageForToolType() {
 }
 
 func (dm *DialogueManager) removeSecondMessageForToolTypeLocked() {
-	// 如果第二条的类型是"role": "tool",则移除这条
+	// If second message is "role": "tool", remove it
 	if len(dm.dialogue) < 2 || dm.dialogue[1].Role != "tool" {
 		return
 	}
 	dm.dialogue = append(dm.dialogue[:1], dm.dialogue[2:]...)
 }
 
-// 保留最近的几条对话消息
+// Keep most recent dialogue messages
 func (dm *DialogueManager) KeepRecentMessages(maxMessages int) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
@@ -87,40 +87,40 @@ func (dm *DialogueManager) keepRecentMessagesLocked(maxMessages int) {
 	if maxMessages <= 0 || len(dm.dialogue) <= maxMessages {
 		return
 	}
-	// 保留system消息和最近的 maxMessages 条消息
+	// Keep system message and most recent maxMessages messages
 	if len(dm.dialogue) > 0 && dm.dialogue[0].Role == "system" {
-		// 保留system消息
+		// Keep system message
 		dm.dialogue = append(dm.dialogue[:1], dm.dialogue[len(dm.dialogue)-maxMessages:]...)
 		dm.removeSecondMessageForToolTypeLocked()
 		return
 	}
-	// 如果没有system消息，直接保留最近的 maxMessages 条消息
+	// If no system message, keep most recent maxMessages messages directly
 	if len(dm.dialogue) > maxMessages {
 		dm.dialogue = dm.dialogue[len(dm.dialogue)-maxMessages:]
 	}
 }
 
-// GetRecentMessages 获取最近的对话消息
-// 如果 maxMessages <= 0，则返回全部对话消息
+// GetRecentMessages gets recent dialogue messages
+// If maxMessages <= 0, return all dialogue messages
 func (dm *DialogueManager) GetRecentMessages(maxMessages int) []Message {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 	if maxMessages <= 0 || len(dm.dialogue) <= maxMessages {
 		return cloneMessages(dm.dialogue)
 	}
-	// 保留system消息和最近的 maxMessages 条消息
+	// Keep system message and most recent maxMessages messages
 	if len(dm.dialogue) > 0 && dm.dialogue[0].Role == "system" {
-		// 保留system消息
+		// Keep system message
 		return cloneMessages(append([]Message{dm.dialogue[0]}, dm.dialogue[len(dm.dialogue)-maxMessages:]...))
 	}
 	return cloneMessages(dm.dialogue)
 }
 
-// Put 添加新消息到对话
+// Put adds new message to dialogue
 func (dm *DialogueManager) Put(message Message) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
-	// 如果最近一条是user消息且当前也是user消息，则插入一个空的assistant消息
+	// If latest message is user and current is user, insert empty assistant message
 	if len(dm.dialogue) > 0 && dm.dialogue[len(dm.dialogue)-1].Role == "user" && message.Role == "user" {
 		dm.dialogue = append(dm.dialogue, Message{Role: "assistant", Content: "..."})
 	}
@@ -138,14 +138,14 @@ func (dm *DialogueManager) GetLastTwoMessages() []Message {
 	return cloneMessages(dm.dialogue[len(dm.dialogue)-2:])
 }
 
-// GetLLMDialogue 获取完整对话历史
+// GetLLMDialogue gets full dialogue history
 func (dm *DialogueManager) GetLLMDialogue() []Message {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 	return cloneMessages(dm.dialogue)
 }
 
-// GetLLMDialogueWithMemory 获取带记忆的对话
+// GetLLMDialogueWithMemory gets dialogue with memory
 func (dm *DialogueManager) GetLLMDialogueWithMemory(memoryStr string) []Message {
 	if memoryStr == "" {
 		return dm.GetLLMDialogue()
@@ -165,7 +165,7 @@ func (dm *DialogueManager) GetLLMDialogueWithMemory(memoryStr string) []Message 
 	return dialogue
 }
 
-// Clear 清空对话历史
+// Clear clears dialogue history
 func (dm *DialogueManager) Clear() {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
@@ -181,13 +181,13 @@ func (dm *DialogueManager) Length() int {
 	return len(dm.dialogue)
 }
 
-// ToJSON 将对话历史转换为JSON字符串
+// ToJSON converts dialogue history to JSON string
 func (dm *DialogueManager) ToJSON(keepSystemPrompt bool) (string, error) {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 	dialogue := dm.dialogue
 	if !keepSystemPrompt && len(dialogue) > 0 && dialogue[0].Role == "system" {
-		// 如果不保留系统消息，则移除第一条消息
+		// If not keeping system message, remove first message
 		dialogue = dialogue[1:]
 	}
 	bytes, err := json.Marshal(dialogue)
@@ -197,7 +197,7 @@ func (dm *DialogueManager) ToJSON(keepSystemPrompt bool) (string, error) {
 	return string(bytes), nil
 }
 
-// LoadFromJSON 从JSON字符串加载对话历史
+// LoadFromJSON loads dialogue history from JSON string
 func (dm *DialogueManager) LoadFromJSON(jsonStr string) error {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
@@ -277,7 +277,7 @@ func (dm *DialogueManager) saveMemoryLocked() {
 		dialogue = dialogue[1:]
 	}
 	if err := dm.memory.SaveMemory(cloneMessages(dialogue)); err != nil && dm.logger != nil {
-		dm.logger.Warn("保存短期记忆失败: %v", err)
+		dm.logger.Warn("failed to save short-term memory: %v", err)
 	}
 }
 

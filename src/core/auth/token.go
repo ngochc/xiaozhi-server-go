@@ -13,7 +13,7 @@ type AuthToken struct {
 }
 
 func NewAuthToken(secretKey string) *AuthToken {
-	// 添加验证，确保密钥不为空
+	// Validate secret key is not empty
 	if secretKey == "" {
 		fmt.Println("Error! secret key cannot be empty")
 	}
@@ -23,20 +23,20 @@ func NewAuthToken(secretKey string) *AuthToken {
 }
 
 func (at *AuthToken) GenerateToken(deviceID string) (string, error) {
-	// 设置过期时间为1小时后
+	// Set expiration to 1 hour later
 	expireTime := time.Now().Add(time.Hour)
 
-	// 创建claims
+	// Create claims
 	claims := jwt.MapClaims{
 		"device_id": deviceID,
 		"exp":       expireTime.Unix(),
-		"iat":       time.Now().Unix(), // 添加签发时间
+		"iat":       time.Now().Unix(), // Issued at
 	}
 
-	// 创建token
+	// Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// 使用密钥签名
+	// Sign with secret key
 	tokenString, err := token.SignedString(at.secretKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
@@ -54,9 +54,9 @@ func (at *AuthToken) VerifyToken(tokenString string) (bool, string, error) {
 		return false, "", errors.New("secret key is not initialized")
 	}
 
-	// 解析token
+	// Parse token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// 验证签名方法
+		// Verify signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -66,18 +66,18 @@ func (at *AuthToken) VerifyToken(tokenString string) (bool, string, error) {
 		return false, "", fmt.Errorf("failed to parse token: %w", err)
 	}
 
-	// 验证token是否有效
+	// Verify token validity
 	if !token.Valid {
 		return false, "", errors.New("invalid token")
 	}
 
-	// 获取claims
+	// Get claims
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return false, "", errors.New("invalid claims")
 	}
 
-	// 获取设备ID
+	// Get device ID
 	deviceID, ok := claims["device_id"].(string)
 	if !ok {
 		return false, "", errors.New("invalid device_id in claims")

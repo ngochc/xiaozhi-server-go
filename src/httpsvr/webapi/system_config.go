@@ -11,13 +11,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// SystemConfigService 系统配置服务
+// SystemConfigService handles system configuration
 type SystemConfigService struct {
 	logger *utils.Logger
 	db     *gorm.DB
 }
 
-// NewSystemConfigService 构造函数
+// NewSystemConfigService constructor
 func NewSystemConfigService(logger *utils.Logger, db *gorm.DB) *SystemConfigService {
 	return &SystemConfigService{
 		logger: logger,
@@ -25,52 +25,52 @@ func NewSystemConfigService(logger *utils.Logger, db *gorm.DB) *SystemConfigServ
 	}
 }
 
-// RegisterRoutes 注册路由
+// RegisterRoutes registers configuration routes
 func (s *SystemConfigService) RegisterRoutes(apiGroup *gin.RouterGroup) {
-	// 需要管理员权限的配置管理路由
+	// Configuration routes requiring admin permissions
 	adminGroup := apiGroup.Group("/admin/config")
 	adminGroup.Use(AuthMiddleware(), AdminMiddleware())
 	{
-		// 应用配置
+		// Application configuration
 		adminGroup.GET("/application", s.handleGetApplicationConfig)
 		adminGroup.PUT("/application", s.handleUpdateApplicationConfig)
 
-		// 认证配置
+		// Auth configuration
 		adminGroup.GET("/auth", s.handleGetAuthConfig)
 		adminGroup.PUT("/auth", s.handleUpdateAuthConfig)
 
-		// 传输配置
+		// Transport configuration
 		adminGroup.GET("/transport", s.handleGetTransportConfig)
 		adminGroup.PUT("/transport", s.handleUpdateTransportConfig)
 
-		// Web配置
+		// Web configuration
 		adminGroup.GET("/web", s.handleGetWebConfig)
 		adminGroup.PUT("/web", s.handleUpdateWebConfig)
 		adminGroup.POST("/diagnostics", s.handleRunDiagnostics)
 
-		// 日志配置
+		// Logging configuration
 		adminGroup.GET("/log", s.handleGetLogConfig)
 		adminGroup.PUT("/log", s.handleUpdateLogConfig)
 
-		// 角色配置
+		// Roles configuration
 		adminGroup.GET("/roles", s.handleGetRoleConfigs)
 		adminGroup.POST("/roles", s.handleCreateRoleConfig)
 		adminGroup.PUT("/roles/:id", s.handleUpdateRoleConfig)
 		adminGroup.DELETE("/roles/:id", s.handleDeleteRoleConfig)
 
-		// 快捷回复词
+		// Quick reply words
 		adminGroup.GET("/quick-reply", s.handleGetQuickReplyWords)
 		adminGroup.POST("/quick-reply", s.handleCreateQuickReplyWord)
 		adminGroup.PUT("/quick-reply/:id", s.handleUpdateQuickReplyWord)
 		adminGroup.DELETE("/quick-reply/:id", s.handleDeleteQuickReplyWord)
 
-		// 本地MCP功能
+		// Local MCP tools
 		adminGroup.GET("/mcp-functions", s.handleGetMCPFunctions)
 		adminGroup.POST("/mcp-functions", s.handleCreateMCPFunction)
 		adminGroup.PUT("/mcp-functions/:id", s.handleUpdateMCPFunction)
 		adminGroup.DELETE("/mcp-functions/:id", s.handleDeleteMCPFunction)
 
-		// 退出指令
+		// Exit commands
 		adminGroup.GET("/exit-commands", s.handleGetExitCommands)
 		adminGroup.POST("/exit-commands", s.handleCreateExitCommand)
 		adminGroup.PUT("/exit-commands/:id", s.handleUpdateExitCommand)
@@ -85,7 +85,7 @@ type ApplicationConfig struct {
 	SaveUserAudio   bool `json:"saveUserAudio"`
 }
 
-// 应用配置相关处理器
+// Application configuration handlers
 func (s *SystemConfigService) handleGetApplicationConfig(c *gin.Context) {
 	var config ApplicationConfig
 	config.SaveTtsAudio = configs.Cfg.SaveTTSAudio
@@ -103,7 +103,7 @@ func (s *SystemConfigService) handleUpdateApplicationConfig(c *gin.Context) {
 	if err := c.ShouldBindJSON(&config); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -112,12 +112,12 @@ func (s *SystemConfigService) handleUpdateApplicationConfig(c *gin.Context) {
 	configs.Cfg.SaveTTSAudio = config.SaveTtsAudio
 	configs.Cfg.SaveUserAudio = config.SaveUserAudio
 	configs.Cfg.QuickReply = config.QuickReply
-	fmt.Println("设置应用配置：", config)
+	fmt.Println("Setting application config:", config)
 	configs.Cfg.SaveToDB(database.GetServerConfigDB())
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "应用配置更新成功",
+		"message": "Application configuration updated successfully",
 		"data":    config,
 	})
 }
@@ -127,7 +127,7 @@ type AuthConfig struct {
 	Expiry int    `json:"expiry"`
 }
 
-// 认证配置相关处理器
+// Auth configuration handlers
 func (s *SystemConfigService) handleGetAuthConfig(c *gin.Context) {
 	var config AuthConfig
 	config.Token = configs.Cfg.Server.Token
@@ -144,7 +144,7 @@ func (s *SystemConfigService) handleUpdateAuthConfig(c *gin.Context) {
 	if err := c.ShouldBindJSON(&config); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -155,7 +155,7 @@ func (s *SystemConfigService) handleUpdateAuthConfig(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "认证配置更新成功",
+		"message": "Authentication configuration updated successfully",
 		"data":    config,
 	})
 }
@@ -166,7 +166,7 @@ type TransportConfig struct {
 	Config  json.RawMessage `json:"config"` // arbitrary JSON payload
 }
 
-// 传输配置相关处理器
+// Transport configuration handlers
 func (s *SystemConfigService) handleGetTransportConfig(c *gin.Context) {
 	var configsTransport []TransportConfig
 	configsTransport = make([]TransportConfig, 0)
@@ -176,7 +176,7 @@ func (s *SystemConfigService) handleGetTransportConfig(c *gin.Context) {
 		Enabled: configs.Cfg.Transport.WebSocket.Enabled,
 		Config:  str,
 	})
-	fmt.Println("获取 WebSocket 配置：", configs.Cfg.Transport.WebSocket.Enabled)
+	fmt.Println("Get WebSocket config:", configs.Cfg.Transport.WebSocket.Enabled)
 
 	strMqttUdp, _ := json.Marshal(configs.Cfg.Transport.MQTTUDP)
 	configsTransport = append(configsTransport, TransportConfig{
@@ -195,22 +195,22 @@ func (s *SystemConfigService) handleUpdateTransportConfig(c *gin.Context) {
 	if err := c.ShouldBindJSON(&configsTransport); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
-		fmt.Println("绑定传输配置错误：", err)
+		fmt.Println("Failed to bind transport config:", err)
 		return
 	}
-	fmt.Println("更新传输配置：", configsTransport)
+	fmt.Println("Updating transport config:", configsTransport)
 
 	for _, cfg := range configsTransport {
-		// 更新传输配置
+		// Update transport configuration
 		switch cfg.Type {
 		case "websocket":
 			configs.Cfg.Transport.WebSocket.Enabled = cfg.Enabled
-			fmt.Println("更新WebSocket配置：", (cfg.Enabled))
+			fmt.Println("Update WebSocket config:", (cfg.Enabled))
 			json.Unmarshal(cfg.Config, &configs.Cfg.Transport.WebSocket)
-			fmt.Println("更新WebSocket配置内容：", configs.Cfg.Transport.WebSocket)
+			fmt.Println("Update WebSocket config content:", configs.Cfg.Transport.WebSocket)
 		case "mqtt_udp":
 			configs.Cfg.Transport.MQTTUDP.Enabled = cfg.Enabled
 			json.Unmarshal(cfg.Config, &configs.Cfg.Transport.MQTTUDP)
@@ -220,58 +220,58 @@ func (s *SystemConfigService) handleUpdateTransportConfig(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "传输配置更新成功",
+		"message": "Transport configuration updated successfully",
 		"data":    configsTransport,
 	})
 }
 
-// WebConfig Web界面配置
+// WebConfig Web UI configuration
 type WebConfig struct {
 	Enabled      bool   `json:"enabled"`
 	Port         int    `json:"port"`
 	StaticDir    string `json:"staticDir"`
 	Websocket    string `json:"websocket"`
 	VisionURL    string `json:"visionUrl"`
-	ActivateText string `json:"activateText"` // 发送激活码时携带的文本
+	ActivateText string `json:"activateText"` // Text sent with activation code
 }
 
-// LogConfig 日志配置
+// LogConfig logging configuration
 type LogConfig struct {
 	LogLevel string `json:"logLevel"`
 	LogDir   string `json:"logDir"`
 	LogFile  string `json:"logFile"`
 }
 
-// RoleConfig 角色配置
+// RoleConfig role configuration
 type RoleConfig struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Enabled     bool   `json:"enabled"`
 }
 
-// QuickReplyWord 快捷回复词
+// QuickReplyWord Quick reply words
 type QuickReplyWord struct {
 	Word    string `json:"word"`
 	Enabled bool   `json:"enabled"`
 	Order   int    `json:"order"`
 }
 
-// LocalMCPFunction 本地MCP功能配置
+// LocalMCPFunction local MCP tools configuration
 type LocalMCPFunction struct {
 	FunctionName string `json:"functionName"`
 	Description  string `json:"description"`
 	Enabled      bool   `json:"enabled"`
 }
 
-// ExitCommand 退出指令
+// ExitCommand Exit commands
 type ExitCommand struct {
 	Command string `json:"command"`
 	Enabled bool   `json:"enabled"`
 }
 
-// Web配置相关处理器（使用 configs.Cfg 读取/保存）
+// Web configuration handlers (reads/saves via configs.Cfg)
 func (s *SystemConfigService) handleGetWebConfig(c *gin.Context) {
-	// 构造返回 DTO，从全局配置读取
+	// Construct response DTO from global configuration
 	config := WebConfig{
 		Port:         configs.Cfg.Web.Port,
 		StaticDir:    configs.Cfg.Web.StaticDir,
@@ -291,13 +291,13 @@ func (s *SystemConfigService) handleUpdateWebConfig(c *gin.Context) {
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
 	}
 
-	// 将 DTO 应用到全局配置并保存到数据库
+	// Apply DTO to global configuration and save to database
 	configs.Cfg.Web.Port = payload.Port
 	configs.Cfg.Web.StaticDir = payload.StaticDir
 	configs.Cfg.Web.Websocket = payload.Websocket
@@ -305,10 +305,10 @@ func (s *SystemConfigService) handleUpdateWebConfig(c *gin.Context) {
 	configs.Cfg.Web.ActivateText = payload.ActivateText
 
 	if err := configs.Cfg.SaveToDB(database.GetServerConfigDB()); err != nil {
-		s.logger.Error("保存 Web 配置到数据库失败: %v", err)
+		s.logger.Error("Failed to save Web configuration to database: %v", err)
 		c.JSON(500, gin.H{
 			"status":  "error",
-			"message": "保存 Web 配置失败",
+			"message": "Failed to save Web configuration",
 			"error":   err.Error(),
 		})
 		return
@@ -316,14 +316,14 @@ func (s *SystemConfigService) handleUpdateWebConfig(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "Web 配置更新成功",
+		"message": "Web configuration updated successfully",
 		"data":    payload,
 	})
 }
 
-// 日志配置相关处理器
+// Logging configuration handlers
 func (s *SystemConfigService) handleGetLogConfig(c *gin.Context) {
-	// 从全局配置读取并返回 DTO
+	// Read from global configuration and return DTO
 	cfg := LogConfig{
 		LogLevel: configs.Cfg.Log.LogLevel,
 		LogDir:   configs.Cfg.Log.LogDir,
@@ -341,22 +341,22 @@ func (s *SystemConfigService) handleUpdateLogConfig(c *gin.Context) {
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
 	}
 
-	// 应用到全局配置并保存
+	// Apply to global configuration and save
 	configs.Cfg.Log.LogLevel = payload.LogLevel
 	configs.Cfg.Log.LogDir = payload.LogDir
 	configs.Cfg.Log.LogFile = payload.LogFile
 
 	if err := configs.Cfg.SaveToDB(database.GetServerConfigDB()); err != nil {
-		s.logger.Error("保存日志配置到数据库失败: %v", err)
+		s.logger.Error("Failed to save logging configuration to database: %v", err)
 		c.JSON(500, gin.H{
 			"status":  "error",
-			"message": "保存日志配置失败",
+			"message": "Failed to save logging configuration",
 			"error":   err.Error(),
 		})
 		return
@@ -364,12 +364,12 @@ func (s *SystemConfigService) handleUpdateLogConfig(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "日志配置更新成功",
+		"message": "Logging configuration updated successfully",
 		"data":    payload,
 	})
 }
 
-// 角色配置相关处理器
+// Roles configuration handlers
 func (s *SystemConfigService) handleGetRoleConfigs(c *gin.Context) {
 	var roles []RoleConfig
 	for _, role := range configs.Cfg.Roles {
@@ -392,7 +392,7 @@ func (s *SystemConfigService) handleCreateRoleConfig(c *gin.Context) {
 	if err := c.ShouldBindJSON(&config); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -406,7 +406,7 @@ func (s *SystemConfigService) handleCreateRoleConfig(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "角色配置创建成功",
+		"message": "Role configuration created successfully",
 		"data":    config,
 	})
 }
@@ -417,7 +417,7 @@ func (s *SystemConfigService) handleUpdateRoleConfig(c *gin.Context) {
 	if err := c.ShouldBindJSON(&config); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -433,7 +433,7 @@ func (s *SystemConfigService) handleUpdateRoleConfig(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "角色配置更新成功",
+		"message": "Role configuration updated successfully",
 	})
 }
 
@@ -450,11 +450,11 @@ func (s *SystemConfigService) handleDeleteRoleConfig(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "角色配置删除成功",
+		"message": "Role configuration deleted successfully",
 	})
 }
 
-// 快捷回复词相关处理器
+// Quick reply words handlers
 func (s *SystemConfigService) handleGetQuickReplyWords(c *gin.Context) {
 	var words []QuickReplyWord
 	words = make([]QuickReplyWord, 0)
@@ -476,7 +476,7 @@ func (s *SystemConfigService) handleCreateQuickReplyWord(c *gin.Context) {
 	if err := c.ShouldBindJSON(&word); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -487,7 +487,7 @@ func (s *SystemConfigService) handleCreateQuickReplyWord(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "快捷回复词创建成功",
+		"message": "Quick reply words created successfully",
 		"data":    word,
 	})
 }
@@ -497,7 +497,7 @@ func (s *SystemConfigService) handleUpdateQuickReplyWord(c *gin.Context) {
 	if err := c.ShouldBindJSON(&word); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -512,7 +512,7 @@ func (s *SystemConfigService) handleUpdateQuickReplyWord(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "快捷回复词更新成功",
+		"message": "Quick reply words updated successfully",
 	})
 }
 
@@ -529,11 +529,11 @@ func (s *SystemConfigService) handleDeleteQuickReplyWord(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "快捷回复词删除成功",
+		"message": "Quick reply words deleted successfully",
 	})
 }
 
-// 本地MCP功能相关处理器
+// Local MCP tools handlers
 func (s *SystemConfigService) handleGetMCPFunctions(c *gin.Context) {
 	var functions []LocalMCPFunction
 	functions = make([]LocalMCPFunction, 0)
@@ -556,12 +556,12 @@ func (s *SystemConfigService) handleCreateMCPFunction(c *gin.Context) {
 	if err := c.ShouldBindJSON(&function); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
 	}
-	fmt.Println("创建MCP功能：", function)
+	fmt.Println("Creating MCP function:", function)
 	configs.Cfg.LocalMCPFun = append(configs.Cfg.LocalMCPFun, configs.LocalMCPFun{
 		Name:        function.FunctionName,
 		Description: function.Description,
@@ -571,7 +571,7 @@ func (s *SystemConfigService) handleCreateMCPFunction(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "MCP功能创建成功",
+		"message": "MCP function created successfully",
 		"data":    function,
 	})
 }
@@ -582,7 +582,7 @@ func (s *SystemConfigService) handleUpdateMCPFunction(c *gin.Context) {
 	if err := c.ShouldBindJSON(&function); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -601,7 +601,7 @@ func (s *SystemConfigService) handleUpdateMCPFunction(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "MCP功能更新成功",
+		"message": "MCP function updated successfully",
 	})
 }
 
@@ -618,11 +618,11 @@ func (s *SystemConfigService) handleDeleteMCPFunction(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "MCP功能删除成功",
+		"message": "MCP function deleted successfully",
 	})
 }
 
-// 退出指令相关处理器
+// Exit commands handlers
 func (s *SystemConfigService) handleGetExitCommands(c *gin.Context) {
 	var commands []ExitCommand
 	commands = make([]ExitCommand, 0)
@@ -644,7 +644,7 @@ func (s *SystemConfigService) handleCreateExitCommand(c *gin.Context) {
 	if err := c.ShouldBindJSON(&command); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -655,7 +655,7 @@ func (s *SystemConfigService) handleCreateExitCommand(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "退出指令创建成功",
+		"message": "Exit commands created successfully",
 		"data":    command,
 	})
 }
@@ -666,7 +666,7 @@ func (s *SystemConfigService) handleUpdateExitCommand(c *gin.Context) {
 	if err := c.ShouldBindJSON(&command); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -680,7 +680,7 @@ func (s *SystemConfigService) handleUpdateExitCommand(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "退出指令更新成功",
+		"message": "Exit commands updated successfully",
 	})
 }
 
@@ -696,6 +696,6 @@ func (s *SystemConfigService) handleDeleteExitCommand(c *gin.Context) {
 	configs.Cfg.SaveToDB(database.GetServerConfigDB())
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "退出指令删除成功",
+		"message": "Exit commands deleted successfully",
 	})
 }

@@ -1,6 +1,6 @@
 package webapi
 
-// 通用事务包装函数
+// Generic transaction wrapper function
 import (
 	"net/http"
 	"xiaozhi-server-go/src/configs/database"
@@ -9,14 +9,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// WithTx 包装函数，执行事务操作
+// WithTx executes operation within database transaction
 // c: gin.Context, fn: func(tx *gorm.DB) error
 func WithTx(c *gin.Context, fn func(tx *gorm.DB) error) {
 	tx := database.GetTxDB()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "事务异常中断"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "transaction aborted unexpectedly"})
 		}
 	}()
 	if err := fn(tx); err != nil {
@@ -25,12 +25,12 @@ func WithTx(c *gin.Context, fn func(tx *gorm.DB) error) {
 	}
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "事务提交失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction commit failed: " + err.Error()})
 		return
 	}
 }
 
-// 无c的事务包装函数
+// Transaction wrapper without gin context
 func WithTxNoContext(fn func(tx *gorm.DB) error) error {
 	tx := database.GetTxDB()
 	defer func() {

@@ -1,14 +1,14 @@
-# 短期记忆
+# Short-Term Memory
 
-服务端为已绑定的设备提供轻量的短期上下文，让设备重新建立 WebSocket 连接后仍能延续最近一段对话。
+The server maintains lightweight short-term dialogue context for bound devices, allowing devices to resume conversations seamlessly across WebSocket reconnects.
 
-## 工作方式
+## How It Works
 
-- 记忆以“设备 ID + 智能体 ID”为键隔离；不同设备或不同智能体不会共享对话内容。
-- 最多保留 12 条非系统消息，并按本地估算最多保留约 3000 token 的内容。超出限制时，从最早的消息开始移除；单条过长消息会保留其末尾可容纳的内容。
-- 系统提示词不会写入短期记忆。服务端重启后，内存中的短期记忆会自然消失。
-- 设备断开后，上下文最多保留 30 分钟；到期后会在下次访问时自动清理。
+- Memory is isolated by key: `Device ID + Agent ID`. Different devices and agents never share conversation state.
+- Stores up to 12 non-system messages and approximately 3000 tokens based on local heuristics. When limits are exceeded, oldest messages are trimmed first.
+- System prompts are never written to short-term memory. Memory resides in RAM and resets when the server process restarts.
+- Context expires 30 minutes after device disconnect and is cleaned up on subsequent accesses.
 
-## 清空上下文
+## Clearing Memory
 
-打开控制台中的“智能体 → 管理设备”，在设备卡片上点击“清空短期记忆”。这只会清空该设备当前绑定智能体的短期上下文，不会修改角色设置、设备绑定或已保存的历史记录。
+In the Web Console, go to **Agents -> Manage Devices**, and click **Clear Short-term Memory** on the device card. This clears the memory buffer for that specific device and agent without altering configuration, bindings, or persisted dialog history.

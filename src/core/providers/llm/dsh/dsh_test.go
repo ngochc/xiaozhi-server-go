@@ -27,21 +27,21 @@ func TestProviderStreamsBridgeResponse(t *testing.T) {
 		require.NoError(t, connection.ReadJSON(&turn))
 		require.Equal(t, "turn", turn.Type)
 		require.Equal(t, "device-01", turn.DeviceID)
-		require.Equal(t, "最新问题", turn.Text)
+		require.Equal(t, "latest question", turn.Text)
 		require.NotEmpty(t, turn.RequestID)
 
 		require.NoError(t, connection.WriteJSON(bridgeMessage{Type: "accepted", RequestID: turn.RequestID}))
-		require.NoError(t, connection.WriteJSON(bridgeMessage{Type: "assistant_delta", RequestID: turn.RequestID, Text: "第一段。"}))
-		require.NoError(t, connection.WriteJSON(bridgeMessage{Type: "assistant_fallback", RequestID: turn.RequestID, Text: "我在继续处理。"}))
+		require.NoError(t, connection.WriteJSON(bridgeMessage{Type: "assistant_delta", RequestID: turn.RequestID, Text: "First part."}))
+		require.NoError(t, connection.WriteJSON(bridgeMessage{Type: "assistant_fallback", RequestID: turn.RequestID, Text: "Continuing to process."}))
 		require.NoError(t, connection.WriteJSON(bridgeMessage{Type: "assistant_end", RequestID: turn.RequestID}))
 	}))
 	defer server.Close()
 
 	provider := newTestProvider(t, websocketURL(server.URL))
 	responses, err := provider.ResponseWithFunctions(context.Background(), "device-01", []types.Message{
-		{Role: "user", Content: "旧问题"},
-		{Role: "assistant", Content: "旧回答"},
-		{Role: "user", Content: "最新问题"},
+		{Role: "user", Content: "old question"},
+		{Role: "assistant", Content: "old answer"},
+		{Role: "user", Content: "latest question"},
 	}, nil)
 	require.NoError(t, err)
 
@@ -49,7 +49,7 @@ func TestProviderStreamsBridgeResponse(t *testing.T) {
 	for response := range responses {
 		got = append(got, response)
 	}
-	require.Equal(t, []types.Response{{Content: "第一段。"}, {Content: "我在继续处理。"}}, got)
+	require.Equal(t, []types.Response{{Content: "First part."}, {Content: "Continuing to process."}}, got)
 }
 
 func TestProviderReturnsBridgeError(t *testing.T) {
@@ -66,7 +66,7 @@ func TestProviderReturnsBridgeError(t *testing.T) {
 	defer server.Close()
 
 	provider := newTestProvider(t, websocketURL(server.URL))
-	responses, err := provider.ResponseWithFunctions(context.Background(), "device-01", []types.Message{{Role: "user", Content: "测试"}}, nil)
+	responses, err := provider.ResponseWithFunctions(context.Background(), "device-01", []types.Message{{Role: "user", Content: "test"}}, nil)
 	require.NoError(t, err)
 
 	response, ok := <-responses

@@ -33,7 +33,7 @@ var (
 	}
 )
 
-// 默认的二进制消息头
+// Default binary message header
 // version: b0001 (4 bits)
 // header size: b0001 (4 bits)
 // message type: b0001 (Full client request) (4bits)
@@ -48,13 +48,13 @@ type synResp struct {
 	IsLast bool
 }
 
-// Provider 豆包 TTS 提供者
+// Provider Doubao TTS provider
 type Provider struct {
 	*tts.BaseProvider
 	baseURL string
 }
 
-// NewProvider 创建豆包 TTS 提供者
+// NewProvider creates Doubao TTS provider
 func NewProvider(config *tts.Config, deleteFile bool) (*Provider, error) {
 	base := tts.NewBaseProvider(config, deleteFile)
 	u := url.URL{Scheme: "wss", Host: "openspeech.bytedance.com", Path: "/api/v1/tts/ws_binary"}
@@ -65,17 +65,17 @@ func NewProvider(config *tts.Config, deleteFile bool) (*Provider, error) {
 	}, nil
 }
 
-// ToTTS 实现文本到语音的转换
+// ToTTS converts text to speech
 func (p *Provider) ToTTS(text string) (string, error) {
-	// 创建WebSocket连接
+	// Create WebSocket connection
 	header := http.Header{"Authorization": []string{fmt.Sprintf("Bearer;%s", p.Config().Token)}}
 	conn, _, err := websocket.DefaultDialer.Dial(p.baseURL, header)
 	if err != nil {
-		return "", fmt.Errorf("连接WebSocket服务器失败: %v", err)
+		return "", fmt.Errorf("failed to connect to WebSocket server: %v", err)
 	}
 	defer conn.Close()
 
-	// 准备请求参数
+	// Prepare request parameters
 	reqParams := map[string]map[string]interface{}{
 		"app": {
 			"appid":   p.Config().AppID,
@@ -96,25 +96,25 @@ func (p *Provider) ToTTS(text string) (string, error) {
 			"reqid":     uuid.New().String(),
 			"text":      text,
 			"text_type": "plain",
-			"operation": "submit", // 使用流式合成
+			"operation": "submit", // Use streaming synthesis
 		},
 	}
 
-	// 序列化并压缩请求参数
+	// Serialize and compress request parameters
 	jsonData, err := json.Marshal(reqParams)
 	if err != nil {
-		return "", fmt.Errorf("序列化请求参数失败: %v", err)
+		return "", fmt.Errorf("failed to serialize request parameters: %v", err)
 	}
 
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
 	if _, err := w.Write(jsonData); err != nil {
-		return "", fmt.Errorf("压缩请求数据失败: %v", err)
+		return "", fmt.Errorf("failed to compress request data: %v", err)
 	}
 	w.Close()
 	compressed := b.Bytes()
 
-	// 构建完整的二进制请求
+	// Construct full binary request
 	payloadSize := make([]byte, 4)
 	binary.BigEndian.PutUint32(payloadSize, uint32(len(compressed)))
 	request := make([]byte, len(defaultHeader))
@@ -122,33 +122,33 @@ func (p *Provider) ToTTS(text string) (string, error) {
 	request = append(request, payloadSize...)
 	request = append(request, compressed...)
 
-	// 发送请求
+	// Send request
 	if err := conn.WriteMessage(websocket.BinaryMessage, request); err != nil {
-		return "", fmt.Errorf("发送请求失败: %v", err)
+		return "", fmt.Errorf("failed to send request: %v", err)
 	}
 
-	// 创建临时文件
+	// Create temporary file
 	outputDir := p.Config().OutputDir
 	if outputDir == "" {
 		outputDir = "tmp"
 	}
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return "", fmt.Errorf("创建输出目录失败: %v", err)
+		return "", fmt.Errorf("failed to create output directory: %v", err)
 	}
 
 	tempFile := filepath.Join(outputDir, fmt.Sprintf("doubao_tts_%d.mp3", time.Now().UnixNano()))
 	var audioData []byte
 
-	// 接收音频数据
+	// Receive audio data
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			return "", fmt.Errorf("接收响应失败: %v", err)
+			return "", fmt.Errorf("failed to receive response: %v", err)
 		}
 
 		resp, err := p.parseResponse(message)
 		if err != nil {
-			return "", fmt.Errorf("解析响应失败: %v", err)
+			return "", fmt.Errorf("failed to parse response: %v", err)
 		}
 
 		audioData = append(audioData, resp.Audio...)
@@ -157,18 +157,18 @@ func (p *Provider) ToTTS(text string) (string, error) {
 		}
 	}
 
-	// 写入音频文件
+	// Write audio file
 	if err := os.WriteFile(tempFile, audioData, 0644); err != nil {
-		return "", fmt.Errorf("写入音频文件失败: %v", err)
+		return "", fmt.Errorf("failed to write audio file: %v", err)
 	}
 
 	return tempFile, nil
 }
 
-// parseResponse 解析服务器响应
+// parseResponse parses server response
 func (p *Provider) parseResponse(res []byte) (resp synResp, err error) {
 	if len(res) < 4 {
-		return resp, fmt.Errorf("响应数据长度不足")
+		return resp, fmt.Errorf("response data length too short")
 	}
 
 	messageType := res[1] >> 4
@@ -179,9 +179,9 @@ func (p *Provider) parseResponse(res []byte) (resp synResp, err error) {
 	switch messageType {
 	case 0xb: // audio-only server response
 		if messageTypeSpecificFlags != 0 {
-			// 有序列号的响应
+			// Response with sequence number
 			if len(payload) < 8 {
-				return resp, fmt.Errorf("音频数据长度不足")
+				return resp, fmt.Errorf("audio data length too short")
 			}
 			sequenceNumber := int32(binary.BigEndian.Uint32(payload[0:4]))
 			payload = payload[8:]
@@ -192,11 +192,11 @@ func (p *Provider) parseResponse(res []byte) (resp synResp, err error) {
 		}
        case 0xf: // error message
 	       if len(payload) < 8 {
-		       return resp, fmt.Errorf("错误消息数据长度不足")
+		       return resp, fmt.Errorf("error message data length too short")
 	       }
 	       code := int32(binary.BigEndian.Uint32(payload[0:4]))
 	       errMsg := payload[8:]
-	       // 总是尝试 gzip 解压
+	       // Always attempt gzip decompression
 	       r, gzErr := gzip.NewReader(bytes.NewReader(errMsg))
 	       if gzErr == nil {
 		       if errMsg2, err2 := io.ReadAll(r); err2 == nil {
@@ -204,9 +204,9 @@ func (p *Provider) parseResponse(res []byte) (resp synResp, err error) {
 		       }
 		       r.Close()
 	       }
-	       return resp, fmt.Errorf("服务器错误 [%d]: %s", code, string(errMsg))
+	       return resp, fmt.Errorf("server error [%d]: %s", code, string(errMsg))
 	default:
-		return resp, fmt.Errorf("未知的消息类型: %d", messageType)
+		return resp, fmt.Errorf("unknown message type: %d", messageType)
 	}
 
 	return resp, nil

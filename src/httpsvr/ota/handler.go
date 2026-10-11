@@ -21,7 +21,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// OtaFirmwareResponse 定义OTA固件接口返回结构
+// OtaFirmwareResponse defines OTA firmware endpoint response structure
 type OtaFirmwareResponse struct {
 	ServerTime struct {
 		Timestamp      int64 `json:"timestamp" example:"1688443200000"`
@@ -36,24 +36,24 @@ type OtaFirmwareResponse struct {
 	} `json:"websocket"`
 }
 
-// ErrorResponse 定义错误返回结构
+// ErrorResponse defines error response structure
 type ErrorResponse struct {
 	Success bool   `json:"success" example:"false"`
-	Message string `json:"message" example:"缺少 device-id"`
+	Message string `json:"message" example:"Missing device-id"`
 }
 
-// HandleOTARequest 处理 OTA 请求（POST /ota/）
+// HandleOTARequest handles OTA requests (POST /ota/)
 //
-// @Summary 设备 OTA 请求
-// @Description 设备通过该接口发起 OTA 升级请求，服务端返回最新固件信息及 MQTT/WebSocket 连接信息。
+// @Summary Device OTA request
+// @Description Device initiates OTA upgrade request; server returns latest firmware info and connection endpoints.
 // @Tags OTA
 // @Accept json
 // @Produce json
-// @Param device-id header string true "设备唯一ID，如 MAC 地址（用于唯一标识设备）"
-// @Param client-id header string false "客户端ID，用于标识应用或用户"
-// @Param body body ota.OTARequestBody false "应用版本信息"
+// @Param device-id header string true "Unique device ID such as MAC address"
+// @Param client-id header string false "Client ID identifying application or user"
+// @Param body body ota.OTARequestBody false "Application version information"
 // @Success 200 {object} ota.OTAResponse
-// @Failure 400 {object} object "缺少必要参数或请求体错误"
+// @Failure 400 {object} object "Missing required parameter or invalid body"
 // @Router /ota/ [post]
 func (s *DefaultOTAService) HandleOTARequest() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -69,28 +69,28 @@ func (s *DefaultOTAService) HandleOTARequest() gin.HandlerFunc {
 			s.handlePostOTA(c)
 			return
 		default:
-			c.String(http.StatusMethodNotAllowed, "不支持的方法: %s", c.Request.Method)
+			c.String(http.StatusMethodNotAllowed, "Method not allowed: %s", c.Request.Method)
 		}
 	}
 }
 
-// Trans2OTARequestBody 将原始请求体转换为 OTARequestBody 结构体
-// 主要用于兼容处理不同格式的请求体
+// Trans2OTARequestBody converts raw request body to OTARequestBody struct
+// Handles compatibility across different payload formats
 func (s *DefaultOTAService) Trans2OTARequestBody(raw map[string]interface{}) OTARequestBody {
 	var req OTARequestBody
-	// 优先尝试直接转换
+	// Attempt direct unmarshal first
 	if b, err := json.Marshal(raw); err == nil {
 		if err := json.Unmarshal(b, &req); err == nil {
 			return req
 		} else {
-			utils.DefaultLogger.Warn("转换 OTARequestBody 失败: %v", err)
+			utils.DefaultLogger.Warn("Failed to convert OTARequestBody: %v", err)
 		}
 	} else {
-		utils.DefaultLogger.Error("OTARequestBody 请求体 JSON 编码失败: %v", err)
+		utils.DefaultLogger.Error("Failed to JSON-encode OTARequestBody: %v", err)
 	}
 
-	utils.DefaultLogger.Warn("直接转换 OTARequestBody 失败，尝试逐字段兼容转换")
-	// 失败则逐字段兼容转换
+	utils.DefaultLogger.Warn("Direct conversion to OTARequestBody failed, attempting field fallback")
+	// Fallback to field-by-field conversion
 	// Application
 	if app, ok := raw["application"].(map[string]interface{}); ok {
 		if v, ok := app["name"].(string); ok {
@@ -211,30 +211,30 @@ func (s *DefaultOTAService) Trans2OTARequestBody(raw map[string]interface{}) OTA
 	return req
 }
 
-// @Summary 上传设备信息获取最新固件
-// @Description 设备上传信息后，返回最新固件版本和下载地址
+// @Summary Upload device info to get latest firmware
+// @Description Returns latest firmware version and download URL after uploading device info
 // @Tags OTA
 // @Accept json
 // @Produce json
-// @Param device-id header string true "设备ID"
-// @Param body body OtaRequest true "请求体"
+// @Param device-id header string true "Device ID"
+// @Param body body OtaRequest true "Request body"
 // @Success 200 {object} OtaFirmwareResponse
 // @Failure 400 {object} ErrorResponse
 // @Router /ota/ [post]
 func (s *DefaultOTAService) handlePostOTA(c *gin.Context) {
 	deviceID := c.GetHeader("device-id")
 	if deviceID == "" {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Success: false, Message: "缺少 device-id"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Success: false, Message: "Missing device-id"})
 		return
 	}
 
 	var raw map[string]interface{}
 	if err := c.ShouldBindJSON(&raw); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "解析失败: " + err.Error()})
-		utils.DefaultLogger.Error("解析 OTA 请求体失败: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Parse failed: " + err.Error()})
+		utils.DefaultLogger.Error("Failed to parse OTA request body: %v", err)
 		return
 	}
-	// 兼容转换到 OTARequestBody
+	// Compatibility conversion to OTARequestBody
 	var req OTARequestBody = s.Trans2OTARequestBody(raw)
 
 	clientID := c.GetHeader("client-id")
@@ -268,8 +268,8 @@ func (s *DefaultOTAService) handlePostOTA(c *gin.Context) {
 	resp.Websocket.URL = updateURL
 	if resp.Websocket.URL == "" {
 		utils.DefaultLogger.Warn("===========================================================")
-		utils.DefaultLogger.Warn("=====  WebSocket URL 未配置，OTA 服务可能无法正常工作 =====")
-		utils.DefaultLogger.Warn("=====  请尽快修改配置并重启服务                       =====")
+		utils.DefaultLogger.Warn("=====  WebSocket URL not configured, OTA service may not work properly =====")
+		utils.DefaultLogger.Warn("=====  Please configure WebSocket URL and restart service            =====")
 		utils.DefaultLogger.Warn("===========================================================")
 	}
 
@@ -290,22 +290,22 @@ func (s *DefaultOTAService) CheckAndUpdateDevice(
 		macAddress = database.NormalizeMACAddress(deviceID)
 	}
 	webapi.WithTx(c, func(tx *gorm.DB) error {
-		// 查询 设备是否已注册
-		device, err := database.FindDeviceByID(tx, deviceID) // 确保设备存在
+		// Check if device is already registered
+		device, err := database.FindDeviceByID(tx, deviceID) // Ensure device exists
 		if err != nil {
 			if device == nil {
-				// 检查是否是被软删除的设备
+				// Check if device was soft-deleted
 				deleteDevice, err := database.FindDeletedDeviceByID(tx, deviceID)
 				if err != nil && err != gorm.ErrRecordNotFound {
-					utils.DefaultLogger.Error("查询已删除设备失败: %v", err)
+					utils.DefaultLogger.Error("Failed to query deleted device: %v", err)
 				}
 				if deleteDevice != nil {
-					// 硬删除
+					// Hard delete
 					if err := database.HardDeleteDevice(tx, deleteDevice.DeviceID); err != nil {
-						utils.DefaultLogger.Error("硬删除设备失败: %s, %v", deviceID, err)
+						utils.DefaultLogger.Error("Failed to hard delete device %s: %v", deviceID, err)
 						c.JSON(
 							http.StatusInternalServerError,
-							gin.H{"success": false, "message": "设备状态异常，请联系管理员" + err.Error()},
+							gin.H{"success": false, "message": "Device status error, contact administrator: " + err.Error()},
 						)
 						return err
 					}
@@ -313,54 +313,54 @@ func (s *DefaultOTAService) CheckAndUpdateDevice(
 			}
 
 			device = &models.Device{
-				DeviceID:         deviceID,   // 设置设备ID
-				MACAddress:       macAddress, // 设备上报的物理 MAC 地址
-				ClientID:         clientID,   // 设置客户端ID
-				Name:             deviceName, // 设置设备名称
-				Version:          version,    // 设置设备版本
+				DeviceID:         deviceID,   // Set device ID
+				MACAddress:       macAddress, // Physical MAC address reported by device
+				ClientID:         clientID,   // Set client ID
+				Name:             deviceName, // Set device name
+				Version:          version,    // Set device version
 				RegisterTimeV2:   time.Now(),
 				LastActiveTimeV2: time.Now(),
-				BoardType:        req.Board.Type,    // 设置主板类型
-				ChipModelName:    req.ChipModelName, // 设置芯片型号
-				Channel:          req.Board.Channel, // 设置WiFi频道
-				SSID:             req.Board.SSID,    // 设置WiFi SSID
-				Language:         req.Language,      // 设置语言
-				OTA:              true,              // 设置支持OTA升级
+				BoardType:        req.Board.Type,    // Set board type
+				ChipModelName:    req.ChipModelName, // Set chip model
+				Channel:          req.Board.Channel, // Set WiFi channel
+				SSID:             req.Board.SSID,    // Set WiFi SSID
+				Language:         req.Language,      // Set language
+				OTA:              true,              // Enable OTA upgrade
 			}
 			ownerID := database.AdminUserID
 			device.UserID = &ownerID
-			// 只有管理员显式创建初始设置助手后，新设备才自动绑定；设备接入不会反向创建助手。
+			// New devices bind to Setup Assistant once created by admin; devices do not create it implicitly.
 			if onboardingAgent, err := database.GetOnboardingAgent(tx); err == nil {
 				ownerID := onboardingAgent.UserID
 				device.AgentID = &onboardingAgent.ID
 				device.UserID = &ownerID
 				device.AuthStatus = "onboarding"
 			} else if err != gorm.ErrRecordNotFound {
-				utils.DefaultLogger.Error("查询初始设置助手失败: %v", err)
+				utils.DefaultLogger.Error("Failed to query Setup Assistant: %v", err)
 				return err
 			}
 			appBytes, _ := json.Marshal(req.Application)
 			device.Application = string(appBytes)
-			if err := database.AddDevice(tx, device); err != nil { // 保存设备信息
-				utils.DefaultLogger.Error("保存设备信息失败: %v", err)
+			if err := database.AddDevice(tx, device); err != nil { // Save device info
+				utils.DefaultLogger.Error("Failed to save device information: %v", err)
 				c.JSON(
 					http.StatusInternalServerError,
-					gin.H{"success": false, "message": "保存设备信息失败: " + err.Error()},
+					gin.H{"success": false, "message": "Failed to save device information: " + err.Error()},
 				)
 				return err
 			} else {
-				utils.DefaultLogger.Info("新设备注册成功: %s", deviceID)
+				utils.DefaultLogger.Info("New device registered successfully: %s", deviceID)
 			}
 		}
 
 		appBytes, _ := json.Marshal(req.Application)
 		if device.Application != string(appBytes) || (macAddress != "" && device.MACAddress != macAddress) {
-			device.Application = string(appBytes) // 更新应用信息
+			device.Application = string(appBytes) // Update application info
 			if macAddress != "" {
 				device.MACAddress = macAddress
 			}
 			if err := database.UpdateDevice(tx, device); err != nil {
-				utils.DefaultLogger.Error("更新设备应用信息失败: %v", err)
+				utils.DefaultLogger.Error("Failed to update device application info: %v", err)
 			}
 		}
 		resultDevice = device
@@ -369,11 +369,11 @@ func (s *DefaultOTAService) CheckAndUpdateDevice(
 	return resultDevice
 }
 
-// HandleFirmwareDownload 处理 /ota_bin/:filename 下载
+// HandleFirmwareDownload handles /ota_bin/:filename downloads
 func (s *DefaultOTAService) HandleFirmwareDownload() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 支持之前 /ota_bin/:filename 路径，也兼容通配 /ota_bin/*filepath
-		// 尝试先读取通配参数，否则读取老参数名
+		// Supports both /ota_bin/:filename and wildcard /ota_bin/*filepath
+		// Read wildcard parameter first, fallback to legacy param
 		reqPath := c.Param("filepath")
 
 		if reqPath == "" {
@@ -398,12 +398,12 @@ func (s *DefaultOTAService) HandleFirmwareDownload() gin.HandlerFunc {
 		}
 
 		c.Header("Content-Type", "application/octet-stream")
-		// 使用 gin 的 File 来处理范围请求与高效传输
+		// Use Gin File helper to handle range requests and streaming efficiently
 		c.File(p)
 	}
 }
 
-// 按语义比较两个版本号 a < b
+// Compares two semantic version strings (a < b)
 func versionLess(a, b string) bool {
 	av := strings.Split(strings.TrimSuffix(filepath.Base(a), ".bin"), ".")
 	bv := strings.Split(strings.TrimSuffix(filepath.Base(b), ".bin"), ".")

@@ -10,12 +10,12 @@ type DefaultOTAService struct {
 	UpdateURL string
 }
 
-// NewDefaultOTAService 构造函数
+// NewDefaultOTAService constructor
 func NewDefaultOTAService(updateURL string) *DefaultOTAService {
 	return &DefaultOTAService{UpdateURL: updateURL}
 }
 
-// Start 注册 OTA 相关路由
+// Start registers OTA routes
 func (s *DefaultOTAService) Start(ctx context.Context, engine *gin.Engine, apiGroup *gin.RouterGroup) error {
 
 	apiGroup.Any("/ota/", s.HandleOTARequest())

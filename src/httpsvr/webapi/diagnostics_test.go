@@ -29,7 +29,7 @@ func TestProbeEndpoint(t *testing.T) {
 	}
 	defer listener.Close()
 
-	result := probeEndpoint("测试服务", "http://"+listener.Addr().String())
+	result := probeEndpoint("Test Service", "http://"+listener.Addr().String())
 	if result.Status != "ok" {
 		t.Fatalf("probe result = %#v, want ok", result)
 	}

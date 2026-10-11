@@ -20,9 +20,9 @@ func TestNormalizeSingleUserDataAssignsDefaultUser(t *testing.T) {
 	}
 	legacyUserID := uint(42)
 	fixtures := []interface{}{
-		&models.Agent{Name: "旧智能体", UserID: legacyUserID},
+		&models.Agent{Name: "Legacy Agent", UserID: legacyUserID},
 		&models.AgentDialog{Conversationid: "dialog", AgentID: 1, UserID: legacyUserID},
-		&models.Device{Name: "未归属设备", DeviceID: "device-01", ClientID: "client-01"},
+		&models.Device{Name: "Unassigned Device", DeviceID: "device-01", ClientID: "client-01"},
 		&models.ASRConfig{UserID: legacyUserID, Name: "asr", Type: "edge", Data: datatypes.JSON([]byte(`{}`))},
 		&models.TTSConfig{UserID: legacyUserID, Name: "tts", Type: "edge", Data: datatypes.JSON([]byte(`{}`))},
 		&models.LLMConfig{UserID: legacyUserID, Name: "llm", Type: "openai", Data: datatypes.JSON([]byte(`{}`))},

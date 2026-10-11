@@ -9,16 +9,16 @@ import (
 	"xiaozhi-server-go/src/core/utils"
 )
 
-// SessionKeys 会话密钥结构
+// SessionKeys session key struct
 type SessionKeys struct {
-	Key       string    `json:"key"`        // AES密钥（十六进制）
-	Nonce     string    `json:"nonce"`      // AES nonce（十六进制）
-	SessionID string    `json:"session_id"` // 会话ID
-	CreatedAt time.Time `json:"created_at"` // 创建时间
-	ExpiresAt time.Time `json:"expires_at"` // 过期时间
+	Key       string    `json:"key"`        // AES key (hex)
+	Nonce     string    `json:"nonce"`      // AES nonce (hex)
+	SessionID string    `json:"session_id"` // Session ID
+	CreatedAt time.Time `json:"created_at"` // Created at
+	ExpiresAt time.Time `json:"expires_at"` // Expires at
 }
 
-// CryptoManager 加密管理器接口
+// CryptoManager encryption manager interface
 type CryptoManager interface {
 	GenerateSessionKeys(sessionID string) (*SessionKeys, error)
 	GetSessionKeys(sessionID string) (*SessionKeys, error)
@@ -27,18 +27,18 @@ type CryptoManager interface {
 	GetKeyStats() map[string]interface{}
 }
 
-// MemoryCryptoManager 内存加密管理器实现
+// MemoryCryptoManager in-memory encryption manager implementation
 type MemoryCryptoManager struct {
 	keys   map[string]*SessionKeys
 	mutex  sync.RWMutex
 	logger *utils.Logger
-	keyTTL time.Duration // 密钥有效期
+	keyTTL time.Duration // Key TTL
 }
 
-// NewCryptoManager 创建加密管理器
+// NewCryptoManager creates encryption manager
 func NewCryptoManager(logger *utils.Logger, keyTTL time.Duration) CryptoManager {
 	if keyTTL <= 0 {
-		keyTTL = 24 * time.Hour // 默认24小时有效期
+		keyTTL = 24 * time.Hour // Default 24h validity
 	}
 
 	return &MemoryCryptoManager{
@@ -48,31 +48,31 @@ func NewCryptoManager(logger *utils.Logger, keyTTL time.Duration) CryptoManager 
 	}
 }
 
-// generateAESKey 生成AES密钥（128位）
+// generateAESKey generates 128-bit AES key
 func generateAESKey() (string, error) {
-	key := make([]byte, 16) // 128位密钥
+	key := make([]byte, 16) // 128-bit key
 	if _, err := rand.Read(key); err != nil {
-		return "", fmt.Errorf("生成AES密钥失败: %v", err)
+		return "", fmt.Errorf("failed to generate AES key: %v", err)
 	}
 	return hex.EncodeToString(key), nil
 }
 
-// generateNonce 生成AES nonce（128位）
+// generateNonce generates 128-bit AES nonce
 func generateNonce() (string, error) {
-	nonce := make([]byte, 16) // 128位nonce（与ESP32期望的16字节一致）
+	nonce := make([]byte, 16) // 128-bit nonce matching ESP32 16-byte expectation
 	if _, err := rand.Read(nonce); err != nil {
-		return "", fmt.Errorf("生成AES nonce失败: %v", err)
+		return "", fmt.Errorf("failed to generate AES nonce: %v", err)
 	}
 	return hex.EncodeToString(nonce), nil
 }
 
-// GenerateSessionKeys 生成会话密钥
+// GenerateSessionKeys generates session keys
 func (cm *MemoryCryptoManager) GenerateSessionKeys(sessionID string) (*SessionKeys, error) {
 	if sessionID == "" {
-		return nil, fmt.Errorf("会话ID不能为空")
+		return nil, fmt.Errorf("session ID cannot be empty")
 	}
 
-	// 生成密钥和nonce
+	// Generate key and nonce
 	key, err := generateAESKey()
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (cm *MemoryCryptoManager) GenerateSessionKeys(sessionID string) (*SessionKe
 	cm.keys[sessionID] = sessionKeys
 	cm.mutex.Unlock()
 
-	cm.logger.Debug("生成会话密钥", map[string]interface{}{
+	cm.logger.Debug("generated session keys", map[string]interface{}{
 		"session_id": sessionID,
 		"expires_at": sessionKeys.ExpiresAt,
 	})
@@ -104,47 +104,47 @@ func (cm *MemoryCryptoManager) GenerateSessionKeys(sessionID string) (*SessionKe
 	return sessionKeys, nil
 }
 
-// GetSessionKeys 获取会话密钥
+// GetSessionKeys retrieves session keys
 func (cm *MemoryCryptoManager) GetSessionKeys(sessionID string) (*SessionKeys, error) {
 	cm.mutex.RLock()
 	defer cm.mutex.RUnlock()
 
 	keys, exists := cm.keys[sessionID]
 	if !exists {
-		return nil, fmt.Errorf("会话密钥不存在: %s", sessionID)
+		return nil, fmt.Errorf("session keys not found: %s", sessionID)
 	}
 
-	// 检查是否过期
+	// Check if expired
 	if time.Now().After(keys.ExpiresAt) {
 		cm.mutex.RUnlock()
 		cm.mutex.Lock()
 		delete(cm.keys, sessionID)
 		cm.mutex.Unlock()
 		cm.mutex.RLock()
-		return nil, fmt.Errorf("会话密钥已过期: %s", sessionID)
+		return nil, fmt.Errorf("session keys expired: %s", sessionID)
 	}
 
 	return keys, nil
 }
 
-// RevokeSessionKeys 撤销会话密钥
+// RevokeSessionKeys revokes session keys
 func (cm *MemoryCryptoManager) RevokeSessionKeys(sessionID string) error {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 
 	if _, exists := cm.keys[sessionID]; !exists {
-		return fmt.Errorf("会话密钥不存在: %s", sessionID)
+		return fmt.Errorf("session keys not found: %s", sessionID)
 	}
 
 	delete(cm.keys, sessionID)
-	cm.logger.Info("撤销会话密钥", map[string]interface{}{
+	cm.logger.Info("revoked session keys", map[string]interface{}{
 		"session_id": sessionID,
 	})
 
 	return nil
 }
 
-// CleanupExpiredKeys 清理过期密钥
+// CleanupExpiredKeys cleans up expired keys
 func (cm *MemoryCryptoManager) CleanupExpiredKeys() error {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
@@ -160,7 +160,7 @@ func (cm *MemoryCryptoManager) CleanupExpiredKeys() error {
 	}
 
 	if expiredCount > 0 {
-		cm.logger.Info("清理过期密钥", map[string]interface{}{
+		cm.logger.Info("cleaned up expired keys", map[string]interface{}{
 			"expired_count": expiredCount,
 		})
 	}
@@ -168,7 +168,7 @@ func (cm *MemoryCryptoManager) CleanupExpiredKeys() error {
 	return nil
 }
 
-// GetKeyStats 获取密钥统计信息
+// GetKeyStats gets key statistics
 func (cm *MemoryCryptoManager) GetKeyStats() map[string]interface{} {
 	cm.mutex.RLock()
 	defer cm.mutex.RUnlock()

@@ -22,41 +22,41 @@ type onboardingStatus struct {
 	PendingDevices int64    `json:"pendingDevices"`
 }
 
-// onboardingProviderSetup 从持久化的管理员 Provider 配置中读取已选模块，避免使用进程启动时的旧配置。
+// onboardingProviderSetup reads active modules from persisted admin provider configuration.
 func (s *DefaultAdminService) onboardingProviderSetup() (string, string, []string) {
 	if s.config == nil || s.config.SelectedModule == nil {
-		return "", "", []string{"系统配置尚未初始化"}
+		return "", "", []string{"System configuration not yet initialized"}
 	}
 	issues := make([]string, 0)
 	selectedConfigs := make(map[string]map[string]interface{}, 3)
 	for _, providerType := range []string{"ASR", "LLM", "TTS"} {
 		name := strings.TrimSpace(s.config.SelectedModule[providerType])
 		if name == "" {
-			issues = append(issues, providerType+"：尚未选择 Provider")
+			issues = append(issues, providerType+": No provider selected")
 			continue
 		}
 		providers, err := database.GetProviderByTypeInternal(providerType, database.AdminUserID, false)
 		if err != nil {
-			issues = append(issues, providerType+"：读取 Provider 配置失败")
+			issues = append(issues, providerType+": Failed to read provider config")
 			continue
 		}
 		raw, ok := providers[name]
 		if !ok {
-			issues = append(issues, fmt.Sprintf("%s：未找到已选 Provider「%s」", providerType, name))
+			issues = append(issues, fmt.Sprintf("%s: Selected provider %q not found", providerType, name))
 			continue
 		}
 		var providerConfig map[string]interface{}
 		if err := json.Unmarshal([]byte(raw), &providerConfig); err != nil {
-			issues = append(issues, fmt.Sprintf("%s：Provider 配置不是有效 JSON", providerType))
+			issues = append(issues, fmt.Sprintf("%s: Provider config is not valid JSON", providerType))
 			continue
 		}
 		subType := strings.ToLower(strings.TrimSpace(stringConfig(providerConfig, "type")))
 		if subType == "" {
-			issues = append(issues, fmt.Sprintf("%s：Provider 缺少具体类型", providerType))
+			issues = append(issues, fmt.Sprintf("%s: Provider missing specific subtype", providerType))
 			continue
 		}
 		if missing := missingProviderTestFields(providerType, subType, providerConfig); len(missing) > 0 {
-			issues = append(issues, fmt.Sprintf("%s「%s」还需填写：%s", providerType, name, strings.Join(missing, "、")))
+			issues = append(issues, fmt.Sprintf("%s %q still requires: %s", providerType, name, strings.Join(missing, ", ")))
 			continue
 		}
 		invalidField := ""
@@ -67,7 +67,7 @@ func (s *DefaultAdminService) onboardingProviderSetup() (string, string, []strin
 			}
 		}
 		if invalidField != "" {
-			issues = append(issues, fmt.Sprintf("%s「%s」的%s仍是示例值", providerType, name, invalidField))
+			issues = append(issues, fmt.Sprintf("%s '%s' field '%s' is still a placeholder value", providerType, name, invalidField))
 			continue
 		}
 		selectedConfigs[providerType] = providerConfig
@@ -77,7 +77,7 @@ func (s *DefaultAdminService) onboardingProviderSetup() (string, string, []strin
 	}
 	voice := stringConfig(selectedConfigs["TTS"], "voice")
 	if isPlaceholder(voice) {
-		return "", "", []string{"TTS：未填写有效音色"}
+		return "", "", []string{"TTS: No valid voice configured"}
 	}
 	return s.config.SelectedModule["LLM"], voice, nil
 }
@@ -122,7 +122,7 @@ func (s *DefaultAdminService) currentOnboardingStatus() onboardingStatus {
 		status.Exists = true
 		status.AgentID = agent.ID
 	} else if err != gorm.ErrRecordNotFound {
-		status.Issues = append(status.Issues, "读取初始设置助手状态失败")
+		status.Issues = append(status.Issues, "Failed to read onboarding assistant status")
 		status.Ready = false
 	}
 	return status
@@ -132,34 +132,34 @@ func (s *DefaultAdminService) handleOnboardingStatus(c *gin.Context) {
 	c.JSON(200, gin.H{"status": "ok", "data": s.currentOnboardingStatus()})
 }
 
-// handleOnboardingActivate 显式创建唯一初始设置助手，并接管此前未绑定的设备。
+// handleOnboardingActivate explicitly creates the unique onboarding assistant and takes over previously unbound devices.
 func (s *DefaultAdminService) handleOnboardingActivate(c *gin.Context) {
 	llmName, voice, issues := s.onboardingProviderSetup()
 	if len(issues) > 0 {
-		c.JSON(400, gin.H{"status": "error", "message": "请先完成 ASR、LLM、TTS 配置", "data": gin.H{"issues": issues}})
+		c.JSON(400, gin.H{"status": "error", "message": "Please configure ASR, LLM, and TTS first", "data": gin.H{"issues": issues}})
 		return
 	}
 	tx := database.GetTxDB()
 	agent, created, err := database.ActivateOnboardingAgent(tx, llmName, voice)
 	if err != nil {
 		tx.Rollback()
-		c.JSON(500, gin.H{"status": "error", "message": "创建初始设置助手失败"})
+		c.JSON(500, gin.H{"status": "error", "message": "Failed to create onboarding assistant"})
 		return
 	}
 	bound, err := database.BindUnboundDevicesToOnboardingAgent(tx, agent)
 	if err != nil {
 		tx.Rollback()
-		c.JSON(500, gin.H{"status": "error", "message": "绑定等待中的设备失败"})
+		c.JSON(500, gin.H{"status": "error", "message": "Failed to bind pending devices"})
 		return
 	}
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
-		c.JSON(500, gin.H{"status": "error", "message": "保存初始设置助手失败"})
+		c.JSON(500, gin.H{"status": "error", "message": "Failed to save onboarding assistant"})
 		return
 	}
-	message := "初始设置助手已创建"
+	message := "Onboarding assistant created"
 	if !created {
-		message = "初始设置助手已存在，已同步当前 Provider 配置"
+		message = "Onboarding assistant already exists; current provider configuration synchronized"
 	}
 	c.JSON(200, gin.H{"status": "ok", "message": message, "data": gin.H{
 		"agentId": agent.ID, "created": created, "boundDevices": bound,

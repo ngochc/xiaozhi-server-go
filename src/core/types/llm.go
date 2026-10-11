@@ -21,12 +21,12 @@ const (
 )
 
 var ToolTypeMessages = map[ToolType]string{
-	ToolNone:            "调用完工具后，不做其他操作",
-	ToolWait:            "调用工具，等待函数返回",
-	ToolChangeSysPrompt: "修改系统提示词，切换角色性格或职责",
-	ToolSystemCtl:       "系统控制，影响正常的对话流程，如退出、播放音乐等，需要传递conn参数",
-	ToolIotCtl:          "IOT设备控制，需要传递conn参数",
-	ToolMcpClient:       "MCP客户端",
+	ToolNone:            "no further action after tool call",
+	ToolWait:            "call tool and wait for function return",
+	ToolChangeSysPrompt: "modify system prompt to change role persona or duties",
+	ToolSystemCtl:       "system control affecting normal dialogue flow like exit or playing music, requires conn param",
+	ToolIotCtl:          "IoT device control, requires conn param",
+	ToolMcpClient:       "MCP client",
 }
 
 // Action represents the type of action.
@@ -42,26 +42,26 @@ const (
 )
 
 var ActionDesc = map[Action]string{
-	ActionTypeError:    "错误",
-	ActionTypeNotFound: "没有找到函数",
-	ActionTypeNone:     "啥也不干",
-	ActionTypeResponse: "直接回复",
-	ActionTypeReqLLM:   "调用函数后再请求llm生成回复",
+	ActionTypeError:    "error",
+	ActionTypeNotFound: "function not found",
+	ActionTypeNone:     "none",
+	ActionTypeResponse: "respond",
+	ActionTypeReqLLM:   "call_function_then_request_llm",
 }
 
 // ActionResponse holds the result of an action.
 type ActionResponse struct {
-	Action   Action      // 动作类型
-	Result   interface{} // 动作产生的结果
-	Response interface{} // 直接回复的内容
+	Action   Action      // Action type
+	Result   interface{} // Action result
+	Response interface{} // Direct response content
 }
 
 type ActionResponseCall struct {
-	FuncName string      // 函数名
-	Args     interface{} // 函数参数
+	FuncName string      // Function name
+	Args     interface{} // Function arguments
 }
 
-// Message 对话消息结构
+// Message dialogue message struct
 type Message struct {
 	Role       string     `json:"role"`
 	Content    string     `json:"content"`
@@ -70,7 +70,7 @@ type Message struct {
 }
 
 func (m *Message) Print() {
-	// 转为json字符串
+	// Convert to JSON string
 	jsonStr, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		fmt.Println("json marshal error:", err)
@@ -80,7 +80,7 @@ func (m *Message) Print() {
 	fmt.Println(string(jsonStr))
 }
 
-// ToolCall 工具调用结构
+// ToolCall tool call struct
 type ToolCall struct {
 	ID       string       `json:"id"`
 	Type     string       `json:"type"`
@@ -88,13 +88,13 @@ type ToolCall struct {
 	Index    int          `json:"index"`
 }
 
-// FunctionCall 函数调用结果
+// FunctionCall function call result
 type FunctionCall struct {
 	Name      string `json:"name"`
 	Arguments string `json:"arguments"`
 }
 
-// Response LLM响应结构
+// Response LLM response struct
 type Response struct {
 	Content              string     `json:"content,omitempty"`
 	ReasonContent        string     `json:"reasoning_content,omitempty"`
@@ -104,7 +104,7 @@ type Response struct {
 	Error                string     `json:"error,omitempty"`
 }
 
-// Provider 基础提供者接口
+// Provider base provider interface
 type Provider interface {
 	Initialize() error
 	Cleanup() error
@@ -119,7 +119,7 @@ type FunctionRegistryInterface interface {
 	FunctionExists(name string) bool
 }
 
-// LLMProvider 大语言模型提供者接口
+// LLMProvider Large Language Model provider interface
 type LLMProvider interface {
 	Provider
 	Response(ctx context.Context, sessionID string, messages []Message) (<-chan string, error)
@@ -129,6 +129,6 @@ type LLMProvider interface {
 		messages []Message,
 		tools []openai.Tool,
 	) (<-chan Response, error)
-	GetSessionID() string                       // 获取当前会话ID
-	SetIdentityFlag(idType string, flag string) // 设置身份标识
+	GetSessionID() string                       // Get current session ID
+	SetIdentityFlag(idType string, flag string) // Set identity flag
 }

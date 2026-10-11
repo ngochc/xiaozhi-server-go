@@ -12,28 +12,28 @@ import (
 	"gorm.io/gorm"
 )
 
-// DeviceBindRequest 设备绑定请求体
-// @Description 绑定设备到指定Agent
+// DeviceBindRequest represents device binding payload
+// @Description Bind device to specific Agent
 // @Tags Device
 // @Accept json
 // @Produce json
-// @Param data body DeviceBindRequest true "设备绑定参数"
-// @Success 200 {object} models.Device "绑定成功返回设备信息"
+// @Param data body DeviceBindRequest true "Device binding payload"
+// @Success 200 {object} models.Device "Device bound successfully, returns device info"
 // @Router /user/device/bind [post]
 type DeviceBindRequest struct {
 	AgentID  uint   `json:"agentID" binding:"required"`
-	DeviceID string `json:"deviceID"` // 保留兼容旧客户端的设备唯一标识
-	MAC      string `json:"mac"`      // 推荐使用设备物理 MAC 地址绑定
+	DeviceID string `json:"deviceID"` // Legacy client device identifier compatibility
+	MAC      string `json:"mac"`      // Recommended to bind using device physical MAC address
 	AuthCode string `json:"authCode"`
 }
 
-// DeviceUpdateRequest 设备更新请求体
-// @Description 更新设备信息
+// DeviceUpdateRequest device update payload
+// @Description Update device info
 // @Tags Device
 // @Accept json
 // @Produce json
-// @Param data body DeviceUpdateRequest true "设备更新参数"
-// @Success 200 {object} models.Device "更新后的设备信息"
+// @Param data body DeviceUpdateRequest true "Device update parameters"
+// @Success 200 {object} models.Device "Updated device information"
 // @Router /user/device/{id} [put]
 type DeviceUpdateRequest struct {
 	Online         *bool      `json:"online,omitempty"`
@@ -44,12 +44,12 @@ type DeviceUpdateRequest struct {
 	Disabled       *bool      `json:"disabled,omitempty"`
 }
 
-// handleDeviceList 设备列表
-// @Summary 获取设备列表
-// @Description 获取当前Agent的所有设备
+// handleDeviceList Device list
+// @Summary Get device list
+// @Description Get all devices for current agent
 // @Tags Device
 // @Produce json
-// @Success 200 {object} []models.Device "设备列表"
+// @Success 200 {object} []models.Device "Device list"
 // @Router /user/device/list [get]
 func (s *DefaultUserService) handleDeviceList(c *gin.Context) {
 	userID := currentUserID(c)
@@ -124,12 +124,12 @@ func (s *DefaultUserService) handleDeviceBind(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "data": boundDevice})
 }
 
-// handleDeviceListByUser 获取当前用户的所有设备
-// @Summary 获取当前用户的所有设备
-// @Description 获取当前用户的所有设备
+// handleDeviceListByUser Get all devices for current user
+// @Summary Get all devices for current user
+// @Description Get all devices for current user
 // @Tags Device
 // @Produce json
-// @Success 200 {object} []models.Device "设备列表"
+// @Success 200 {object} []models.Device "Device list"
 // @Router /user/device/list [get]
 func (s *DefaultUserService) handleDeviceListByUser(c *gin.Context) {
 	userID := currentUserID(c)
@@ -144,13 +144,13 @@ func (s *DefaultUserService) handleDeviceListByUser(c *gin.Context) {
 	})
 }
 
-// handleDeviceGet 设备详情
-// @Summary 获取设备详情
-// @Description 获取指定ID的设备信息
+// handleDeviceGet Device details
+// @Summary Get device details
+// @Description Get device information by ID
 // @Tags Device
 // @Produce json
-// @Param id path int true "设备ID"
-// @Success 200 {object} models.Device "设备信息"
+// @Param id path int true "Device ID"
+// @Success 200 {object} models.Device "Device information"
 // @Router /user/device/{id} [get]
 func (s *DefaultUserService) handleDeviceGet(c *gin.Context) {
 	userID := currentUserID(c)
@@ -186,15 +186,15 @@ func (s *DefaultUserService) handleDeviceMemoryClear(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
-// handleDeviceUpdate 设备更新
-// @Summary 更新设备信息
-// @Description 更新指定ID的设备信息
+// handleDeviceUpdate Device update
+// @Summary Update device information
+// @Description Update device information by ID
 // @Tags Device
 // @Accept json
 // @Produce json
-// @Param id path int true "设备ID"
-// @Param data body DeviceUpdateRequest true "设备更新参数"
-// @Success 200 {object} models.Device "更新后的设备信息"
+// @Param id path int true "Device ID"
+// @Param data body DeviceUpdateRequest true "Device update parameters"
+// @Success 200 {object} models.Device "Updated device information"
 // @Router /user/device/{id} [put]
 func (s *DefaultUserService) handleDeviceUpdate(c *gin.Context) {
 	userID := currentUserID(c)
@@ -245,19 +245,19 @@ func (s *DefaultUserService) handleDeviceUpdate(c *gin.Context) {
 	return
 }
 
-// handleDeviceDelete 设备删除
-// @Summary 删除设备
-// @Description 删除指定设备
+// handleDeviceDelete Device deletion
+// @Summary Delete device
+// @Description Delete specified device
 // @Tags Device
 // @Accept json
 // @Produce json
-// @Param data body object true "设备删除参数（deviceID）"
-// @Success 200 {object} map[string]interface{} "删除结果"
+// @Param data body object true "Device deletion parameters (deviceID)"
+// @Success 200 {object} map[string]interface{} "Deletion result"
 // @Router /user/device [delete]
 func (s *DefaultUserService) handleDeviceDelete(c *gin.Context) {
 	userID := currentUserID(c)
 
-	// 取body里的json数据
+	// Get JSON data from body
 	var requestData struct {
 		DeviceID string `json:"deviceID"`
 	}
@@ -269,7 +269,7 @@ func (s *DefaultUserService) handleDeviceDelete(c *gin.Context) {
 	s.logger.Info("handleDeviceDelete called with id: %s", deviceID)
 
 	device, err := database.FindDeviceByIDAndUser(database.GetDB(), deviceID, userID)
-	// 查找设备
+	// Find device
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "device not found"})
 		return
@@ -289,7 +289,7 @@ func (s *DefaultUserService) handleDeviceDelete(c *gin.Context) {
 }
 
 func (s *DefaultAdminService) handleDeviceDeleteAdmin(c *gin.Context) {
-	// 取body里的json数据
+	// Get JSON data from body
 	var requestData struct {
 		DeviceID string `json:"deviceID"`
 	}
@@ -300,7 +300,7 @@ func (s *DefaultAdminService) handleDeviceDeleteAdmin(c *gin.Context) {
 	deviceID := requestData.DeviceID
 	s.logger.Info("Admin handleDeviceDelete called with id: %s", deviceID)
 
-	// 查找设备
+	// Find device
 	_, err := database.FindDeviceByID(database.GetDB(), deviceID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "device not found"})

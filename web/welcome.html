@@ -1,10 +1,10 @@
 <!-- WELCOME_PAGE_MARKER -->
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-US">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Anime AI Chat 管理后台</title>
+  <title>Anime AI Chat Admin Console</title>
   <style>
     body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial; color:#222; background:#f5f7fa; margin:0; padding:0; }
     .container { max-width:1100px; margin:32px auto; background:#fff; border-radius:12px; box-shadow:0 4px 24px 0 rgba(0,0,0,0.06); padding:32px 24px; }
@@ -31,125 +31,116 @@
 </head>
 <body>
   <div class="container">
-    <div class="alert">本站仅作演示测试，未开放管理员权限。如需完整功能请本地部署。</div>
+    <div class="alert">This demo is for testing only and administrator privileges are not enabled. For full features, please deploy locally.</div>
     <h1>
       <span class="title-icons">😊</span>
-      Anime AI Chat 管理后台
+      Anime AI Chat Admin Console
       <span class="title-icons" style="color:#eb2f96;">❤️</span>
     </h1>
     <div class="lead">
-      由 <b>Anime AI Chat</b> 团队打造的现代化管理系统，助力高效界面化管理
+      A modern admin system built by the <b>Anime AI Chat</b> team to simplify management for the
       <a href="https://github.com/AnimeAIChat/xiaozhi-server-go" style="margin:0 4px;color:#1677ff;font-weight:500;" target="_blank" rel="noreferrer">xiaozhi-server-go</a>
-      后端服务。
+      backend service.
     </div>
     <div class="card">
-      <b>使用须知：</b>
+      <b>Usage notes:</b>
       <ul class="quickstart">
-        <li>每日每用户限额 <b>3000</b> 字符，次日 <b>0:00</b> 自动刷新额度。</li>
-        <li>如需大量测试，请联系管理员。</li>
+        <li>Daily per-user quota: <b>3000</b> characters, reset at <b>00:00</b> each day.</li>
+        <li>For extensive testing, contact the administrator.</li>
       </ul>
     </div>
     <div class="card card2">
-      <h4 style="color:#222;font-weight:600;margin-bottom:12px;">快速开始</h4>
+      <h4 style="color:#222;font-weight:600;margin-bottom:12px;">Quick Start</h4>
       <ol class="quickstart">
-        <li>在智能体页面创建新的智能体，用于绑定设备。</li>
+        <li>Create an agent on the Agents page to bind a device.</li>
         <li>
-          前端固件在配网界面，修改 OTA 地址为：
+          In device firmware, set the OTA URL to:
           <span style="color:#1677ff;font-weight:500;">https://xiaozhi.xf.bj.cn/api/ota/</span>
-          ，重启客户端。
+          and reboot the client.
         </li>
-        <li>设备重启后访问 OTA 地址，自动获取 WebSocket 和 MQTT+UDP 地址。</li>
-        <li>设备通过 WS 或 MQTT 连接后端（固件需支持 MQTT），获取验证码。</li>
-        <li>在控制台后端智能体页面输入验证码，系统将绑定设备。</li>
-        <li>重启设备，即可进行聊天。</li>
+        <li>After reboot, visit the OTA URL to retrieve WebSocket and MQTT+UDP addresses.</li>
+        <li>Connect to the backend via WS or MQTT (firmware must support MQTT) to obtain a verification code.</li>
+        <li>Enter the code on the agent page in the console to bind the device.</li>
+        <li>Reboot the device to start chatting.</li>
       </ol>
     </div>
     <div class="lead" style="margin-top:8px;">
-      当前仍处于测试阶段，欢迎及时反馈问题，我们会持续优化体验。
+      This project is in testing. Feedback is welcome and we will keep improving the experience.
     </div>
     <div class="section">
-      <h5 style="margin-bottom:16px;">联系我们</h5>
+      <h5 style="margin-bottom:16px;">Contact</h5>
       <div class="contact-row">
         <div class="contact-col">
-          <div style="color:#888;">GitHub主页</div>
+          <div style="color:#888;">GitHub</div>
           <a href="https://github.com/AnimeAIChat/xiaozhi-server-go" target="_blank" rel="noopener noreferrer"
             style="display:inline-block;padding:8px 20px;background:#1677ff;color:#fff;border-radius:6px;font-weight:500;font-size:15px;text-decoration:none;box-shadow:0 2px 8px 0 rgba(0,0,0,0.04);transition:background 0.2s;">
-            访问 GitHub 项目主页
+            Visit GitHub Project
           </a>
         </div>
       </div>
     </div>
     <div class="features">
       <div class="feature-card">
-        <div class="feature-title">🚀 开源版本</div>
+        <div class="feature-title">🚀 Open Source</div>
         <ul class="feature-list">
-          <li>个人使用免费授权</li>
-          <li>支持 websocket 连接</li>
-          <li>支持 OPUS 音频编码</li>
-          <li>支持 PCM 音频编码</li>
-          <li>支持的模型：ASR（豆包流式）、LLM（OpenAI API、ollama）、TTS（EdgeTTS、豆包TTS）</li>
-          <li>支持 OTA 功能</li>
-          <li>支持 auto/manual/realtime 三种对话模式，支持对话实时打断</li>
-          <li>支持 ESP32 小智客户端、Python 客户端、Android 客户端连入，无需校验</li>
-          <li>支持服务端 MCP，可接入高德地图、天气查询等</li>
-          <li>支持 ESP32 客户端 MCP，可以控制 IOT 设备</li>
-          <li>支持语音控制调用摄像头识别图像</li>
-          <li>支持语音控制切换角色声音</li>
-          <li>支持语音控制切换预设角色</li>
-          <li>支持语音控制播放音乐</li>
-          <li>支持单机部署服务</li>
-          <li>支持本地数据库 sqlite</li>
-          <li>服务维度的管理后台，简化配置流程</li>
+          <li>Free for personal use</li>
+          <li>Supports websocket connections</li>
+          <li>Supports OPUS audio encoding</li>
+          <li>Supports PCM audio encoding</li>
+          <li>Supported models: ASR (streaming), LLM (OpenAI API, ollama), TTS (EdgeTTS, Doubao TTS)</li>
+          <li>Supports OTA</li>
+          <li>Supports auto/manual/realtime conversation modes with interruption</li>
+          <li>Supports ESP32, Python, Android clients</li>
+          <li>Server-side MCP integrations available</li>
+          <li>ESP32 client MCP support for IOT control</li>
+          <li>Voice-controlled camera recognition</li>
+          <li>Voice-controlled role voice switching</li>
+          <li>Voice-controlled preset switching</li>
+          <li>Voice-controlled music playback</li>
+          <li>Standalone deployment supported</li>
+          <li>Local sqlite database supported</li>
         </ul>
       </div>
       <div class="feature-card">
-        <div class="feature-title">⚡ 商务版本</div>
+        <div class="feature-title">⚡ Commercial</div>
         <ul class="feature-list">
-          <li>商务使用书面授权</li>
-          <li>开源版本所有功能</li>
-          <li>开发团队技术支持</li>
-          <li>后续核心功能免费更新</li>
-          <li>商务版管理后台，更多的功能选项</li>
-          <li>支持多用户管理</li>
-          <li>自定义修改欢迎界面</li>
-          <li>自定义修改版权logo，使用自己公司的商务标识</li>
-          <li>自定义修改Agent角色模板</li>
-          <li>支持更多的模型</li>
-          <li>支持 websocket 和 MQTT+UDP 两种协议</li>
-          <li>支持 tts 流式生成及发送</li>
-          <li>支持声音克隆</li>
-          <li>支持知识库</li>
-          <li>支持定制音色（cosyvoice2, indextts）</li>
-          <li>支持通过 OTA 升级固件</li>
-          <li>支持 Coze 工作流</li>
-          <li>支持 Dify 工作流</li>
-          <li>深度优化响应速度</li>
-          <li>支持用户身份验证，激活绑定设备</li>
-          <li>支持设备管理：解绑/禁用</li>
-          <li>支持后台解绑设备</li>
-          <li>支持用户自定义 Agent</li>
-          <li>国际化多语言支持：中文、英语、日语、西班牙语、印尼语等</li>
-          <li>支持MCP接入点【即将开放】</li>
-          <li>支持网络数据库</li>
-          <li>支持分布式部署</li>
-          <li>支持本地部署大模型</li>
+          <li>Commercial license available</li>
+          <li>All open-source features included</li>
+          <li>Team technical support</li>
+          <li>Core feature updates</li>
+          <li>Extended admin options</li>
+          <li>Support for more models</li>
+          <li>Supports websocket and MQTT+UDP</li>
+          <li>Supports TTS streaming</li>
+          <li>Voice cloning support</li>
+          <li>Custom voice/timbre options</li>
+          <li>OTA firmware upgrades</li>
+          <li>Coze and Dify workflow support</li>
+          <li>Performance optimizations</li>
+          <li>User authentication and device binding</li>
+          <li>Device unbind from admin</li>
+          <li>User-defined Agents</li>
+          <li>Networked databases</li>
+          <li>Distributed deployment</li>
+          <li>Local large model hosting</li>
         </ul>
       </div>
       <div class="feature-card">
-        <div class="feature-title">⭐ 后续功能</div>
+        <div class="feature-title">⭐ Future</div>
         <ul class="feature-list">
-          <li>支持声纹识别</li>
-          <li>支持长期记忆</li>
-          <li>支持文生图，文生视频</li>
-          <li>配套安卓客户端：个人语音对话+配置管理</li>
+          <li>Voiceprint recognition</li>
+          <li>Knowledge base</li>
+          <li>Long-term memory</li>
+          <li>Text-to-image and text-to-video</li>
+          <li>Android client with voice + config management</li>
         </ul>
       </div>
       <div class="feature-card">
-        <div class="feature-title">🎁 增值服务</div>
+        <div class="feature-title">🎁 Services</div>
         <ul class="feature-list">
-          <li>功能定制开发</li>
-          <li>服务协助部署</li>
-          <li>服务托管运维</li>
+          <li>Custom development</li>
+          <li>Deployment assistance</li>
+          <li>Managed operations</li>
         </ul>
       </div>
     </div>

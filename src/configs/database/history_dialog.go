@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// 保存 Agent 对话（支持事务）
+// SaveAgentDialog saves agent conversation history (supports transactions)
 func SaveAgentDialog(
 	tx *gorm.DB,
 	AgentID uint,
@@ -16,13 +16,11 @@ func SaveAgentDialog(
 	dialogStr string,
 	conversationid string,
 ) error {
-	// 检查对话是否已存在
 	var existingDialog models.AgentDialog
 	err := tx.Where("agent_id = ? AND conversationid = ?", AgentID, conversationid).
 		First(&existingDialog).
 		Error
 	if err == nil {
-		// 如果对话已存在，更新对话内容
 		existingDialog.Dialog = dialogStr
 		existingDialog.UpdatedAt = time.Now()
 		return tx.Save(&existingDialog).Error
@@ -49,9 +47,9 @@ func GetAgentDialogByConversationID(
 		Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("对话记录不存在")
+			return nil, fmt.Errorf("dialog record not found")
 		}
-		return nil, fmt.Errorf("查询对话记录失败: %v", err)
+		return nil, fmt.Errorf("failed to query dialog record: %v", err)
 	}
 	return &agentDialog, nil
 }
@@ -63,9 +61,9 @@ func GetAgentDialogByID(
 	var agentDialog models.AgentDialog
 	if err := tx.Where("id = ?", id).First(&agentDialog).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("对话记录不存在")
+			return nil, fmt.Errorf("dialog record not found")
 		}
-		return nil, fmt.Errorf("查询对话记录失败: %v", err)
+		return nil, fmt.Errorf("failed to query dialog record: %v", err)
 	}
 	return &agentDialog, nil
 }
@@ -81,7 +79,7 @@ func GetAgentDialogsWithoutDetailByID(
 		Find(&agentDialogs).
 		Error
 	if err != nil {
-		return nil, fmt.Errorf("查询对话记录失败: %v", err)
+		return nil, fmt.Errorf("failed to query dialog records: %v", err)
 	}
 	return agentDialogs, nil
 }
@@ -93,18 +91,17 @@ func DeleteAgentDialogByID(
 	var agentDialog models.AgentDialog
 	if err := tx.Where("id = ?", id).First(&agentDialog).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return fmt.Errorf("对话记录不存在")
+			return fmt.Errorf("dialog record not found")
 		}
-		return fmt.Errorf("查询对话记录失败: %v", err)
+		return fmt.Errorf("failed to query dialog record: %v", err)
 	}
 	if err := tx.Delete(&agentDialog).Error; err != nil {
-		return fmt.Errorf("删除对话记录失败: %v", err)
+		return fmt.Errorf("failed to delete dialog record: %v", err)
 	}
 	return nil
 }
 
 func SaveAgentConversation(tx *gorm.DB, agentID uint, conversationID string) error {
-	// 更新 Agent 的 Conversationid 字段,以及最后对话时间
 	return tx.Model(&models.Agent{}).
 		Where("id = ?", agentID).
 		Updates(map[string]interface{}{
@@ -114,6 +111,5 @@ func SaveAgentConversation(tx *gorm.DB, agentID uint, conversationID string) err
 }
 
 func ClearAgentConversation(tx *gorm.DB, agentID uint) error {
-	// 清空 Agent 的 Conversationid 字段
 	return tx.Model(&models.Agent{}).Where("id = ?", agentID).Update("conversationid", "").Error
 }

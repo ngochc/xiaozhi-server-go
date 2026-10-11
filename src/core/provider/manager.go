@@ -43,42 +43,42 @@ func NewProviderManager(config *configs.Config, logger *utils.Logger) (*Provider
 	if asrType := selectedModule["ASR"]; asrType != "" {
 		asrFactory := NewASRFactory(asrType, config, logger)
 		if asrFactory == nil {
-			return nil, fmt.Errorf("创建ASR工厂失败: 找不到配置 %s", asrType)
+			return nil, fmt.Errorf("failed to create ASR factory: config not found for %s", asrType)
 		}
 		pm.asrFactory = asrFactory
-		logger.Info("[ASR] 当前选择的ASR模型: %s", asrType)
+		logger.Info("[ASR] Selected ASR model: %s", asrType)
 	} else {
-		logger.Warn("[ASR] 当前选择的ASR模型为空")
+		logger.Warn("[ASR] Selected ASR model is empty")
 	}
 
 	if llmType := selectedModule["LLM"]; llmType != "" {
 		llmFactory := NewLLMFactory(llmType, config, logger)
 		if llmFactory == nil {
-			return nil, fmt.Errorf("创建LLM工厂失败: 找不到配置 %s", llmType)
+			return nil, fmt.Errorf("failed to create LLM factory: config not found for %s", llmType)
 		}
 		pm.llmFactory = llmFactory
 	} else {
-		logger.Warn("[LLM] 当前选择的LLM模型为空")
+		logger.Warn("[LLM] Selected LLM model is empty")
 	}
 
 	if ttsType := selectedModule["TTS"]; ttsType != "" {
 		ttsFactory := NewTTSFactory(ttsType, config, logger)
 		if ttsFactory == nil {
-			return nil, fmt.Errorf("创建TTS工厂失败: 找不到配置 %s", ttsType)
+			return nil, fmt.Errorf("failed to create TTS factory: config not found for %s", ttsType)
 		}
 		pm.ttsFactory = ttsFactory
-		logger.Info("[TTS] 当前选择的TTS模型: %s", ttsType)
+		logger.Info("[TTS] Selected TTS model: %s", ttsType)
 	} else {
-		logger.Warn("[TTS] 当前选择的TTS模型为空")
+		logger.Warn("[TTS] Selected TTS model is empty")
 	}
 
 	if vlllmType := selectedModule["VLLLM"]; vlllmType != "" {
 		vlllmFactory := NewVLLLMFactory(vlllmType, config, logger)
 		if vlllmFactory == nil {
-			logger.Warn("创建VLLLM工厂失败: 找不到配置 %s", vlllmType)
+			logger.Warn("failed to create VLLLM factory: config not found for %s", vlllmType)
 		} else {
 			pm.vlllmFactory = vlllmFactory
-			logger.Info("[VLLLM] 当前选择的VLLLM模型: %s", vlllmType)
+			logger.Info("[VLLLM] Selected VLLLM model: %s", vlllmType)
 		}
 	}
 
@@ -93,7 +93,7 @@ func (pm *ProviderManager) GetProviderSet() (*ProviderSet, error) {
 		asr, err := pm.asrFactory.Create()
 		if err != nil {
 			pm.DestroyProviderSet(set)
-			return nil, fmt.Errorf("创建ASR提供者失败: %v", err)
+			return nil, fmt.Errorf("failed to create ASR provider: %v", err)
 		}
 		set.ASR = asr.(providers.ASRProvider)
 	}
@@ -102,7 +102,7 @@ func (pm *ProviderManager) GetProviderSet() (*ProviderSet, error) {
 		llm, err := pm.llmFactory.Create()
 		if err != nil {
 			pm.DestroyProviderSet(set)
-			return nil, fmt.Errorf("创建LLM提供者失败: %v", err)
+			return nil, fmt.Errorf("failed to create LLM provider: %v", err)
 		}
 		set.LLM = llm.(providers.LLMProvider)
 	}
@@ -111,7 +111,7 @@ func (pm *ProviderManager) GetProviderSet() (*ProviderSet, error) {
 		tts, err := pm.ttsFactory.Create()
 		if err != nil {
 			pm.DestroyProviderSet(set)
-			return nil, fmt.Errorf("创建TTS提供者失败: %v", err)
+			return nil, fmt.Errorf("failed to create TTS provider: %v", err)
 		}
 		set.TTS = tts.(providers.TTSProvider)
 	}
@@ -119,7 +119,7 @@ func (pm *ProviderManager) GetProviderSet() (*ProviderSet, error) {
 	if pm.vlllmFactory != nil {
 		vlllmProvider, err := pm.vlllmFactory.Create()
 		if err != nil {
-			pm.logger.Warn("创建VLLLM提供者失败，将继续使用普通LLM: %v", err)
+			pm.logger.Warn("failed to create VLLLM provider, falling back to standard LLM: %v", err)
 		} else {
 			set.VLLLM = vlllmProvider.(*vlllm.Provider)
 		}
@@ -129,7 +129,7 @@ func (pm *ProviderManager) GetProviderSet() (*ProviderSet, error) {
 		mcpManager, err := pm.mcpFactory.Create()
 		if err != nil {
 			pm.DestroyProviderSet(set)
-			return nil, fmt.Errorf("创建MCP管理器失败: %v", err)
+			return nil, fmt.Errorf("failed to create MCP manager: %v", err)
 		}
 		set.MCP = mcpManager.(*mcp.Manager)
 	}
@@ -165,7 +165,7 @@ func (pm *ProviderManager) DestroyProviderSet(set *ProviderSet) error {
 	cleanup("MCP", set.MCP)
 
 	if len(errs) > 0 {
-		return fmt.Errorf("销毁提供者时发生错误: %v", errs)
+		return fmt.Errorf("error occurred while destroying providers: %v", errs)
 	}
 	return nil
 }

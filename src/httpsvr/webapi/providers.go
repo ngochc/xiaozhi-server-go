@@ -10,13 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// handleUserProviderTest 验证当前用户可见的已保存 Provider 配置。
-// 测试成功必须取得 Provider 的真实响应，不会把字段完整误报为服务可用。
+// handleUserProviderTest validates saved provider configurations.
+// Verifies live response from provider.
 func (s *DefaultUserService) handleUserProviderTest(c *gin.Context) {
 	providerType := strings.ToUpper(strings.TrimSpace(c.Param("type")))
 	name := strings.TrimSpace(c.Param("name"))
 	if name == "" {
-		c.JSON(400, gin.H{"success": false, "message": "Provider 名称不能为空"})
+		c.JSON(400, gin.H{"success": false, "message": "Provider name cannot be empty"})
 		return
 	}
 
@@ -27,25 +27,25 @@ func (s *DefaultUserService) handleUserProviderTest(c *gin.Context) {
 	}
 	rawConfig, ok := providers[name]
 	if !ok {
-		c.JSON(404, gin.H{"success": false, "message": "未找到可测试的 Provider"})
+		c.JSON(404, gin.H{"success": false, "message": "Provider not found for testing"})
 		return
 	}
 
 	var config map[string]interface{}
 	if err := json.Unmarshal([]byte(rawConfig), &config); err != nil {
-		c.JSON(400, gin.H{"success": false, "message": "Provider 配置不是有效 JSON"})
+		c.JSON(400, gin.H{"success": false, "message": "Provider config is not valid JSON"})
 		return
 	}
 	subType, _ := config["type"].(string)
 	subType = strings.ToLower(strings.TrimSpace(subType))
 	if subType == "" {
-		c.JSON(200, gin.H{"success": false, "message": "缺少具体类型（type）"})
+		c.JSON(200, gin.H{"success": false, "message": "Missing specific subtype (type)"})
 		return
 	}
 	if missing := missingProviderTestFields(providerType, subType, config); len(missing) > 0 {
 		c.JSON(200, gin.H{
 			"success": false,
-			"message": fmt.Sprintf("还需填写：%s", strings.Join(missing, "、")),
+			"message": fmt.Sprintf("Required fields missing: %s", strings.Join(missing, "、")),
 			"data":    gin.H{"level": "configuration", "missing_fields": missing},
 		})
 		return
@@ -89,7 +89,7 @@ func missingProviderTestFields(providerType, subType string, config map[string]i
 	}
 	fields, known := required[providerType][subType]
 	if !known {
-		return []string{"当前类型暂不支持测试"}
+		return []string{"testing is not supported for this provider type"}
 	}
 	missing := make([]string, 0)
 	for _, field := range fields {
@@ -100,12 +100,12 @@ func missingProviderTestFields(providerType, subType string, config map[string]i
 	return missing
 }
 
-// handleSystemProvidersGet 获取所有Provider
-// @Summary 获取所有Provider
-// @Description 获取系统中所有Provider信息
+// handleSystemProvidersGet retrieves all providers
+// @Summary Get all providers
+// @Description Get all provider information in the system
 // @Tags Provider
 // @Produce json
-// @Success 200 {object} []interface{} "Provider列表"
+// @Success 200 {object} []interface{} "Provider list"
 // @Router /admin/system/providers [get]
 func (s *DefaultAdminService) handleSystemProvidersGet(c *gin.Context) {
 	providers := database.GetAllProviders(database.AdminUserID)
@@ -124,13 +124,13 @@ func (s *DefaultAdminService) handleSystemProvidersGet(c *gin.Context) {
 	})
 }
 
-// handleSystemProvidersType 获取指定类型Provider【废弃，使用/user/providers/{type}】
-// @Summary 获取指定类型Provider
-// @Description 根据类型获取Provider信息
+// handleSystemProvidersType Get providers of specified type [deprecated, use /user/providers/{type}]
+// @Summary Get providers of specified type
+// @Description Get provider information by type
 // @Tags Provider
 // @Produce json
-// @Param type path string true "Provider类型"
-// @Success 200 {object} interface{} "Provider信息"
+// @Param type path string true "Provider type"
+// @Success 200 {object} interface{} "Provider information"
 // @Router /admin/system/providers/{type} [get]
 func (s *DefaultAdminService) handleSystemProvidersType(c *gin.Context) {
 	providerType := c.Param("type")
@@ -159,14 +159,14 @@ func (s *DefaultAdminService) handleSystemProvidersType(c *gin.Context) {
 	})
 }
 
-// handleSystemProvidersGetByName 获取指定类型和名称的Provider
-// @Summary 获取指定类型和名称的Provider
-// @Description 根据类型和名称获取Provider信息
+// handleSystemProvidersGetByName Get provider by type and name
+// @Summary Get provider by type and name
+// @Description Get provider information by type and name
 // @Tags Provider
 // @Produce json
-// @Param type path string true "Provider类型"
-// @Param name path string true "Provider名称"
-// @Success 200 {object} interface{} "Provider信息"
+// @Param type path string true "Provider type"
+// @Param name path string true "Provider name"
+// @Success 200 {object} interface{} "Provider information"
 // @Router /admin/system/providers/{type}/{name} [get]
 func (s *DefaultAdminService) handleSystemProvidersGetByName(c *gin.Context) {
 	providerType := c.Param("type")
@@ -197,14 +197,14 @@ func (s *DefaultAdminService) handleSystemProvidersGetByName(c *gin.Context) {
 	})
 }
 
-// handleSystemProvidersCreate 创建Provider【废弃，使用/user/providers/create】
-// @Summary 创建Provider
-// @Description 创建新的Provider
+// handleSystemProvidersCreate Create provider [deprecated, use /user/providers/create]
+// @Summary Create provider
+// @Description Create new provider
 // @Tags Provider
 // @Accept json
 // @Produce json
-// @Param data body object true "Provider创建参数"
-// @Success 201 {object} map[string]interface{} "创建结果"
+// @Param data body object true "Provider creation parameters"
+// @Success 201 {object} map[string]interface{} "Creation result"
 // @Router /user/providers/create [post]
 func (s *DefaultAdminService) handleSystemProvidersCreate(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -212,7 +212,7 @@ func (s *DefaultAdminService) handleSystemProvidersCreate(c *gin.Context) {
 	if err != nil || user == nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}
@@ -236,7 +236,7 @@ func (s *DefaultAdminService) handleSystemProvidersCreate(c *gin.Context) {
 		return
 	}
 
-	// 检查是否已存在相同名称的Provider
+	// Check if a provider with the same name already exists
 	existingProvider, err := database.GetProviderByName(requestData.Type, requestData.Name)
 	if err == nil && existingProvider != "" {
 		c.JSON(409, gin.H{
@@ -272,16 +272,16 @@ func (s *DefaultAdminService) handleSystemProvidersCreate(c *gin.Context) {
 	})
 }
 
-// handleSystemProvidersUpdate 更新Provider【废弃，使用/user/providers/{type}/{name}】
-// @Summary 更新Provider
-// @Description 更新指定类型和名称的Provider
+// handleSystemProvidersUpdate Update provider [deprecated, use /user/providers/{type}/{name}]
+// @Summary Update provider
+// @Description Update provider of specified type and name
 // @Tags Provider
 // @Accept json
 // @Produce json
-// @Param type path string true "Provider类型"
-// @Param name path string true "Provider名称"
-// @Param data body object true "Provider更新参数"
-// @Success 200 {object} map[string]interface{} "更新结果"
+// @Param type path string true "Provider type"
+// @Param name path string true "Provider name"
+// @Param data body object true "Provider update parameters"
+// @Success 200 {object} map[string]interface{} "Update result"
 // @Router /admin/system/providers/{type}/{name} [put]
 func (s *DefaultAdminService) handleSystemProvidersUpdate(c *gin.Context) {
 	providerType := c.Param("type")
@@ -325,14 +325,14 @@ func (s *DefaultAdminService) handleSystemProvidersUpdate(c *gin.Context) {
 	})
 }
 
-// handleSystemProvidersDelete 删除Provider【废弃，使用/user/providers/{type}/{name}】
-// @Summary 删除Provider
-// @Description 删除指定类型和名称的Provider
+// handleSystemProvidersDelete Delete provider [deprecated, use /user/providers/{type}/{name}]
+// @Summary Delete provider
+// @Description Delete provider of specified type and name
 // @Tags Provider
 // @Produce json
-// @Param type path string true "Provider类型"
-// @Param name path string true "Provider名称"
-// @Success 200 {object} map[string]interface{} "删除结果"
+// @Param type path string true "Provider type"
+// @Param name path string true "Provider name"
+// @Success 200 {object} map[string]interface{} "Deletion result"
 // @Router /admin/system/providers/{type}/{name} [delete]
 func (s *DefaultAdminService) handleSystemProvidersDelete(c *gin.Context) {
 	providerType := c.Param("type")
@@ -365,13 +365,13 @@ func (s *DefaultAdminService) handleSystemProvidersDelete(c *gin.Context) {
 
 //=============================================================================== user providers ==============
 
-// handleUserProvidersType 获取指定类型Provider
-// @Summary 获取指定类型Provider
-// @Description 根据类型获取Provider信息
+// handleUserProvidersType Get providers of specified type
+// @Summary Get providers of specified type
+// @Description Get provider information by type
 // @Tags Provider
 // @Produce json
-// @Param type path string true "Provider类型"
-// @Success 200 {object} interface{} "Provider信息"
+// @Param type path string true "Provider type"
+// @Success 200 {object} interface{} "Provider information"
 // @Router /user/providers/{type} [get]
 func (s *DefaultUserService) handleUserProvidersType(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -387,7 +387,7 @@ func (s *DefaultUserService) handleUserProvidersType(c *gin.Context) {
 	if err != nil || user == nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}
@@ -409,14 +409,14 @@ func (s *DefaultUserService) handleUserProvidersType(c *gin.Context) {
 	})
 }
 
-// handleUserProvidersCreate 用户创建Provider
-// @Summary 用户创建Provider
-// @Description 用户创建新的Provider，创建的provider为用户私有，其他人不可见
+// handleUserProvidersCreate User creates provider
+// @Summary User creates provider
+// @Description User creates new provider; created provider is private to the user
 // @Tags Provider
 // @Accept json
 // @Produce json
-// @Param data body object true "Provider创建参数"
-// @Success 201 {object} map[string]interface{} "创建结果"
+// @Param data body object true "Provider creation parameters"
+// @Success 201 {object} map[string]interface{} "Creation result"
 // @Router /user/providers/create [post]
 func (s *DefaultUserService) handleUserProvidersCreate(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -424,7 +424,7 @@ func (s *DefaultUserService) handleUserProvidersCreate(c *gin.Context) {
 	if err != nil || user == nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}
@@ -448,7 +448,7 @@ func (s *DefaultUserService) handleUserProvidersCreate(c *gin.Context) {
 		return
 	}
 
-	// 检查是否已存在相同名称的Provider
+	// Check if a provider with the same name already exists
 	existingProvider, err := database.GetProviderByName(requestData.Type, requestData.Name)
 	if err == nil && existingProvider != "" {
 		c.JSON(409, gin.H{
@@ -484,14 +484,14 @@ func (s *DefaultUserService) handleUserProvidersCreate(c *gin.Context) {
 	})
 }
 
-// handleUserProvidersDelete 删除Provider
-// @Summary 删除Provider
-// @Description 删除指定类型和名称的Provider,仅可删除用户自己创建的
+// handleUserProvidersDelete Delete provider
+// @Summary Delete provider
+// @Description Delete provider of specified type and name, only allowed for user-created providers
 // @Tags Provider
 // @Produce json
-// @Param type path string true "Provider类型"
-// @Param name path string true "Provider名称"
-// @Success 200 {object} map[string]interface{} "删除结果"
+// @Param type path string true "Provider type"
+// @Param name path string true "Provider name"
+// @Success 200 {object} map[string]interface{} "Deletion result"
 // @Router /user/providers/{type}/{name} [delete]
 func (s *DefaultUserService) handleUserProvidersDelete(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -499,7 +499,7 @@ func (s *DefaultUserService) handleUserProvidersDelete(c *gin.Context) {
 	if err != nil || user == nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}
@@ -521,11 +521,11 @@ func (s *DefaultUserService) handleUserProvidersDelete(c *gin.Context) {
 
 	if err := database.DeleteProvider(providerType, name, deleteUserID); err != nil {
 		s.logger.Error("Failed to delete provider: %s/%s, error: %v", providerType, name, err)
-		// 判断错误是否包含“没有权限”
+		// Check if error indicates permission denied
 		if errors.Is(err, database.ErrNoPermission) {
 			c.JSON(403, gin.H{
 				"status":  "error",
-				"message": "没有权限删除该Provider",
+				"message": "Permission denied to delete this provider",
 			})
 			return
 		}
@@ -544,16 +544,16 @@ func (s *DefaultUserService) handleUserProvidersDelete(c *gin.Context) {
 	})
 }
 
-// handleUserProvidersUpdate 更新Provider
-// @Summary 更新Provider
-// @Description 更新指定类型和名称的Provider,仅可更新用户自己创建的
+// handleUserProvidersUpdate Update provider
+// @Summary Update provider
+// @Description Update provider of specified type and name, only allowed for user-created providers
 // @Tags Provider
 // @Accept json
 // @Produce json
-// @Param type path string true "Provider类型"
-// @Param name path string true "Provider名称"
-// @Param data body object true "Provider更新参数"
-// @Success 200 {object} map[string]interface{} "更新结果"
+// @Param type path string true "Provider type"
+// @Param name path string true "Provider name"
+// @Param data body object true "Provider update parameters"
+// @Success 200 {object} map[string]interface{} "Update result"
 // @Router /user/providers/{type}/{name} [put]
 func (s *DefaultUserService) handleUserProvidersUpdate(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -561,7 +561,7 @@ func (s *DefaultUserService) handleUserProvidersUpdate(c *gin.Context) {
 	if err != nil || user == nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}

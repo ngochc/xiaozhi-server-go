@@ -4,50 +4,50 @@ import (
 	"fmt"
 )
 
-// CreateAuthStore 根据配置创建认证存储实例
+// CreateAuthStore creates an auth store instance based on config
 func CreateAuthStore(config *StoreConfig) (AuthStore, error) {
 	if config == nil {
-		return nil, fmt.Errorf("存储配置不能为空")
+		return nil, fmt.Errorf("store config cannot be empty")
 	}
 
 	switch config.Type {
 	case "database", "":
-		// 默认使用数据库存储
+		// Default to database store
 		expiryHr := config.ExpiryHr
 		if expiryHr <= 0 {
-			expiryHr = 24 // 默认24小时
+			expiryHr = 24 // Default 24 hours
 		}
 		return NewDatabaseAuthStore(expiryHr), nil
 
 	case "memory":
-		// 可选：内存存储
+		// Optional: in-memory store
 		expiryHr := config.ExpiryHr
 		if expiryHr <= 0 {
-			expiryHr = 24 // 默认24小时
+			expiryHr = 24 // Default 24 hours
 		}
 		return NewMemoryAuthStore(expiryHr), nil
 
 	case "file":
-		// TODO: 实现文件存储
-		return nil, fmt.Errorf("文件存储暂未实现")
+		// TODO: Implement file store
+		return nil, fmt.Errorf("file store not yet implemented")
 
 	case "redis":
-		// TODO: 实现Redis存储
-		return nil, fmt.Errorf("Redis存储暂未实现")
+		// TODO: Implement Redis store
+		return nil, fmt.Errorf("Redis store not yet implemented")
 
 	default:
-		return nil, fmt.Errorf("不支持的存储类型: %s", config.Type)
+		return nil, fmt.Errorf("unsupported store type: %s", config.Type)
 	}
 }
 
-// ValidateStoreConfig 验证存储配置
+// ValidateStoreConfig validates store config
 func ValidateStoreConfig(config *StoreConfig) error {
 	if config == nil {
-		return fmt.Errorf("存储配置不能为空")
+		return fmt.Errorf("store configuration cannot be empty")
 	}
 
 	if config.Type == "" {
-		config.Type = "database" // 默认使用数据库存储
+		config.Type = "database" // Default to database store
 	}
 
 	supportedTypes := []string{"database", "memory", "file", "redis"}
@@ -60,17 +60,17 @@ func ValidateStoreConfig(config *StoreConfig) error {
 	}
 
 	if !isSupported {
-		return fmt.Errorf("不支持的存储类型: %s, 支持的类型: %v", config.Type, supportedTypes)
+		return fmt.Errorf("unsupported store type: %s, supported types: %v", config.Type, supportedTypes)
 	}
 
 	if config.ExpiryHr < 0 {
-		return fmt.Errorf("过期时间不能为负数")
+		return fmt.Errorf("expiry duration cannot be negative")
 	}
 
 	return nil
 }
 
-// GetDefaultStoreConfig 获取默认存储配置
+// GetDefaultStoreConfig gets default store config
 func GetDefaultStoreConfig() *StoreConfig {
 	return &StoreConfig{
 		Type:     "database",

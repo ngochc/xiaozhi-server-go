@@ -53,7 +53,7 @@ func TestDialogueManagerAppliesMessageAndEstimatedTokenLimits(t *testing.T) {
 	manager.SetShortTermMemoryLimits(4, 12)
 	manager.SetSystemMessage("system")
 	for i := 0; i < 8; i++ {
-		manager.Put(Message{Role: "assistant", Content: "这是一个很长的回复，用来验证短期记忆的令牌边界。"})
+		manager.Put(Message{Role: "assistant", Content: "This is a very long response used to verify the token budget boundaries of short-term memory."})
 	}
 
 	dialogue := manager.GetLLMDialogue()

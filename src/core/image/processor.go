@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// ImageProcessor 图片处理器
+// ImageProcessor image processor
 type ImageProcessor struct {
 	config     *configs.VLLMConfig
 	validator  *ImageSecurityValidator
@@ -27,24 +27,24 @@ type ImageProcessor struct {
 	httpClient *http.Client
 }
 
-// NewImageProcessor 创建新的图片处理器
+// NewImageProcessor creates new image processor
 func NewImageProcessor(config *configs.VLLMConfig, logger *utils.Logger) (*ImageProcessor, error) {
-	// 创建临时目录
+	// Create temporary directory
 	tempDir := filepath.Join("tmp", "images")
 	if err := os.MkdirAll(tempDir, 0o755); err != nil {
-		return nil, fmt.Errorf("创建临时目录失败: %v", err)
+		return nil, fmt.Errorf("failed to create temporary directory: %v", err)
 	}
 
-	// 创建安全验证器
+	// Create security validator
 	validator := NewImageSecurityValidator(&config.Security, logger)
 
-	// 配置HTTP客户端
+	// Configure HTTP client
 	httpClient := &http.Client{
 		Timeout: 30 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			// 限制重定向次数为3次
+			// Limit redirects to 3
 			if len(via) >= 3 {
-				return fmt.Errorf("停止重定向：超过最大重定向次数")
+				return fmt.Errorf("stopped redirect: exceeded max redirect limit")
 			}
 			return nil
 		},
@@ -60,21 +60,21 @@ func NewImageProcessor(config *configs.VLLMConfig, logger *utils.Logger) (*Image
 	}, nil
 }
 
-// ProcessImage 处理图片数据，返回base64编码的图片
+// ProcessImage processes image data and returns base64 string
 func (p *ImageProcessor) ProcessImage(ctx context.Context, imageData ImageData) (string, error) {
 	atomic.AddInt64(&p.metrics.TotalProcessed, 1)
 
 	var finalImageData ImageData
 
-	// 根据输入类型处理图片
+	// Process image based on input type
 	if imageData.URL != "" {
-		// 处理URL类型图片
+		// Handle URL image
 		atomic.AddInt64(&p.metrics.URLDownloads, 1)
 
 		base64Data, err := p.processURLImage(ctx, imageData.URL, imageData.Format)
 		if err != nil {
 			atomic.AddInt64(&p.metrics.FailedValidations, 1)
-			return "", fmt.Errorf("URL图片处理失败: %v", err)
+			return "", fmt.Errorf("URL image processing failed: %v", err)
 		}
 
 		finalImageData = ImageData{
@@ -82,40 +82,40 @@ func (p *ImageProcessor) ProcessImage(ctx context.Context, imageData ImageData) 
 			Format: imageData.Format,
 		}
 
-		p.logger.Info("URL图片处理成功", map[string]interface{}{
+		p.logger.Info("URL image processing succeeded", map[string]interface{}{
 			"url":    imageData.URL,
 			"format": imageData.Format,
 		})
 
 	} else if imageData.Data != "" {
-		// 直接处理base64数据
+		// Handle base64 data directly
 		atomic.AddInt64(&p.metrics.Base64Direct, 1)
 		finalImageData = imageData
 
-		p.logger.Debug("Base64图片处理开始 %v", map[string]interface{}{
+		p.logger.Debug("Base64 image processing started %v", map[string]interface{}{
 			"format":      imageData.Format,
 			"data_length": len(imageData.Data),
 		})
 	} else {
-		return "", fmt.Errorf("图片数据为空：既没有URL也没有base64数据")
+		return "", fmt.Errorf("image data is empty: neither URL nor base64 provided")
 	}
 
-	// 安全验证
+	// Security validation
 	validationResult := p.validator.ValidateImageData(finalImageData)
 	if !validationResult.IsValid {
 		atomic.AddInt64(&p.metrics.FailedValidations, 1)
 		if validationResult.SecurityRisk != "" {
 			atomic.AddInt64(&p.metrics.SecurityIncidents, 1)
-			p.logger.Warn("检测到安全威胁", map[string]interface{}{
+			p.logger.Warn("security threat detected", map[string]interface{}{
 				"error":         validationResult.Error.Error(),
 				"security_risk": validationResult.SecurityRisk,
 				"format":        finalImageData.Format,
 			})
 		}
-		return "", fmt.Errorf("图片验证失败: %v", validationResult.Error)
+		return "", fmt.Errorf("image validation failed: %v", validationResult.Error)
 	}
 
-	p.logger.Debug("图片处理完成 %v", map[string]interface{}{
+	p.logger.Debug("image processing completed %v", map[string]interface{}{
 		"format":    validationResult.Format,
 		"width":     validationResult.Width,
 		"height":    validationResult.Height,
@@ -125,44 +125,44 @@ func (p *ImageProcessor) ProcessImage(ctx context.Context, imageData ImageData) 
 	return finalImageData.Data, nil
 }
 
-// processURLImage 处理URL图片
+// processURLImage processes URL image
 func (p *ImageProcessor) processURLImage(
 	ctx context.Context,
 	url string,
 	format string,
 ) (string, error) {
-	// 创建唯一的临时文件名
+	// Create unique temporary filename
 	tempFileName := fmt.Sprintf("img_%d_%s", time.Now().UnixNano(), uuid.New().String())
 	if format != "" {
 		tempFileName += "." + format
 	}
 	tempPath := filepath.Join(p.tempDir, tempFileName)
 
-	// 确保在函数结束时删除临时文件
+	// Ensure temporary file is removed on exit
 	defer func() {
 		if err := os.Remove(tempPath); err != nil && !os.IsNotExist(err) {
-			p.logger.Warn("删除临时文件失败", map[string]interface{}{
+			p.logger.Warn("failed to delete temporary file", map[string]interface{}{
 				"path":  tempPath,
 				"error": err.Error(),
 			})
 		}
 	}()
 
-	// 下载图片
+	// Download image
 	if err := p.downloadImage(ctx, url, tempPath); err != nil {
-		return "", fmt.Errorf("下载图片失败: %v", err)
+		return "", fmt.Errorf("failed to download image: %v", err)
 	}
 
-	// 读取文件并转换为base64
+	// Read file and convert to base64
 	imageData, err := os.ReadFile(tempPath)
 	if err != nil {
-		return "", fmt.Errorf("读取临时文件失败: %v", err)
+		return "", fmt.Errorf("failed to read temporary file: %v", err)
 	}
 
-	// 转换为base64
+	// Convert to base64
 	base64Data := base64.StdEncoding.EncodeToString(imageData)
 
-	p.logger.Info("URL图片下载和转换完成", map[string]interface{}{
+	p.logger.Info("URL image download and conversion completed", map[string]interface{}{
 		"url":         url,
 		"temp_path":   tempPath,
 		"file_size":   len(imageData),
@@ -172,58 +172,58 @@ func (p *ImageProcessor) processURLImage(
 	return base64Data, nil
 }
 
-// downloadImage 下载图片到临时文件
+// downloadImage downloads image to temporary file
 func (p *ImageProcessor) downloadImage(ctx context.Context, url string, tempPath string) error {
-	// 创建请求
+	// Create request
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return fmt.Errorf("创建请求失败: %v", err)
+		return fmt.Errorf("failed to create request: %v", err)
 	}
 
-	// 设置User-Agent，避免被某些网站拒绝
+	// Set User-Agent to avoid rejection by servers
 	req.Header.Set("User-Agent", "XiaoZhi-Image-Bot/1.0")
 
-	// 发送请求
+	// Send request
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("HTTP请求失败: %v", err)
+		return fmt.Errorf("HTTP request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// 检查响应状态
+	// Check response status
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("HTTP响应错误: %d %s", resp.StatusCode, resp.Status)
+		return fmt.Errorf("HTTP response error: %d %s", resp.StatusCode, resp.Status)
 	}
 
-	// 检查Content-Type
+	// Check Content-Type
 	contentType := resp.Header.Get("Content-Type")
 	if !p.isValidImageContentType(contentType) {
-		return fmt.Errorf("无效的Content-Type: %s", contentType)
+		return fmt.Errorf("invalid Content-Type: %s", contentType)
 	}
 
-	// 检查Content-Length
+	// Check Content-Length
 	if resp.ContentLength > p.config.Security.MaxFileSize {
-		return fmt.Errorf("文件过大: %d bytes，最大允许: %d bytes",
+		return fmt.Errorf("file too large: %d bytes, max allowed: %d bytes",
 			resp.ContentLength, p.config.Security.MaxFileSize)
 	}
 
-	// 创建临时文件
+	// Create temporary file
 	tempFile, err := os.Create(tempPath)
 	if err != nil {
-		return fmt.Errorf("创建临时文件失败: %v", err)
+		return fmt.Errorf("failed to create temporary file: %v", err)
 	}
 	defer tempFile.Close()
 
-	// 使用LimitReader限制下载大小，防止无限下载
+	// Use LimitReader to prevent unbounded download size
 	limitedReader := io.LimitReader(resp.Body, p.config.Security.MaxFileSize)
 
-	// 复制数据到临时文件
+	// Copy data to temporary file
 	written, err := io.Copy(tempFile, limitedReader)
 	if err != nil {
-		return fmt.Errorf("下载文件失败: %v", err)
+		return fmt.Errorf("failed to download file: %v", err)
 	}
 
-	p.logger.Info("图片下载完成", map[string]interface{}{
+	p.logger.Info("image download completed", map[string]interface{}{
 		"url":          url,
 		"content_type": contentType,
 		"size":         written,
@@ -233,7 +233,7 @@ func (p *ImageProcessor) downloadImage(ctx context.Context, url string, tempPath
 	return nil
 }
 
-// isValidImageContentType 检查Content-Type是否为有效的图片类型
+// isValidImageContentType checks if Content-Type is a valid image type
 func (p *ImageProcessor) isValidImageContentType(contentType string) bool {
 	validContentTypes := []string{
 		"image/jpeg",
@@ -254,7 +254,7 @@ func (p *ImageProcessor) isValidImageContentType(contentType string) bool {
 	return false
 }
 
-// GetMetrics 获取处理统计信息
+// GetMetrics gets processing metrics
 func (p *ImageProcessor) GetMetrics() ImageMetrics {
 	return ImageMetrics{
 		TotalProcessed:    atomic.LoadInt64(&p.metrics.TotalProcessed),
@@ -265,12 +265,12 @@ func (p *ImageProcessor) GetMetrics() ImageMetrics {
 	}
 }
 
-// Cleanup 清理资源
+// Cleanup cleans up resources
 func (p *ImageProcessor) Cleanup() error {
-	// 清理临时目录中的旧文件
+	// Clean up old files in temporary directory
 	entries, err := os.ReadDir(p.tempDir)
 	if err != nil {
-		return fmt.Errorf("读取临时目录失败: %v", err)
+		return fmt.Errorf("failed to read temporary directory: %v", err)
 	}
 
 	now := time.Now()
@@ -287,10 +287,10 @@ func (p *ImageProcessor) Cleanup() error {
 			continue
 		}
 
-		// 删除超过1小时的临时文件
+		// Delete temporary files older than 1 hour
 		if now.Sub(info.ModTime()) > time.Hour {
 			if err := os.Remove(filePath); err != nil {
-				p.logger.Warn("删除过期临时文件失败", map[string]interface{}{
+				p.logger.Warn("failed to delete expired temporary file", map[string]interface{}{
 					"path":  filePath,
 					"error": err.Error(),
 				})
@@ -301,7 +301,7 @@ func (p *ImageProcessor) Cleanup() error {
 	}
 
 	if cleanedCount > 0 {
-		p.logger.Info("清理临时文件完成", map[string]interface{}{
+		p.logger.Info("temporary file cleanup completed", map[string]interface{}{
 			"cleaned_count": cleanedCount,
 		})
 	}

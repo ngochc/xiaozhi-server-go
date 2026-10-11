@@ -6,7 +6,7 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    command: ["./linux-amd64-server-upx"] #修改成程序文件名
+    command: ["./linux-amd64-server-upx"] # Replace with your binary name
     ports:
       - "8080:8080"
       - "8000:8000"

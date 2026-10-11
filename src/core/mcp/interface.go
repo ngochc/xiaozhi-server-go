@@ -12,36 +12,36 @@ type ToolInputSchema struct {
 	Required   []string       `json:"required,omitempty"`
 }
 
-// Tool 表示MCP工具
+// Tool represents MCP tool
 type Tool struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	InputSchema ToolInputSchema `json:"inputSchema"`
 }
 
-// MCPClient 定义MCP客户端接口
+// MCPClient defines MCP client interface
 type MCPClient interface {
-	// Start 启动MCP客户端
+	// Start starts MCP client
 	Start(ctx context.Context) error
 
-	// Stop 停止MCP客户端
+	// Stop stops MCP client
 	Stop()
 
-	// HasTool 检查是否有指定名称的工具
+	// HasTool checks if tool with given name exists
 	HasTool(name string) bool
 
-	// GetAvailableTools 获取所有可用工具
+	// GetAvailableTools gets all available tools
 	GetAvailableTools() []openai.Tool
 
-	// CallTool 调用指定的工具
+	// CallTool calls specified tool
 	CallTool(ctx context.Context, name string, args map[string]interface{}) (interface{}, error)
 
-	// IsReady 检查客户端是否已初始化完成并准备就绪
+	// IsReady checks if client is initialized and ready
 	IsReady() bool
 
-	// ResetConnection 重置连接状态但保留客户端结构
+	// ResetConnection resets connection state while preserving client struct
 	ResetConnection() error
 }
 
-// 确保Client实现了MCPClient接口
+// Ensure Client implements MCPClient interface
 var _ MCPClient = (*Client)(nil)

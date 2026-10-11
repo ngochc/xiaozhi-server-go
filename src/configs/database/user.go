@@ -51,7 +51,7 @@ func generateInitialAdminPassword() (string, error) {
 	for i := range password {
 		index, err := rand.Int(rand.Reader, big.NewInt(int64(len(initialAdminPasswordAlphabet))))
 		if err != nil {
-			return "", fmt.Errorf("生成初始管理员密码失败: %w", err)
+			return "", fmt.Errorf("failed to generate initial admin password: %w", err)
 		}
 		password[i] = initialAdminPasswordAlphabet[index.Int64()]
 	}
@@ -60,13 +60,11 @@ func generateInitialAdminPassword() (string, error) {
 
 func InitAdminUser(db *gorm.DB, config *configs.Config) error {
 	var count int64
-	// 检查是否已经存在管理员用户
+	// Check if admin user already exists
 	if err := db.Model(&models.User{}).Where("role = ?", "admin").Count(&count).Error; err != nil {
-		// 查询失败
 		return err
 	}
 	if count > 0 {
-		// 已经存在管理员用户，不需要初始化
 		return nil
 	}
 
@@ -76,27 +74,26 @@ func InitAdminUser(db *gorm.DB, config *configs.Config) error {
 	}
 	hash := md5.Sum([]byte(password + "xiaozhi_salt"))
 	pwd := hex.EncodeToString(hash[:])
-	// 创建管理员用户
+	// Create admin user
 	adminUser := &models.User{
 		ID:        AdminUserID,
 		Username:  "admin",
 		Email:     "",
-		Password:  pwd, // 使用默认的管理员密码
+		Password:  pwd,
 		Role:      "admin",
-		Status:    1, // 默认启用状态
+		Status:    1,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 	if err := db.Create(adminUser).Error; err != nil {
-		// 创建失败
 		return err
 	}
-	fmt.Printf("首次启动已创建本地管理员账号 admin，临时密码：%s。请登录后立即修改密码；该密码只会在本次启动日志中显示。\n", password)
+	fmt.Printf("Initial start: created local admin user 'admin' with temporary password: %s. Please change it immediately; this password is only shown in this startup log.\n", password)
 
 	return nil
 }
 
-// GetUserByUsername 根据用户名获取用户
+// GetUserByUsername retrieves a user by username
 func GetUserByUsername(tx *gorm.DB, username string) (*models.User, error) {
 	var user models.User
 	err := tx.Where("username = ?", username).First(&user).Error
@@ -109,7 +106,7 @@ func GetUserByUsername(tx *gorm.DB, username string) (*models.User, error) {
 	return &user, nil
 }
 
-// GetUserByID 根据ID获取用户
+// GetUserByID retrieves a user by ID
 func GetUserByID(tx *gorm.DB, userID uint) (*models.User, error) {
 	var user models.User
 	err := tx.Where("id = ?", userID).First(&user).Error
@@ -122,7 +119,7 @@ func GetUserByID(tx *gorm.DB, userID uint) (*models.User, error) {
 	return &user, nil
 }
 
-// UpdateUserLastLogin 更新用户最后登录时间
+// UpdateUserLastLogin updates the user's last login timestamp
 func UpdateUserLastLogin(tx *gorm.DB, userID uint) error {
 	err := tx.Model(&models.User{}).
 		Where("id = ?", userID).
@@ -132,16 +129,15 @@ func UpdateUserLastLogin(tx *gorm.DB, userID uint) error {
 	return err
 }
 
-// UpdateUserProfile 更新用户资料
+// UpdateUserEmail updates the user's email
 func UpdateUserEmail(tx *gorm.DB, userID uint, email string) error {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
-	// 检查邮箱是否已经存在
 	var existingUser models.User
 	tx.Where("email = ?", email).First(&existingUser)
 	if existingUser.ID != 0 && existingUser.ID != userID {
-		return fmt.Errorf("邮箱已被其他用户使用")
+		return fmt.Errorf("email is already in use by another user")
 	}
 
 	if email != "" {
@@ -157,11 +153,10 @@ func UpdateUserName(tx *gorm.DB, userID uint, username string) error {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
-	// 检查用户名是否已经存在
 	var existingUser models.User
 	tx.Where("username = ?", username).First(&existingUser)
 	if existingUser.ID != 0 && existingUser.ID != userID {
-		return fmt.Errorf("用户名已被其他用户使用")
+		return fmt.Errorf("username is already in use by another user")
 	}
 
 	if username != "" {
@@ -199,7 +194,7 @@ func UpdateUserHeadImg(tx *gorm.DB, userID uint, headImg string) error {
 	return err
 }
 
-// UpdateUserPassword 更新用户密码
+// UpdateUserPassword updates the user's password
 func UpdateUserPassword(tx *gorm.DB, userID uint, hashedPassword string) error {
 	err := tx.Model(&models.User{}).
 		Where("id = ?", userID).
@@ -210,9 +205,8 @@ func UpdateUserPassword(tx *gorm.DB, userID uint, hashedPassword string) error {
 	return err
 }
 
-// GetSystemSummary
+// GetSystemSummary retrieves system resource summary
 func GetSystemSummary(tx *gorm.DB) (map[string]interface{}, error) {
-	// 取ServerStatus
 	status, err := GetServerStatus()
 	if err != nil {
 		return nil, err
@@ -220,7 +214,6 @@ func GetSystemSummary(tx *gorm.DB) (map[string]interface{}, error) {
 	cpuUsage := status.CPUUsage
 	memoryUsage := status.MemoryUsage
 
-	// agent总数
 	var agentCount int64
 	if err := tx.Model(&models.Agent{}).Count(&agentCount).Error; err != nil {
 		return nil, err

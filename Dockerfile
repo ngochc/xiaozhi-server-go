@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-# 安装运行时依赖
+# Install runtime dependencies
 RUN apk add --no-cache \
     ca-certificates \
     sqlite-libs \

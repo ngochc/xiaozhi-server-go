@@ -1,39 +1,39 @@
 package vision
 
-// VisionRequest Vision分析请求结构（从multipart表单解析）
-// @Description Vision分析请求体
-// @Param question formData string true "问题文本"
-// @Param image formData file true "图片文件"
-// @Param Device-Id header string true "设备ID"
-// @Param Client-Id header string false "客户端ID"
-// @Param image_path formData string false "图片路径"
+// VisionRequest represents Vision analysis request parsed from multipart form
+// @Description Vision analysis request body
+// @Param question formData string true "Question text"
+// @Param image formData file true "Image file"
+// @Param Device-Id header string true "Device ID"
+// @Param Client-Id header string false "Client ID"
+// @Param image_path formData string false "Image path"
 type VisionRequest struct {
-	Question  string // 问题文本（从表单字段获取）
-	Image     []byte // 图片数据（从文件字段获取）
-	DeviceID  string // 设备ID（从请求头获取）
-	ClientID  string // 客户端ID（从请求头获取）
-	ImagePath string // 图片路径
+	Question  string // Question text
+	Image     []byte // Image data
+	DeviceID  string // Device ID from header
+	ClientID  string // Client ID from header
+	ImagePath string // Image file path
 }
 
-// VisionResponse Vision标准响应结构（兼容Python版本）
-// @Description Vision分析响应体
+// VisionResponse represents standard Vision analysis response
+// @Description Vision analysis response body
 // @Success 200 {object} VisionResponse
 // @Failure 400 {object} VisionResponse
 // @Failure 401 {object} VisionResponse
 // @Failure 500 {object} VisionResponse
 type VisionResponse struct {
-	Success bool   `json:"success"`           // 是否成功
-	Result  string `json:"result,omitempty"`  // 分析结果（成功时）
-	Message string `json:"message,omitempty"` // 错误信息（失败时）
+	Success bool   `json:"success"`           // Success indicator
+	Result  string `json:"result,omitempty"`  // Analysis result
+	Message string `json:"message,omitempty"` // Error message
 }
 
-// VisionStatusResponse Vision状态响应结构
-// @Description Vision状态响应体
+// VisionStatusResponse represents Vision health status response
+// @Description Vision health status response
 type VisionStatusResponse struct {
-	Message string // 状态信息（纯文本）
+	Message string // Status message
 }
 
-// AuthVerifyResult 认证验证结果
+// AuthVerifyResult represents authentication verification result
 type AuthVerifyResult struct {
 	IsValid  bool
 	DeviceID string

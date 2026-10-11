@@ -27,10 +27,10 @@ import (
 const (
 	providerTestTimeout      = 25 * time.Second
 	asrTestSampleRate        = 16000
-	ttsTestText              = "你好，这是语音合成服务测试。"
+	ttsTestText              = "Hello, this is a speech synthesis test."
 	maxTTSTestAudioBytes     = 2 * 1024 * 1024
-	llmTestPrompt            = "请用一句简短中文介绍你能提供的帮助。"
-	vlllmTestPrompt          = "请判断图片的主要颜色，只回答颜色名称。"
+	llmTestPrompt            = "Please briefly introduce how you can help in one short sentence."
+	vlllmTestPrompt          = "Please identify the main color of this image in one word."
 	vlllmTestImageBase64     = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY/jPwPAfAAUAAf+mXJtdAAAAAElFTkSuQmCC"
 	maxProviderResponseBytes = 16 * 1024
 )
@@ -54,7 +54,7 @@ func (s *DefaultUserService) runLiveProviderTest(ctx context.Context, providerTy
 	case "VLLLM":
 		return s.testVLLLMProvider(ctx, name, subType, config)
 	default:
-		return liveProviderTestResult{}, fmt.Errorf("不支持测试的 Provider 类型：%s", providerType)
+		return liveProviderTestResult{}, fmt.Errorf("unsupported provider type for testing: %s", providerType)
 	}
 }
 
@@ -87,11 +87,11 @@ func (s *DefaultUserService) testASRProvider(ctx context.Context, name, subType 
 	}
 	created, err := asr.Create(subType, &asr.Config{Name: name, Type: subType, Data: config}, false, s.logger)
 	if err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("ASR Provider 初始化失败：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("ASR provider initialization failed: %w", err)
 	}
 	provider, ok := created.(asrProviderTest)
 	if !ok {
-		return liveProviderTestResult{}, fmt.Errorf("ASR Provider 类型 %s 不支持实时测试", subType)
+		return liveProviderTestResult{}, fmt.Errorf("ASR provider type %s does not support live testing", subType)
 	}
 	if closeable, ok := provider.(interface{ CloseConnection() error }); ok {
 		defer closeable.CloseConnection()
@@ -107,20 +107,20 @@ func (s *DefaultUserService) testASRProvider(ctx context.Context, name, subType 
 			n = len(audio)
 		}
 		if err := addASRProviderTestAudio(testCtx, provider, audio[:n]); err != nil {
-			return liveProviderTestResult{}, fmt.Errorf("ASR 测试请求失败：%w", err)
+			return liveProviderTestResult{}, fmt.Errorf("ASR test request failed: %w", err)
 		}
 		audio = audio[n:]
 	}
 	if finalizer, ok := provider.(interface{ SendLastAudio([]byte) error }); ok {
 		if err := finalizer.SendLastAudio(nil); err != nil {
-			return liveProviderTestResult{}, fmt.Errorf("ASR 完成请求失败：%w", err)
+			return liveProviderTestResult{}, fmt.Errorf("ASR completion request failed: %w", err)
 		}
 	}
 	select {
 	case text := <-listener.result:
-		return liveProviderTestResult{message: fmt.Sprintf("语音识别已返回结果：%s", text), data: map[string]interface{}{"level": "live", "text": text}}, nil
+		return liveProviderTestResult{message: fmt.Sprintf("Speech recognition returned: %s", text), data: map[string]interface{}{"level": "live", "text": text}}, nil
 	case <-testCtx.Done():
-		return liveProviderTestResult{}, errors.New("ASR 测试超时，未收到有效识别结果")
+		return liveProviderTestResult{}, errors.New("ASR test timed out, no valid recognition result received")
 	}
 }
 
@@ -136,14 +136,14 @@ func addASRProviderTestAudio(ctx context.Context, provider asrProviderTest, audi
 func loadProviderTestPCM() ([]byte, error) {
 	encoded, err := providerTestAssets.ReadFile("testdata/asr-test.wav.b64")
 	if err != nil {
-		return nil, fmt.Errorf("读取内置 ASR 测试音频失败：%w", err)
+		return nil, fmt.Errorf("failed to read built-in ASR test audio: %w", err)
 	}
 	wav, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(encoded)))
 	if err != nil {
-		return nil, fmt.Errorf("解析内置 ASR 测试音频失败：%w", err)
+		return nil, fmt.Errorf("failed to parse built-in ASR test audio: %w", err)
 	}
 	if len(wav) <= 44 || string(wav[:4]) != "RIFF" || string(wav[8:12]) != "WAVE" {
-		return nil, errors.New("内置 ASR 测试音频格式无效")
+		return nil, errors.New("invalid format for built-in ASR test audio")
 	}
 	var sampleRate uint32
 	var pcm []byte
@@ -152,12 +152,12 @@ func loadProviderTestPCM() ([]byte, error) {
 		chunkSize := int(binary.LittleEndian.Uint32(wav[offset+4 : offset+8]))
 		offset += 8
 		if chunkSize < 0 || offset+chunkSize > len(wav) {
-			return nil, errors.New("内置 ASR 测试音频数据损坏")
+			return nil, errors.New("built-in ASR test audio data is corrupted")
 		}
 		switch chunkID {
 		case "fmt ":
 			if chunkSize < 16 || binary.LittleEndian.Uint16(wav[offset:offset+2]) != 1 || binary.LittleEndian.Uint16(wav[offset+2:offset+4]) != 1 || binary.LittleEndian.Uint16(wav[offset+14:offset+16]) != 16 {
-				return nil, errors.New("内置 ASR 测试音频必须为单声道 16 位 PCM")
+				return nil, errors.New("built-in ASR test audio must be mono 16-bit PCM")
 			}
 			sampleRate = binary.LittleEndian.Uint32(wav[offset+4 : offset+8])
 		case "data":
@@ -169,7 +169,7 @@ func loadProviderTestPCM() ([]byte, error) {
 		}
 	}
 	if len(pcm) == 0 || sampleRate == 0 {
-		return nil, errors.New("内置 ASR 测试音频缺少 PCM 数据")
+		return nil, errors.New("built-in ASR test audio is missing PCM data")
 	}
 	return resamplePCM16Mono(pcm, sampleRate, asrTestSampleRate), nil
 }
@@ -195,7 +195,7 @@ func (s *DefaultUserService) testTTSProvider(ctx context.Context, name, subType 
 	raw, _ := jsonProviderConfig(config)
 	var providerConfig configs.TTSConfig
 	if err := json.Unmarshal(raw, &providerConfig); err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("TTS Provider 配置格式无效：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("invalid TTS provider configuration format: %w", err)
 	}
 	outputDir := strings.TrimSpace(providerConfig.OutputDir)
 	if outputDir == "" {
@@ -203,14 +203,14 @@ func (s *DefaultUserService) testTTSProvider(ctx context.Context, name, subType 
 	}
 	provider, err := tts.Create(subType, &tts.Config{Name: name, Type: subType, OutputDir: outputDir, Voice: providerConfig.Voice, Format: providerConfig.Format, AppID: providerConfig.AppID, Token: providerConfig.Token, Cluster: providerConfig.Cluster, SupportedVoices: providerConfig.SupportedVoices}, false)
 	if err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("TTS Provider 初始化失败：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("failed to initialize TTS provider: %w", err)
 	}
 	defer provider.Cleanup()
 	audio, err := collectTTSProviderTest(ctx, provider)
 	if err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("TTS 测试失败：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("TTS test failed: %w", err)
 	}
-	return liveProviderTestResult{message: fmt.Sprintf("语音合成已返回音频（%d 字节）。", len(audio.data)), data: map[string]interface{}{"level": "live", "audio_base64": base64.StdEncoding.EncodeToString(audio.data), "audio_format": audio.format}}, nil
+	return liveProviderTestResult{message: fmt.Sprintf("Speech synthesis returned audio (%d bytes).", len(audio.data)), data: map[string]interface{}{"level": "live", "audio_base64": base64.StdEncoding.EncodeToString(audio.data), "audio_format": audio.format}}, nil
 }
 
 func jsonProviderConfig(config map[string]interface{}) ([]byte, error) { return json.Marshal(config) }
@@ -234,21 +234,21 @@ func collectTTSProviderTest(ctx context.Context, provider tts.Provider) (provide
 	select {
 	case result = <-completed:
 	case <-ctx.Done():
-		return providerTestAudio{}, errors.New("语音合成超时")
+		return providerTestAudio{}, errors.New("speech synthesis timed out")
 	}
 	if result.err != nil {
 		return providerTestAudio{}, result.err
 	}
 	if result.path == "" {
-		return providerTestAudio{}, errors.New("语音合成未返回音频数据")
+		return providerTestAudio{}, errors.New("speech synthesis returned no audio data")
 	}
 	defer os.Remove(result.path)
 	info, err := os.Stat(result.path)
 	if err != nil || info.Size() == 0 {
-		return providerTestAudio{}, errors.New("语音合成输出文件不可用")
+		return providerTestAudio{}, errors.New("speech synthesis output file unavailable")
 	}
 	if info.Size() > maxTTSTestAudioBytes {
-		return providerTestAudio{}, fmt.Errorf("测试音频超过 %d MiB", maxTTSTestAudioBytes/(1024*1024))
+		return providerTestAudio{}, fmt.Errorf("test audio exceeds %d MiB", maxTTSTestAudioBytes/(1024*1024))
 	}
 	data, err := os.ReadFile(result.path)
 	if err != nil {
@@ -260,7 +260,7 @@ func collectTTSProviderTest(ctx context.Context, provider tts.Provider) (provide
 func normalizeProviderTestAudio(data []byte, format string) (providerTestAudio, error) {
 	format = strings.TrimPrefix(strings.ToLower(strings.TrimSpace(format)), ".")
 	if len(data) == 0 {
-		return providerTestAudio{}, errors.New("语音合成未返回音频数据")
+		return providerTestAudio{}, errors.New("speech synthesis returned no audio data")
 	}
 	switch format {
 	case "pcm", "raw", "s16le":
@@ -272,7 +272,7 @@ func normalizeProviderTestAudio(data []byte, format string) (providerTestAudio, 
 	case "ogg", "opus":
 		return providerTestAudio{data, "ogg"}, nil
 	default:
-		return providerTestAudio{}, fmt.Errorf("不支持页面播放的音频格式：%s", format)
+		return providerTestAudio{}, fmt.Errorf("unsupported audio format for web playback: %s", format)
 	}
 }
 
@@ -298,20 +298,20 @@ func pcmToProviderTestWAV(pcm []byte) []byte {
 func (s *DefaultUserService) testLLMProvider(ctx context.Context, name, subType string, config map[string]interface{}) (liveProviderTestResult, error) {
 	provider, err := llm.Create(subType, &llm.Config{Name: name, Type: subType, ModelName: stringConfig(config, "model_name"), BaseURL: stringConfig(config, "url"), APIKey: stringConfig(config, "api_key"), Extra: config})
 	if err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("LLM Provider 初始化失败：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("failed to initialize LLM provider: %w", err)
 	}
 	defer provider.Cleanup()
 	testCtx, cancel := context.WithTimeout(ctx, providerTestTimeout)
 	defer cancel()
 	response, err := provider.Response(testCtx, "provider-test", []providerbase.Message{{Role: "user", Content: llmTestPrompt}})
 	if err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("LLM 测试请求失败：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("LLM test request failed: %w", err)
 	}
 	text, err := collectLiveResponse(testCtx, response)
 	if err != nil {
 		return liveProviderTestResult{}, err
 	}
-	return liveProviderTestResult{message: fmt.Sprintf("模型原始响应：%s", text), data: map[string]interface{}{"level": "live", "prompt": llmTestPrompt, "text": text}}, nil
+	return liveProviderTestResult{message: fmt.Sprintf("Raw model response: %s", text), data: map[string]interface{}{"level": "live", "prompt": llmTestPrompt, "text": text}}, nil
 }
 
 func (s *DefaultUserService) testVLLLMProvider(ctx context.Context, name, subType string, config map[string]interface{}) (liveProviderTestResult, error) {
@@ -326,20 +326,20 @@ func (s *DefaultUserService) testVLLLMProvider(ctx context.Context, name, subTyp
 		err = provider.Initialize()
 	}
 	if err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("视觉模型初始化失败：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("failed to initialize vision model: %w", err)
 	}
 	defer provider.Cleanup()
 	testCtx, cancel := context.WithTimeout(ctx, providerTestTimeout)
 	defer cancel()
 	response, err := provider.ResponseWithImage(testCtx, "provider-test", []providerbase.Message{}, image.ImageData{Data: vlllmTestImageBase64, Format: "png"}, vlllmTestPrompt)
 	if err != nil {
-		return liveProviderTestResult{}, fmt.Errorf("视觉模型测试请求失败：%w", err)
+		return liveProviderTestResult{}, fmt.Errorf("vision model test request failed: %w", err)
 	}
 	text, err := collectLiveResponse(testCtx, response)
 	if err != nil {
 		return liveProviderTestResult{}, err
 	}
-	return liveProviderTestResult{message: fmt.Sprintf("视觉模型已返回结果：%s", text), data: map[string]interface{}{"level": "live", "text": text}}, nil
+	return liveProviderTestResult{message: fmt.Sprintf("Vision model returned result: %s", text), data: map[string]interface{}{"level": "live", "text": text}}, nil
 }
 
 func decodeVLLLMTestConfig(config map[string]interface{}) (configs.VLLMConfig, error) {
@@ -367,11 +367,11 @@ func decodeVLLLMTestConfig(config map[string]interface{}) (configs.VLLMConfig, e
 	}
 	raw, err := jsonProviderConfig(normalized)
 	if err != nil {
-		return configs.VLLMConfig{}, fmt.Errorf("视觉模型配置格式无效：%w", err)
+		return configs.VLLMConfig{}, fmt.Errorf("invalid vision model configuration format: %w", err)
 	}
 	var cfg configs.VLLMConfig
 	if err := json.Unmarshal(raw, &cfg); err != nil {
-		return configs.VLLMConfig{}, fmt.Errorf("视觉模型配置格式无效：%w", err)
+		return configs.VLLMConfig{}, fmt.Errorf("invalid vision model configuration format: %w", err)
 	}
 	return cfg, nil
 }
@@ -383,7 +383,7 @@ func normalizeProviderInteger(value interface{}, field string) (interface{}, err
 	}
 	parsed, err := strconv.Atoi(strings.TrimSpace(text))
 	if err != nil {
-		return nil, fmt.Errorf("视觉模型配置格式无效：%s 必须是整数", field)
+		return nil, fmt.Errorf("invalid vision model configuration: %s must be an integer", field)
 	}
 	return parsed, nil
 }
@@ -395,7 +395,7 @@ func normalizeProviderFloat(value interface{}, field string) (interface{}, error
 	}
 	parsed, err := strconv.ParseFloat(strings.TrimSpace(text), 64)
 	if err != nil {
-		return nil, fmt.Errorf("视觉模型配置格式无效：%s 必须是数值", field)
+		return nil, fmt.Errorf("invalid vision model configuration: %s must be a number", field)
 	}
 	return parsed, nil
 }
@@ -426,7 +426,7 @@ func collectLiveResponse(ctx context.Context, response <-chan string) (string, e
 			if !ok {
 				result := strings.TrimSpace(text.String())
 				if result == "" {
-					return "", errors.New("模型未返回任何内容")
+					return "", errors.New("model returned no content")
 				}
 				if strings.HasPrefix(result, "【") {
 					return "", errors.New(result)
@@ -434,11 +434,11 @@ func collectLiveResponse(ctx context.Context, response <-chan string) (string, e
 				return result, nil
 			}
 			if text.Len()+len(chunk) > maxProviderResponseBytes {
-				return "", errors.New("测试响应过长")
+				return "", errors.New("test response too long")
 			}
 			text.WriteString(chunk)
 		case <-ctx.Done():
-			return "", errors.New("测试超时，未收到有效响应")
+			return "", errors.New("test timed out, no valid response received")
 		}
 	}
 }

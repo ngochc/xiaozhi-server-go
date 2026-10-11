@@ -17,7 +17,7 @@ type DefaultUserService struct {
 	config *configs.Config
 }
 
-// NewDefaultUserService 构造函数
+// NewDefaultUserService constructor
 func NewDefaultUserService(
 	config *configs.Config,
 	logger *utils.Logger,
@@ -29,7 +29,7 @@ func NewDefaultUserService(
 	return service, nil
 }
 
-// Start 实现用户服务接口，注册所有用户相关路由
+// Start registers User service routes
 func (s *DefaultUserService) Start(
 	ctx context.Context,
 	engine *gin.Engine,
@@ -38,7 +38,7 @@ func (s *DefaultUserService) Start(
 	apiGroup.POST("/user/login", s.handleLogin)
 	apiGroup.POST("/user/logout", s.handleLogout)
 
-	// 需要认证的用户接口
+	// User routes requiring authentication
 	authGroup := apiGroup.Group("/user")
 	authGroup.Use(AuthMiddleware())
 	{
@@ -46,7 +46,7 @@ func (s *DefaultUserService) Start(
 		authGroup.PUT("/profile", s.handleUpdateProfile)
 		authGroup.POST("/change-password", s.handleChangePassword)
 
-		authGroup.GET("/summary", s.handleSystemSummary) // 获取用户汇总信息
+		authGroup.GET("/summary", s.handleSystemSummary) // Retrieve user summary metrics
 
 		authGroup.POST("/agent/create", s.handleAgentCreate)
 		authGroup.GET("/agent/list", s.handleAgentList)
@@ -77,18 +77,18 @@ func (s *DefaultUserService) Start(
 		authGroup.DELETE("/device/:id/memory", s.handleDeviceMemoryClear)
 	}
 
-	s.logger.Info("用户HTTP服务路由注册完成")
+	s.logger.Info("User HTTP routes registered successfully")
 	return nil
 }
 
 func (s *DefaultUserService) handleSystemSummary(c *gin.Context) {
-	// 获取用户汇总信息
+	// Retrieve user summary metrics
 	userID, _ := c.Get("user_id")
 	_, err := database.GetUserByID(database.GetDB(), userID.(uint))
 	if err != nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}
@@ -97,7 +97,7 @@ func (s *DefaultUserService) handleSystemSummary(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "获取系统汇总信息成功",
+		"message": "Retrieved system summary successfully",
 		"data": gin.H{
 			"totle_users":       data["total_users"],
 			"totle_agents":      data["total_agents"],
@@ -110,97 +110,97 @@ func (s *DefaultUserService) handleSystemSummary(c *gin.Context) {
 	})
 }
 
-// LoginRequest 用户登录请求体
-// @Description 用户登录参数
+// LoginRequest User login request body
+// @Description User login parameters
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param data body LoginRequest true "登录参数"
-// @Success 200 {object} map[string]interface{} "登录成功返回token和用户信息"
+// @Param data body LoginRequest true "Login parameters"
+// @Success 200 {object} map[string]interface{} "Token and user information returned on successful login"
 // @Router /user/login [post]
 type LoginRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-// ChangePasswordRequest 修改密码请求体
-// @Description 修改密码参数
+// ChangePasswordRequest Change password request body
+// @Description Change password parameters
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param data body ChangePasswordRequest true "修改密码参数"
-// @Success 200 {object} map[string]interface{} "修改密码结果"
+// @Param data body ChangePasswordRequest true "Change password parameters"
+// @Success 200 {object} map[string]interface{} "Change password result"
 // @Router /user/change-password [post]
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password" binding:"required"`
 	NewPassword string `json:"new_password" binding:"required,min=6"`
 }
 
-// handleLogin 用户登录
-// @Summary 用户登录
-// @Description 用户登录接口
+// handleLogin User login
+// @Summary User login
+// @Description User login endpoint
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param data body LoginRequest true "登录参数"
-// @Success 200 {object} map[string]interface{} "登录成功返回token和用户信息"
+// @Param data body LoginRequest true "Login parameters"
+// @Success 200 {object} map[string]interface{} "Token and user information returned on successful login"
 // @Router /user/login [post]
 func (s *DefaultUserService) handleLogin(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
 	}
 
-	// 获取用户信息
+	// Get user information
 	user, err := database.GetUserByUsername(database.GetDB(), req.Username)
 	if err != nil || user == nil {
 		c.JSON(401, gin.H{
 			"status":  "error",
-			"message": "用户名或密码错误",
+			"message": "Incorrect username or password",
 		})
 		return
 	}
 
-	// 验证密码
+	// Verify password
 	if !s.verifyPassword(req.Password, user.Password) {
 		c.JSON(401, gin.H{
 			"status":  "error",
-			"message": "用户名或密码错误",
+			"message": "Incorrect username or password",
 		})
 		return
 	}
 
-	// 检查用户状态
+	// Check user status
 	if user.Status != 1 {
 		c.JSON(401, gin.H{
 			"status":  "error",
-			"message": "账户已被禁用",
+			"message": "Account has been disabled",
 		})
 		return
 	}
 
-	// 生成JWT token
+	// Generate JWT token
 	token, err := GenerateJWT(user.ID, user.Username)
 	if err != nil {
-		s.logger.Error("生成JWT失败: %v", err)
+		s.logger.Error("Failed to generate JWT: %v", err)
 		c.JSON(500, gin.H{
 			"status":  "error",
-			"message": "登录失败",
+			"message": "Login failed",
 		})
 		return
 	}
 
-	// 更新最后登录时间
+	// Update last login time
 	database.UpdateUserLastLogin(database.GetDB(), user.ID)
 
-	s.logger.Info("用户登录成功: %s", req.Username)
+	s.logger.Info("User logged in successfully: %s", req.Username)
 	role := user.Role
-	// 判断 如果时admin，则下发role字段
+	// If admin, assign role field
 	data := gin.H{
 		"token":    token,
 		"user_id":  user.ID,
@@ -208,7 +208,7 @@ func (s *DefaultUserService) handleLogin(c *gin.Context) {
 		"email":    user.Email,
 	}
 
-	// 判断 如果是admin，则下发role字段
+	// If admin, assign role field
 	if role != "user" {
 		data["role"] = role
 	}
@@ -216,32 +216,32 @@ func (s *DefaultUserService) handleLogin(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"status":  "ok",
 		"success": true,
-		"message": "登录成功",
+		"message": "Login successful",
 		"data":    data,
 	})
 }
 
-// handleLogout 用户登出
-// @Summary 用户登出
-// @Description 用户登出接口
+// handleLogout User logout
+// @Summary User logout
+// @Description User logout endpoint
 // @Tags User
 // @Produce json
-// @Success 200 {object} map[string]interface{} "登出结果"
+// @Success 200 {object} map[string]interface{} "Logout result"
 // @Router /user/logout [post]
 func (s *DefaultUserService) handleLogout(c *gin.Context) {
-	// 这里可以实现token黑名单机制
+	// Token blacklist mechanism can be implemented here
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "登出成功",
+		"message": "Logout successful",
 	})
 }
 
-// handleGetProfile 获取用户资料
-// @Summary 获取用户资料
-// @Description 获取当前登录用户的个人信息
+// handleGetProfile Get user profile
+// @Summary Get user profile
+// @Description Get personal information of currently logged in user
 // @Tags User
 // @Produce json
-// @Success 200 {object} map[string]interface{} "用户资料"
+// @Success 200 {object} map[string]interface{} "User profile"
 // @Router /user/profile [get]
 func (s *DefaultUserService) handleGetProfile(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -250,14 +250,14 @@ func (s *DefaultUserService) handleGetProfile(c *gin.Context) {
 	if err != nil || user == nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "获取用户资料成功",
+		"message": "User profile retrieved successfully",
 		"data": gin.H{
 			"user_id":    user.ID,
 			"username":   user.Username,
@@ -270,14 +270,14 @@ func (s *DefaultUserService) handleGetProfile(c *gin.Context) {
 	})
 }
 
-// handleUpdateProfile 更新用户资料
-// @Summary 更新用户资料
-// @Description 更新当前登录用户的个人信息
+// handleUpdateProfile Update user profile
+// @Summary Update user profile
+// @Description Update personal information of currently logged in user
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param data body object true "用户资料参数"
-// @Success 200 {object} map[string]interface{} "更新后的用户资料"
+// @Param data body object true "User profile parameters"
+// @Success 200 {object} map[string]interface{} "Updated user profile"
 // @Router /user/profile [put]
 func (s *DefaultUserService) handleUpdateProfile(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -291,7 +291,7 @@ func (s *DefaultUserService) handleUpdateProfile(c *gin.Context) {
 	if err := c.ShouldBindJSON(&updateData); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
@@ -301,7 +301,7 @@ func (s *DefaultUserService) handleUpdateProfile(c *gin.Context) {
 		if err != nil {
 			c.JSON(404, gin.H{
 				"status":  "error",
-				"message": "用户不存在",
+				"message": "User does not exist",
 			})
 			return err
 		}
@@ -310,7 +310,7 @@ func (s *DefaultUserService) handleUpdateProfile(c *gin.Context) {
 			if err != nil {
 				c.JSON(400, gin.H{
 					"status":  "error",
-					"message": "更新用昵称失败",
+					"message": "Failed to update nickname",
 					"error":   err.Error(),
 				})
 				return err
@@ -322,7 +322,7 @@ func (s *DefaultUserService) handleUpdateProfile(c *gin.Context) {
 			if err != nil {
 				c.JSON(400, gin.H{
 					"status":  "error",
-					"message": "更新头像失败",
+					"message": "Failed to update avatar",
 					"error":   err.Error(),
 				})
 				return err
@@ -334,7 +334,7 @@ func (s *DefaultUserService) handleUpdateProfile(c *gin.Context) {
 			if err != nil {
 				c.JSON(400, gin.H{
 					"status":  "error",
-					"message": "更新邮箱失败",
+					"message": "Failed to update email",
 					"error":   err.Error(),
 				})
 				return err
@@ -343,20 +343,20 @@ func (s *DefaultUserService) handleUpdateProfile(c *gin.Context) {
 		}
 		c.JSON(200, gin.H{
 			"status":  "ok",
-			"message": "更新成功",
+			"message": "Updated successfully",
 		})
 		return nil
 	})
 }
 
-// handleChangePassword 修改密码
-// @Summary 修改密码
-// @Description 修改当前登录用户的密码
+// handleChangePassword Change password
+// @Summary Change password
+// @Description Change password of currently logged in user
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param data body ChangePasswordRequest true "修改密码参数"
-// @Success 200 {object} map[string]interface{} "修改密码结果"
+// @Param data body ChangePasswordRequest true "Change password parameters"
+// @Success 200 {object} map[string]interface{} "Change password result"
 // @Router /user/change-password [post]
 func (s *DefaultUserService) handleChangePassword(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -365,43 +365,43 @@ func (s *DefaultUserService) handleChangePassword(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "请求参数错误",
+			"message": "Invalid request parameters",
 			"error":   err.Error(),
 		})
 		return
 	}
 
-	// 获取用户信息验证旧密码
+	// Get user information to verify old password
 	user, err := database.GetUserByID(database.GetDB(), userID.(uint))
 	if err != nil || user == nil {
 		c.JSON(404, gin.H{
 			"status":  "error",
-			"message": "用户不存在",
+			"message": "User does not exist",
 		})
 		return
 	}
 
-	// 验证旧密码
+	// Verify old password
 	if !s.verifyPassword(req.OldPassword, user.Password) {
 		s.logger.Error(
-			"用户修改密码失败: 原密码错误: %s, old:%s, req:%s",
+			"User password change failed: incorrect old password: %s, old:%s, req:%s",
 			user.Username,
 			user.Password,
 			req.OldPassword,
 		)
 		c.JSON(400, gin.H{
 			"status":  "error",
-			"message": "原密码错误",
+			"message": "Incorrect old password",
 		})
 		return
 	}
 
-	// 更新密码
+	// Update password
 	hashedPassword := s.hashPassword(req.NewPassword)
 	if err := database.UpdateUserPassword(database.GetDB(), userID.(uint), hashedPassword); err != nil {
 		c.JSON(500, gin.H{
 			"status":  "error",
-			"message": "密码修改失败",
+			"message": "Failed to change password",
 			"error":   err.Error(),
 		})
 		return
@@ -409,17 +409,17 @@ func (s *DefaultUserService) handleChangePassword(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"status":  "ok",
-		"message": "密码修改成功",
+		"message": "Password changed successfully",
 	})
 }
 
-// 密码哈希
+// Password hash
 func (s *DefaultUserService) hashPassword(password string) string {
 	hash := md5.Sum([]byte(password + "xiaozhi_salt"))
 	return hex.EncodeToString(hash[:])
 }
 
-// 验证密码
+// Verify password
 func (s *DefaultUserService) verifyPassword(password, hashedPassword string) bool {
 	return s.hashPassword(password) == hashedPassword
 }

@@ -9,17 +9,17 @@ import (
 	"time"
 )
 
-// MemoryAuthStore 内存认证存储实现
+// MemoryAuthStore in-memory authentication store implementation
 type MemoryAuthStore struct {
 	clients  map[string]*ClientInfo
 	mutex    sync.RWMutex
-	expiryHr int // 过期时间(小时)
+	expiryHr int // Expiry time (hours)
 }
 
-// NewMemoryAuthStore 创建内存认证存储
+// NewMemoryAuthStore creates in-memory authentication store
 func NewMemoryAuthStore(expiryHr int) *MemoryAuthStore {
 	if expiryHr <= 0 {
-		expiryHr = 24 // 默认24小时
+		expiryHr = 24 // Default 24 hours
 	}
 
 	store := &MemoryAuthStore{
@@ -27,13 +27,13 @@ func NewMemoryAuthStore(expiryHr int) *MemoryAuthStore {
 		expiryHr: expiryHr,
 	}
 
-	// 启动定期清理过期数据的goroutine
+	// Start background goroutine to clean up expired data
 	go store.periodicCleanup()
 
 	return store
 }
 
-// StoreAuth 存储客户端认证信息
+// StoreAuth stores client authentication info
 func (m *MemoryAuthStore) StoreAuth(
 	clientID, username, password string,
 	metadata map[string]interface{},
@@ -42,15 +42,15 @@ func (m *MemoryAuthStore) StoreAuth(
 	defer m.mutex.Unlock()
 
 	if clientID == "" {
-		return fmt.Errorf("client_id不能为空")
+		return fmt.Errorf("client_id cannot be empty")
 	}
 
-	// 解析用户名中的IP信息(base64编码的JSON)
+	// Parse IP info from username (base64 encoded JSON)
 	ip := ""
 	deviceID := ""
 
 	if username != "" {
-		// 尝试解码base64
+		// Attempt base64 decode
 		if decoded, err := base64.StdEncoding.DecodeString(username); err == nil {
 			var userInfo map[string]interface{}
 			if json.Unmarshal(decoded, &userInfo) == nil {
@@ -61,7 +61,7 @@ func (m *MemoryAuthStore) StoreAuth(
 		}
 	}
 
-	// 从client_id中提取device_id (格式: CGID_test@@@device_id@@@uuid)
+	// Extract device_id from client_id (format: CGID_test@@@device_id@@@uuid)
 	if parts := strings.Split(clientID, "@@@"); len(parts) >= 2 {
 		deviceID = parts[1]
 	}
@@ -85,7 +85,7 @@ func (m *MemoryAuthStore) StoreAuth(
 	return nil
 }
 
-// ValidateAuth 验证客户端认证信息
+// ValidateAuth validates client authentication info
 func (m *MemoryAuthStore) ValidateAuth(
 	clientID, username, password string,
 ) (bool, *ClientInfo, error) {
@@ -97,12 +97,12 @@ func (m *MemoryAuthStore) ValidateAuth(
 		return false, nil, nil
 	}
 
-	// 检查是否过期
+	// Check if expired
 	if clientInfo.ExpiresAt != nil && time.Now().After(*clientInfo.ExpiresAt) {
-		return false, nil, fmt.Errorf("认证信息已过期")
+		return false, nil, fmt.Errorf("authentication info expired")
 	}
 
-	// 验证用户名和密码
+	// Verify username and password
 	if clientInfo.Username != username || clientInfo.Password != password {
 		return false, nil, nil
 	}
@@ -110,27 +110,27 @@ func (m *MemoryAuthStore) ValidateAuth(
 	return true, clientInfo, nil
 }
 
-// GetClientInfo 获取客户端信息
+// GetClientInfo retrieves client info
 func (m *MemoryAuthStore) GetClientInfo(clientID string) (*ClientInfo, error) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 
 	clientInfo, exists := m.clients[clientID]
 	if !exists {
-		return nil, fmt.Errorf("客户端不存在: %s", clientID)
+		return nil, fmt.Errorf("client does not exist: %s", clientID)
 	}
 
-	// 检查是否过期
+	// Check if expired
 	if clientInfo.ExpiresAt != nil && time.Now().After(*clientInfo.ExpiresAt) {
-		return nil, fmt.Errorf("客户端认证已过期: %s", clientID)
+		return nil, fmt.Errorf("client authentication expired: %s", clientID)
 	}
 
-	// 返回副本以避免外部修改
+	// Return copy to prevent external mutation
 	info := *clientInfo
 	return &info, nil
 }
 
-// RemoveAuth 删除客户端认证信息
+// RemoveAuth deletes client authentication info
 func (m *MemoryAuthStore) RemoveAuth(clientID string) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -139,7 +139,7 @@ func (m *MemoryAuthStore) RemoveAuth(clientID string) error {
 	return nil
 }
 
-// ListClients 列出所有客户端ID
+// ListClients lists all client IDs
 func (m *MemoryAuthStore) ListClients() ([]string, error) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -148,7 +148,7 @@ func (m *MemoryAuthStore) ListClients() ([]string, error) {
 	now := time.Now()
 
 	for clientID, clientInfo := range m.clients {
-		// 只返回未过期的客户端
+		// Return only unexpired clients
 		if clientInfo.ExpiresAt == nil || now.Before(*clientInfo.ExpiresAt) {
 			clients = append(clients, clientID)
 		}
@@ -157,7 +157,7 @@ func (m *MemoryAuthStore) ListClients() ([]string, error) {
 	return clients, nil
 }
 
-// CleanupExpired 清理过期认证
+// CleanupExpired cleans up expired authentications
 func (m *MemoryAuthStore) CleanupExpired() error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -178,19 +178,19 @@ func (m *MemoryAuthStore) CleanupExpired() error {
 	return nil
 }
 
-// Close 关闭存储连接
+// Close closes storage connection
 func (m *MemoryAuthStore) Close() error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	// 清空内存数据
+	// Clear memory data
 	m.clients = make(map[string]*ClientInfo)
 	return nil
 }
 
-// periodicCleanup 定期清理过期数据
+// periodicCleanup periodically cleans up expired data
 func (m *MemoryAuthStore) periodicCleanup() {
-	ticker := time.NewTicker(1 * time.Hour) // 每小时清理一次
+	ticker := time.NewTicker(1 * time.Hour) // Clean every hour
 	defer ticker.Stop()
 
 	for range ticker.C {
@@ -198,7 +198,7 @@ func (m *MemoryAuthStore) periodicCleanup() {
 	}
 }
 
-// GetStats 获取存储统计信息
+// GetStats gets storage statistics
 func (m *MemoryAuthStore) GetStats() map[string]interface{} {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()

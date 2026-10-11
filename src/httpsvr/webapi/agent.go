@@ -11,27 +11,27 @@ import (
 	"gorm.io/gorm"
 )
 
-// 创建Agent请求体
+// CreateAgentRequest represents Agent creation payload
 type AgentCreateRequest struct {
 	Prompt     string `json:"prompt"`
-	Name       string `json:"name"` // 智能体名称
+	Name       string `json:"name"` // Agent name
 	LLM        string `json:"LLM"`
-	Language   string `json:"language"`   // 语言，默认为中文
-	Voice      string `json:"voice"`      // 语音，默认为湾湾小何的音色id
-	VoiceName  string `json:"voiceName"`  // 语音名称，默认为湾湾小何
-	ASRSpeed   int    `json:"asrSpeed"`   // ASR 语音识别速度，1=耐心，2=正常，3=快速
-	SpeakSpeed int    `json:"speakSpeed"` // TTS 角色语速，1=慢速，2=正常，3=快速
-	Tone       int    `json:"tone"`       // TTS 角色音调，1-100，低音-高音
+	Language   string `json:"language"`   // Language
+	Voice      string `json:"voice"`      // Voice，Default voice identifier
+	VoiceName  string `json:"voiceName"`  // Voice display name
+	ASRSpeed   int    `json:"asrSpeed"`   // ASR speed: 1=patient, 2=normal, 3=fast
+	SpeakSpeed int    `json:"speakSpeed"` // TTS rate: 1=slow, 2=normal, 3=fast
+	Tone       int    `json:"tone"`       // TTS pitch: 1-100, low to high
 }
 
-// handleAgentCreate 创建Agent请求体
-// @Summary 创建新的智能体
-// @Description 创建新的智能体
+// handleAgentCreate Create agent request body
+// @Summary Create new agent
+// @Description Create new agent
 // @Tags Agent
 // @Accept json
 // @Produce json
-// @Param data body AgentCreateRequest true "Agent创建参数"
-// @Success 200 {object} models.Agent "创建成功返回Agent信息"
+// @Param data body AgentCreateRequest true "Agent creation parameters"
+// @Success 200 {object} models.Agent "Agent information returned on successful creation"
 // @Router /user/agent/create [post]
 func (s *DefaultUserService) handleAgentCreate(c *gin.Context) {
 	userID := currentUserID(c)
@@ -63,18 +63,18 @@ func (s *DefaultUserService) handleAgentCreate(c *gin.Context) {
 	})
 }
 
-// 构造返回结构体，带 device id 列表
+// Construct response struct with device id list
 type AgentWithDeviceIDs struct {
 	models.Agent
 	DeviceIDs []uint `json:"deviceIDs"`
 }
 
-// handleAgentList 获取Agent列表
-// @Summary 获取当前用户的所有Agent
-// @Description 获取当前用户的所有Agent及其设备ID列表
+// handleAgentList Get agent list
+// @Summary Get all agents for the current user
+// @Description Get all agents and their device ID lists for the current user
 // @Tags Agent
 // @Produce json
-// @Success 200 {object} []AgentWithDeviceIDs "Agent列表"
+// @Success 200 {object} []AgentWithDeviceIDs "Agent list"
 // @Router /user/agent/list [get]
 func (s *DefaultUserService) handleAgentList(c *gin.Context) {
 	userID := currentUserID(c)
@@ -99,13 +99,13 @@ func (s *DefaultUserService) handleAgentList(c *gin.Context) {
 	})
 }
 
-// handleAgentGet 获取单个Agent
-// @Summary 获取指定ID的Agent
-// @Description 根据ID获取Agent详情
+// handleAgentGet Get single agent
+// @Summary Get agent by ID
+// @Description Get agent details by ID
 // @Tags Agent
 // @Produce json
 // @Param id path int true "Agent ID"
-// @Success 200 {object} models.Agent "Agent信息"
+// @Success 200 {object} models.Agent "Agent information"
 // @Router /user/agent/{id} [get]
 func (s *DefaultUserService) handleAgentGet(c *gin.Context) {
 	userID := currentUserID(c)
@@ -125,15 +125,15 @@ func (s *DefaultUserService) handleAgentGet(c *gin.Context) {
 	})
 }
 
-// handleAgentUpdate 更新Agent
-// @Summary 更新指定ID的Agent
-// @Description 根据ID更新Agent信息
+// handleAgentUpdate Update agent
+// @Summary Update agent by ID
+// @Description Update agent information by ID
 // @Tags Agent
 // @Accept json
 // @Produce json
 // @Param id path int true "Agent ID"
-// @Param data body AgentCreateRequest true "Agent更新参数"
-// @Success 200 {object} models.Agent "更新后的Agent信息"
+// @Param data body AgentCreateRequest true "Agent update parameters"
+// @Success 200 {object} models.Agent "Updated agent information"
 // @Router /user/agent/{id} [put]
 func (s *DefaultUserService) handleAgentUpdate(c *gin.Context) {
 	userID := currentUserID(c)
@@ -163,9 +163,9 @@ func (s *DefaultUserService) handleAgentUpdate(c *gin.Context) {
 		agent.ASRSpeed = req.ASRSpeed
 		agent.SpeakSpeed = req.SpeakSpeed
 		agent.Tone = req.Tone
-		agent.UpdatedAt = time.Now() // 更新修改时间
+		agent.UpdatedAt = time.Now() // Update modification time
 		if agent.CreatedAt.IsZero() {
-			agent.CreatedAt = time.Now() // 如果没有设置创建时间，则设置为当前时间
+			agent.CreatedAt = time.Now() // If creation time is not set, set to current time
 		}
 
 		if err := database.UpdateAgent(tx, agent); err != nil {
@@ -176,25 +176,25 @@ func (s *DefaultUserService) handleAgentUpdate(c *gin.Context) {
 	})
 }
 
-// handleAgentDelete 删除Agent
-// @Summary 删除指定ID的Agent
-// @Description 根据ID删除Agent
+// handleAgentDelete Delete agent
+// @Summary Delete agent by ID
+// @Description Delete agent by ID
 // @Tags Agent
 // @Produce json
 // @Param id path int true "Agent ID"
-// @Success 200 {object} map[string]interface{} "删除结果"
+// @Success 200 {object} map[string]interface{} "Deletion result"
 // @Router /user/agent/{id} [delete]
 func (s *DefaultUserService) handleAgentDelete(c *gin.Context) {
 	userID := currentUserID(c)
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		s.logger.Error("无效的Agent ID: %v", err)
+		s.logger.Error("Invalid Agent ID: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
 	WithTx(c, func(tx *gorm.DB) error {
 		if err := database.DeleteAgent(tx, uint(id), userID); err != nil {
-			s.logger.Error("删除Agent失败: %v", err)
+			s.logger.Error("Failed to delete Agent: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return err
 		}
@@ -203,13 +203,13 @@ func (s *DefaultUserService) handleAgentDelete(c *gin.Context) {
 	})
 }
 
-// handleAgentHistoryDialogList 获取Agent对话记录列表
-// @Summary 获取Agent对话记录列表
-// @Description 获取指定Agent的对话记录列表
+// handleAgentHistoryDialogList Get agent dialog history list
+// @Summary Get agent dialog history list
+// @Description Get dialog history list for specified agent
 // @Tags Agent
 // @Produce json
 // @Param id path int true "Agent ID"
-// @Success 200 {object} []models.AgentDialog "对话记录列表"
+// @Success 200 {object} []models.AgentDialog "Dialog history list"
 // @Router /user/agent/history_dialog_list/{id} [post]
 func (s *DefaultUserService) handleAgentHistoryDialogList(c *gin.Context) {
 	userID := currentUserID(c)
@@ -234,13 +234,13 @@ func (s *DefaultUserService) handleAgentHistoryDialogList(c *gin.Context) {
 	})
 }
 
-// handleAgentGetHistoryDialog 获取Agent的单条对话记录
-// @Summary 获取Agent的单条对话记录
-// @Description 根据对话ID获取Agent的单条对话记录
+// handleAgentGetHistoryDialog Get single agent dialog record
+// @Summary Get single agent dialog record
+// @Description Get single agent dialog record by dialog ID
 // @Tags Agent
 // @Produce json
-// @Param dialog_id path int true "对话ID"
-// @Success 200 {object} models.AgentDialog "对话记录"
+// @Param dialog_id path int true "Dialog ID"
+// @Success 200 {object} models.AgentDialog "Dialog record"
 // @Router /user/agent/history_dialog/{dialog_id} [get]
 func (s *DefaultUserService) handleAgentGetHistoryDialog(c *gin.Context) {
 	dialogID := c.Param("dialog_id")
@@ -260,13 +260,13 @@ func (s *DefaultUserService) handleAgentGetHistoryDialog(c *gin.Context) {
 	})
 }
 
-// handleAgentDeleteHistoryDialog 删除Agent的单条对话记录
-// @Summary 删除Agent的单条对话记录
-// @Description 根据对话ID删除Agent的单条对话记录
+// handleAgentDeleteHistoryDialog Delete single agent dialog record
+// @Summary Delete single agent dialog record
+// @Description Delete single agent dialog record by dialog ID
 // @Tags Agent
 // @Produce json
-// @Param dialog_id path int true "对话ID"
-// @Success 200 {object} map[string]interface{} "删除结果"
+// @Param dialog_id path int true "Dialog ID"
+// @Success 200 {object} map[string]interface{} "Deletion result"
 // @Router /user/agent/history_dialog/{dialog_id} [delete]
 func (s *DefaultUserService) handleAgentDeleteHistoryDialog(c *gin.Context) {
 	dialogID := c.Param("dialog_id")

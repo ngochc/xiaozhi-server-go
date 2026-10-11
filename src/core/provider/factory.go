@@ -82,7 +82,7 @@ func NewASRFactory(asrType string, config *configs.Config, logger *utils.Logger)
 
 func NewLLMFactory(llmType string, config *configs.Config, logger *utils.Logger) *ProviderFactory {
 	if llmCfg, ok := config.LLM[llmType]; ok {
-		logger.Info("[LLM] 当前选择的LLM模型: %s type=%s model=%s url=%s", llmType, llmCfg.Type, llmCfg.ModelName, llmCfg.BaseURL)
+		logger.Info("[LLM] Selected LLM model: %s type=%s model=%s url=%s", llmType, llmCfg.Type, llmCfg.ModelName, llmCfg.BaseURL)
 		return &ProviderFactory{
 			Name:         llmType,
 			providerType: "llm",

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// 兼容 string/number 的类型
+// StringOrNumber supports unmarshaling string or numeric values
 type StringOrNumber string
 
 func (s *StringOrNumber) UnmarshalJSON(b []byte) error {
@@ -14,7 +14,7 @@ func (s *StringOrNumber) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 	if b[0] == '"' {
-		// 字符串
+		// String
 		var str string
 		if err := json.Unmarshal(b, &str); err != nil {
 			return err
@@ -22,7 +22,7 @@ func (s *StringOrNumber) UnmarshalJSON(b []byte) error {
 		*s = StringOrNumber(str)
 		return nil
 	}
-	// 数字
+	// Number
 	var num interface{}
 	if err := json.Unmarshal(b, &num); err != nil {
 		return err
@@ -80,7 +80,7 @@ type OTARequestBody struct {
 	Version int    `json:"version"`
 }
 
-// 命名结构体用于响应
+// Named response structures
 type ServerTimeInfo struct {
 	Timestamp      int64 `json:"timestamp"       example:"1720065289451"`
 	TimezoneOffset int   `json:"timezone_offset" example:"480"`
@@ -107,7 +107,7 @@ type MQTTInfo struct {
 type Activation struct {
 	Code      string `json:"code"                example:"543091"`
 	Message   string `json:"message"             example:"Anime AI Chat 543091"`
-	Challenge string `json:"challenge,omitempty"` // 用于设备认证挑战
+	Challenge string `json:"challenge,omitempty"` // Challenge for device authentication
 }
 type OTAResponse struct {
 	ServerTime ServerTimeInfo `json:"server_time"`

@@ -40,9 +40,8 @@ func (d *ServerConfigDB) InitServerConfig(cfgStr string) error {
 	var count int64
 	if err := d.db.Model(&models.ServerConfig{}).Count(&count).Error; err != nil {
 		if strings.Contains(err.Error(), "no such table") {
-			// 创建table
 			if err := d.db.AutoMigrate(&models.ServerConfig{}); err != nil {
-				return fmt.Errorf("创建服务器配置表失败: %v", err)
+				return fmt.Errorf("failed to create server configuration table: %v", err)
 			}
 		} else {
 			return err
@@ -66,19 +65,18 @@ func (d *ServerConfigDB) GetServerConfig() (string, error) {
 		if err == gorm.ErrRecordNotFound {
 			return "", nil
 		}
-		return "", fmt.Errorf("查询服务器配置失败: %v", err)
+		return "", fmt.Errorf("failed to query server configuration: %v", err)
 	}
 	return config.CfgStr, nil
 }
 
 func (d *ServerConfigDB) UpdateServerConfig(cfgStr string) error {
-	// 只有一个
 	var count int64
 	if err := d.db.Model(&models.ServerConfig{}).Count(&count).Error; err != nil {
 		return err
 	}
 	if count == 0 {
-		return fmt.Errorf("服务器配置未找到")
+		return fmt.Errorf("server configuration not found")
 	}
 
 	return d.db.Model(&models.ServerConfig{}).Where("id = ?", ServerConfigID).Update("cfg_str", cfgStr).Error
@@ -88,7 +86,7 @@ func (d *ServerConfigDB) LoadServerConfig() (string, error) {
 	var config models.ServerConfig
 
 	if err := d.db.AutoMigrate(&models.ServerConfig{}); err != nil {
-		return "", fmt.Errorf("创建服务器配置表失败: %v", err)
+		return "", fmt.Errorf("failed to create server configuration table: %v", err)
 	}
 
 	if err := d.db.First(&config, ServerConfigID).Error; err != nil {
@@ -98,7 +96,7 @@ func (d *ServerConfigDB) LoadServerConfig() (string, error) {
 		if strings.Contains(err.Error(), "no such table") {
 			return "", nil
 		}
-		return "", fmt.Errorf("查询服务器配置失败: %v", err)
+		return "", fmt.Errorf("failed to query server configuration: %v", err)
 	}
 
 	return config.CfgStr, nil

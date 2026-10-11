@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// WebSocketConnection WebSocket连接适配器
+// WebSocketConnection WebSocket connection adapter
 type WebSocketConnection struct {
 	id         string
 	conn       *websocket.Conn
@@ -18,7 +18,7 @@ type WebSocketConnection struct {
 	mu         sync.Mutex
 }
 
-// NewWebSocketConnection 创建新的WebSocket连接适配器
+// NewWebSocketConnection creates a new WebSocket connection adapter
 func NewWebSocketConnection(id string, conn *websocket.Conn) *WebSocketConnection {
 	return &WebSocketConnection{
 		id:         id,
@@ -28,20 +28,20 @@ func NewWebSocketConnection(id string, conn *websocket.Conn) *WebSocketConnectio
 	}
 }
 
-// WriteMessage 发送消息
+// WriteMessage sends message
 func (c *WebSocketConnection) WriteMessage(messageType int, data []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if atomic.LoadInt32(&c.closed) == 1 {
-		return fmt.Errorf("连接已关闭")
+		return fmt.Errorf("connection is closed")
 	}
 
 	atomic.StoreInt64(&c.lastActive, time.Now().Unix())
 	return c.conn.WriteMessage(messageType, data)
 }
 
-// ReadMessage 读取消息
+// ReadMessage reads message
 func (c *WebSocketConnection) ReadMessage(stopChan <-chan struct{}) (int, []byte, error) {
 	messageType, data, err := c.conn.ReadMessage()
 	if err == nil {
@@ -50,7 +50,7 @@ func (c *WebSocketConnection) ReadMessage(stopChan <-chan struct{}) (int, []byte
 	return messageType, data, err
 }
 
-// Close 关闭连接
+// Close closes connection
 func (c *WebSocketConnection) Close() error {
 	if atomic.CompareAndSwapInt32(&c.closed, 0, 1) {
 		return c.conn.Close()
@@ -58,27 +58,27 @@ func (c *WebSocketConnection) Close() error {
 	return nil
 }
 
-// GetID 获取连接ID
+// GetID gets connection ID
 func (c *WebSocketConnection) GetID() string {
 	return c.id
 }
 
-// GetType 获取连接类型
+// GetType gets connection type
 func (c *WebSocketConnection) GetType() string {
 	return "websocket"
 }
 
-// IsClosed 检查连接是否已关闭
+// IsClosed checks if connection is closed
 func (c *WebSocketConnection) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
 }
 
-// GetLastActiveTime 获取最后活跃时间
+// GetLastActiveTime gets last active time
 func (c *WebSocketConnection) GetLastActiveTime() time.Time {
 	return time.Unix(atomic.LoadInt64(&c.lastActive), 0)
 }
 
-// IsStale 检查连接是否过期
+// IsStale checks if connection is expired
 func (c *WebSocketConnection) IsStale(timeout time.Duration) bool {
 	return time.Since(c.GetLastActiveTime()) > timeout
 }

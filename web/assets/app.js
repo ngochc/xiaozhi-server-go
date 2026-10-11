@@ -12,31 +12,31 @@
   const state = {
     user: readUser(),
     branding: {
-      name: '玄凤小智',
-      title: '玄凤小智管理后台',
-      welcome: '欢迎使用玄凤小智后台管理面板',
+      name: 'Xiaozhi',
+      title: 'Xiaozhi Admin Console',
+      welcome: 'Welcome to Xiaozhi Admin Console',
       logoUrl: asset('logo.png'),
       homeLink: 'https://github.com/AnimeAIChat/xiaozhi-server-go/tree/main',
-      copyright: '玄凤小智',
+      copyright: 'Xiaozhi',
     },
     advancedTab: 'application',
   };
 
   const routeTitles = {
-    login: '登录',
-    welcome: '欢迎',
-    agents: '智能体',
-    agentConfig: '配置角色',
-    devices: '管理设备',
-    history: '历史对话',
-    profile: '个人设置',
-    dashboard: '仪表盘',
-    adminSettings: '系统配置',
-    providers: '模型供应商',
-    unbindDevice: '设备解绑',
-    advancedConfig: '高级配置',
-    diagnostics: '首次配置向导',
-    whiteList: '白名单',
+    login: 'Login',
+    welcome: 'Welcome',
+    agents: 'Agents',
+    agentConfig: 'Configure Agent',
+    devices: 'Manage Devices',
+    history: 'Chat History',
+    profile: 'Profile',
+    dashboard: 'Dashboard',
+    adminSettings: 'System Settings',
+    providers: 'Model Providers',
+    unbindDevice: 'Unbind Device',
+    advancedConfig: 'Advanced Settings',
+    diagnostics: 'Setup Wizard',
+    whiteList: 'Whitelist',
   };
 
   function asset(path) {
@@ -101,14 +101,14 @@
   }
 
   function formatDate(value) {
-    if (!value) return '暂无';
+    if (!value) return 'None';
     let date;
     if (typeof value === 'number') {
       date = new Date(value * 1000);
     } else {
       date = new Date(value);
     }
-    if (Number.isNaN(date.getTime()) || date.getFullYear() < 2020) return '暂无';
+    if (Number.isNaN(date.getTime()) || date.getFullYear() < 2020) return 'N/A';
     return date.toLocaleString();
   }
 
@@ -158,7 +158,7 @@
     }, 3600);
   }
 
-  function showError(error, fallback = '操作失败') {
+  function showError(error, fallback = 'Operation failed') {
     const message = error?.data?.message || error?.data?.error || error?.message || fallback;
     toast(message, 'error');
   }
@@ -169,7 +169,7 @@
         <div class="modal">
           <div class="modal-header">
             <h3>${escapeHtml(title)}</h3>
-            <button class="btn ghost small" data-close-modal>关闭</button>
+            <button class="btn ghost small" data-close-modal>Close</button>
           </div>
           <div class="modal-body">${body}</div>
           <div class="modal-footer">${footer || ''}</div>
@@ -190,8 +190,8 @@
       title,
       body: `<p>${escapeHtml(content)}</p>`,
       footer: `
-        <button class="btn" data-close-modal>取消</button>
-        <button class="btn danger" id="confirm-ok">确认</button>
+        <button class="btn" data-close-modal>Cancel</button>
+        <button class="btn danger" id="confirm-ok">Confirm</button>
       `,
     });
     byId('confirm-ok').addEventListener('click', async () => {
@@ -229,7 +229,7 @@
     try {
       response = await fetch(url, init);
     } catch (error) {
-      const networkError = new Error(`无法连接服务：${apiBase}`);
+      const networkError = new Error(`Unable to connect to server: ${apiBase}`);
       networkError.cause = error;
       throw networkError;
     }
@@ -304,14 +304,14 @@
     const adminItems = canSeeAdmin()
       ? `
         <div class="nav-group">
-          <div class="nav-title">管理页</div>
-          ${navItem('/admin/dashboard', '仪表盘', route.path)}
-          ${navItem('/admin/settings', '系统配置', route.path)}
-          ${navItem('/admin/providers', '模型供应商', route.path)}
-          ${navItem('/admin/diagnostics', '首次配置向导', route.path)}
-          ${navItem('/admin/unbindDevice', '设备解绑', route.path)}
-          ${navItem('/admin/systemConfig', '高级配置', route.path)}
-          ${navItem('/admin/whiteList', '白名单', route.path)}
+          <div class="nav-title">Administration</div>
+          ${navItem('/admin/dashboard', 'Dashboard', route.path)}
+          ${navItem('/admin/settings', 'System Settings', route.path)}
+          ${navItem('/admin/providers', 'Model Providers', route.path)}
+          ${navItem('/admin/diagnostics', 'Setup Wizard', route.path)}
+          ${navItem('/admin/unbindDevice', 'Unbind Device', route.path)}
+          ${navItem('/admin/systemConfig', 'Advanced Settings', route.path)}
+          ${navItem('/admin/whiteList', 'Whitelist', route.path)}
         </div>
       `
       : '';
@@ -321,16 +321,16 @@
         <aside class="sidebar" id="sidebar">
           <div class="brand">
             <img src="${escapeHtml(state.branding.logoUrl || asset('logo.png'))}" alt="">
-            <span>${escapeHtml(state.branding.name || '玄凤小智')}</span>
+            <span>${escapeHtml(state.branding.name || 'Xiaozhi')}</span>
           </div>
           <nav class="nav">
             <div class="nav-group">
-              ${navItem('/welcome', '欢迎', route.path)}
+              ${navItem('/welcome', 'Welcome', route.path)}
             </div>
             <div class="nav-group">
-              <div class="nav-title">控制台</div>
-              ${navItem('/console/agents', '智能体', route.path)}
-              ${navItem('/console/settings', '个人设置', route.path)}
+              <div class="nav-title">Console</div>
+              ${navItem('/console/agents', 'Agents', route.path)}
+              ${navItem('/console/settings', 'Profile', route.path)}
             </div>
             ${adminItems}
           </nav>
@@ -338,7 +338,7 @@
         <section class="main">
           <header class="topbar">
             <div class="topbar-left">
-              <button class="btn ghost mobile-menu" id="mobile-menu">菜单</button>
+              <button class="btn ghost mobile-menu" id="mobile-menu">Menu</button>
               <h1 class="page-title" id="page-title">${escapeHtml(routeTitles[route.key] || '')}</h1>
             </div>
             <div class="topbar-right">
@@ -346,11 +346,11 @@
               <div class="user-menu">
                 <button class="avatar-button" id="avatar-button">
                   <span class="avatar">${escapeHtml((state.user?.username || 'U').slice(0, 1).toUpperCase())}</span>
-                  <span>${escapeHtml(state.user?.username || '用户')}</span>
+                  <span>${escapeHtml(state.user?.username || 'User')}</span>
                 </button>
                 <div class="dropdown" id="user-dropdown">
-                  <button data-link="/console/settings">个人信息</button>
-                  <button data-action="logout">退出登录</button>
+                  <button data-link="/console/settings">Profile</button>
+                  <button data-action="logout">Log Out</button>
                 </div>
               </div>
             </div>
@@ -402,7 +402,7 @@
     `;
   }
 
-  function loadingCard(text = '正在加载...') {
+  function loadingCard(text = 'Loading...') {
     return `<div class="card"><div class="app-loading" style="min-height:180px"><div class="loading-mark"></div><div>${escapeHtml(text)}</div></div></div>`;
   }
 
@@ -425,7 +425,7 @@
     }
 
     shell(route);
-    setTitle(routeTitles[route.key] || '欢迎');
+    setTitle(routeTitles[route.key] || 'Welcome');
 
     const renderers = {
       welcome: renderWelcome,
@@ -447,14 +447,14 @@
       await (renderers[route.key] || renderWelcome)(route);
     } catch (error) {
       page().innerHTML = `
-        ${pageHeader(routeTitles[route.key] || '页面', '')}
-        <div class="alert error">${escapeHtml(error.message || '页面加载失败')}</div>
+        ${pageHeader(routeTitles[route.key] || 'Page', '')}
+        <div class="alert error">${escapeHtml(error.message || 'Failed to load page')}</div>
       `;
     }
   }
 
   function renderLogin() {
-    setTitle('登录');
+    setTitle('Login');
     app.innerHTML = `
       <div class="login-page">
         <main class="login-main">
@@ -462,27 +462,27 @@
             <div class="login-brand">
               <img src="${escapeHtml(state.branding.logoUrl || asset('logo.png'))}" alt="">
               <h1 class="login-title">${escapeHtml(state.branding.title)}</h1>
-              <div class="login-subtitle">账户密码登录</div>
+              <div class="login-subtitle">Account Login</div>
             </div>
             <div class="form">
               <div class="field">
-                <label for="login-username">用户名</label>
+                <label for="login-username">Username</label>
                 <input id="login-username" name="username" autocomplete="username" placeholder="admin" required>
               </div>
               <div class="field">
-                <label for="login-password">密码</label>
-                <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="首次启动日志中的临时密码" required>
+                <label for="login-password">Password</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Temporary password from startup log" required>
               </div>
               <label class="field checkbox">
                 <input type="checkbox" name="autoLogin" checked>
-                <span>自动登录</span>
+                <span>Remember Me</span>
               </label>
-              <button class="btn primary" type="submit">登录</button>
-              <div class="subtle">默认用户 admin，默认密码 123456，登录后请及时修改。</div>
+              <button class="btn primary" type="submit">Sign In</button>
+              <div class="subtle">Default user admin, default password 123456. Please change it after login.</div>
             </div>
           </form>
         </main>
-        <footer class="footer-note">© ${escapeHtml(state.branding.copyright || '玄凤小智')}</footer>
+        <footer class="footer-note">© ${escapeHtml(state.branding.copyright || 'Xiaozhi')}</footer>
       </div>
     `;
 
@@ -499,47 +499,47 @@
         });
         if (result?.status === 'ok' && result?.data?.token) {
           saveUser(result.data);
-          toast('登录成功', 'success');
+          toast('Login successful', 'success');
           navigate('/welcome');
           return;
         }
-        toast(result?.message || '登录失败', 'error');
+        toast(result?.message || 'Login failed', 'error');
       } catch (error) {
-        showError(error, '登录失败');
+        showError(error, 'Login failed');
       }
     });
   }
 
   async function renderDiagnostics() {
     page().innerHTML = `
-      ${pageHeader('首次配置向导', '完成模型与设备地址配置后，运行检查确认每个环节。检查结果不会显示密钥或令牌。')}
+      ${pageHeader('Setup Wizard', 'Run checks to verify model providers and server addresses. Secret keys and tokens are not displayed in results.')}
       <div class="card">
-        <h3>1. 配置模型服务</h3>
-        <p class="muted">在“模型供应商”中填写并选择 ASR、LLM、TTS；地址与凭据只保存在本机配置中。</p>
-        <button class="btn" data-link="/admin/providers">打开模型供应商</button>
+        <h3>1. Configure Model Providers</h3>
+        <p class="muted">Configure and select ASR, LLM, and TTS providers. Credentials are stored only in your local configuration.</p>
+        <button class="btn" data-link="/admin/providers">Open Model Providers</button>
       </div>
       <div class="card">
-        <h3>2. 配置设备接入地址</h3>
-        <p class="muted">在“系统配置”中填写设备可访问的 WebSocket 地址。局域网设备不能使用 localhost。</p>
-        <button class="btn" data-link="/admin/systemConfig">打开系统配置</button>
+        <h3>2. Configure Device Access Address</h3>
+        <p class="muted">Set the WebSocket address accessible by your devices in System Settings. Local devices cannot reach localhost.</p>
+        <button class="btn" data-link="/admin/systemConfig">Open System Settings</button>
       </div>
       <div class="card">
         <div class="toolbar" style="justify-content:space-between;align-items:center">
           <div>
-            <h3 style="margin:0">3. 运行连通性检查</h3>
-            <p class="muted" style="margin:6px 0 0">检查 WebSocket、当前 HTTP 服务及已选择的 ASR、LLM、TTS 配置。</p>
+            <h3 style="margin:0">3. Run Connectivity Checks</h3>
+            <p class="muted" style="margin:6px 0 0">Verify WebSocket, HTTP server, and active ASR, LLM, and TTS configurations.</p>
           </div>
-          <button class="btn primary" id="run-diagnostics">开始检查</button>
+          <button class="btn primary" id="run-diagnostics">Start Check</button>
         </div>
         <div id="diagnostics-results" style="margin-top:16px"></div>
       </div>
       <div class="card">
         <div class="toolbar" style="justify-content:space-between;align-items:center;gap:16px">
           <div>
-            <h3 style="margin:0">4. 创建初始设置助手</h3>
-            <p class="muted" style="margin:6px 0 0">确认已选 ASR、LLM、TTS 的本地配置完整后创建。系统只保留一个；创建后会接管当前未绑定设备，之后的新设备也会自动绑定。</p>
+            <h3 style="margin:0">4. Create Setup Assistant</h3>
+            <p class="muted" style="margin:6px 0 0">Create the default Setup Assistant once ASR, LLM, and TTS are configured. Unbound devices will automatically bind to it.</p>
           </div>
-          <button class="btn primary" id="activate-onboarding" disabled>检查配置中…</button>
+          <button class="btn primary" id="activate-onboarding" disabled>Checking configuration...</button>
         </div>
         <div id="onboarding-status" class="provider-test-result" aria-live="polite" style="margin-top:12px"></div>
       </div>
@@ -556,31 +556,31 @@
         const ready = status.ready === true;
         const exists = status.exists === true;
         onboardingButton.disabled = !ready || !canWriteAdmin();
-        onboardingButton.textContent = exists ? '同步初始助手配置' : '创建初始设置助手';
+        onboardingButton.textContent = exists ? 'Sync Setup Assistant' : 'Create Setup Assistant';
         if (ready) {
           const assistantState = exists
-            ? `初始设置助手已存在（ID ${escapeHtml(status.agentId)}），可同步当前 Provider 选择。`
-            : 'ASR、LLM、TTS 配置已就绪，可创建唯一的初始设置助手。';
-          onboardingHost.innerHTML = `<div class="provider-test-message success">${assistantState} ${Number(status.pendingDevices || 0)} 台未绑定设备会在创建后接管。</div>`;
+            ? `Setup Assistant already exists (ID ${escapeHtml(status.agentId)}). You can sync current Provider selections.`
+            : 'ASR, LLM, and TTS configurations are ready to create the Setup Assistant.';
+          onboardingHost.innerHTML = `<div class="provider-test-message success">${assistantState} ${Number(status.pendingDevices || 0)}  unbound device(s) will be managed after creation.</div>`;
         } else {
-          onboardingHost.innerHTML = `<div class="provider-test-message error">创建前请处理：${escapeHtml(issues.join('；') || 'Provider 配置未就绪')}</div>`;
+          onboardingHost.innerHTML = `<div class="provider-test-message error">Please resolve before creation: ${escapeHtml(issues.join('；') || 'Provider configuration not ready')}</div>`;
         }
       } catch (error) {
         onboardingButton.disabled = true;
-        onboardingButton.textContent = '无法检查配置';
-        onboardingHost.innerHTML = `<div class="provider-test-message error">${escapeHtml(error?.data?.message || error?.message || '无法读取初始设置助手状态')}</div>`;
+        onboardingButton.textContent = 'Unable to check config';
+        onboardingHost.innerHTML = `<div class="provider-test-message error">${escapeHtml(error?.data?.message || error?.message || 'Unable to read Setup Assistant status')}</div>`;
       }
     };
     onboardingButton.addEventListener('click', () => {
-      confirmAction('创建初始设置助手', '将创建唯一的初始设置助手，并自动绑定当前未绑定设备。确认继续吗？', async () => {
+      confirmAction('Create Setup Assistant', 'This will create the Setup Assistant and bind unbound devices. Continue?', async () => {
         onboardingButton.disabled = true;
-        onboardingButton.textContent = '创建中…';
+        onboardingButton.textContent = 'Creating...';
         try {
           const result = await request('/api/admin/onboarding', { method: 'POST' });
-          toast(result.message || '初始设置助手已创建', 'success');
+          toast(result.message || 'Setup Assistant created', 'success');
           await refreshOnboarding();
         } catch (error) {
-          showError(error, '创建初始设置助手失败');
+          showError(error, 'Failed to create Setup Assistant');
           await refreshOnboarding();
         }
       });
@@ -588,11 +588,11 @@
     refreshOnboarding();
     const renderResults = (results) => {
       if (!results?.length) {
-        resultHost.innerHTML = emptyState('暂无检查结果');
+        resultHost.innerHTML = emptyState('No check results');
         return;
       }
-      resultHost.innerHTML = `<div class="table-wrap"><table><thead><tr><th>检查项</th><th>结果</th><th>说明</th><th>耗时</th></tr></thead><tbody>${results.map((result) => {
-        const status = result.status === 'ok' ? '通过' : result.status === 'ready' ? '已配置' : '需处理';
+      resultHost.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Item</th><th>Result</th><th>Description</th><th>Duration</th></tr></thead><tbody>${results.map((result) => {
+        const status = result.status === 'ok' ? 'Pass' : result.status === 'ready' ? 'Configured' : 'Needs Action';
         const className = result.status === 'ok' ? 'green' : result.status === 'ready' ? 'blue' : 'red';
         return `<tr><td>${escapeHtml(result.name)}</td><td><span class="tag ${className}">${status}</span></td><td>${escapeHtml(result.message)}</td><td>${result.latencyMs == null ? '-' : `${escapeHtml(result.latencyMs)} ms`}</td></tr>`;
       }).join('')}</tbody></table></div>`;
@@ -601,24 +601,24 @@
     byId('run-diagnostics').addEventListener('click', async () => {
       const button = byId('run-diagnostics');
       button.disabled = true;
-      button.textContent = '检查中...';
-      resultHost.innerHTML = loadingCard('正在逐项检查配置与服务地址...');
+      button.textContent = 'Checking...';
+      resultHost.innerHTML = loadingCard('Checking configuration and endpoints...');
       try {
         const payload = await request('/api/admin/config/diagnostics', { method: 'POST', body: {} });
         renderResults(payload.data || []);
       } catch (error) {
-        resultHost.innerHTML = `<div class="alert error">${escapeHtml(error.message || '检查失败')}</div>`;
+        resultHost.innerHTML = `<div class="alert error">${escapeHtml(error.message || 'Check failed')}</div>`;
       } finally {
         button.disabled = false;
-        button.textContent = '重新检查';
+        button.textContent = 'Recheck';
       }
     });
   }
 
   async function renderWelcome() {
     page().innerHTML = `
-      ${pageHeader('欢迎', state.branding.welcome)}
-      <div class="card welcome-host" id="welcome-host">${loadingCard('正在加载欢迎页...')}</div>
+      ${pageHeader('Welcome', state.branding.welcome)}
+      <div class="card welcome-host" id="welcome-host">${loadingCard('Loading welcome page...')}</div>
     `;
     const host = byId('welcome-host');
     try {
@@ -633,26 +633,26 @@
       host.innerHTML = `
         <div class="empty">
           <h3>${escapeHtml(state.branding.welcome)}</h3>
-          <p>欢迎使用开源版静态管理后台。</p>
+          <p>Welcome to the open-source admin console.</p>
         </div>
       `;
     }
   }
 
   async function renderDashboard() {
-    page().innerHTML = `${pageHeader('仪表盘', '系统运行概览')}${loadingCard()}`;
+    page().innerHTML = `${pageHeader('Dashboard', 'System Overview')}${loadingCard()}`;
     const data = await request('/api/user/summary').then((res) => res.data || {});
     const stats = [
-      ['用户数量', data.totle_users ?? '-'],
-      ['设备数量', data.totle_devices ?? '-'],
-      ['智能体数量', data.totle_agents ?? '-'],
-      ['在线用户数', data.online_users ?? '-'],
-      ['对话设备数', data.session_devices ?? '-'],
-      ['内存使用率', formatPercent(data.system_memory_use)],
-      ['CPU 使用率', formatPercent(data.system_cpu_use)],
+      ['Total Users', data.totle_users ?? '-'],
+      ['Total Devices', data.totle_devices ?? '-'],
+      ['Total Agents', data.totle_agents ?? '-'],
+      ['Online Users', data.online_users ?? '-'],
+      ['Active Devices', data.session_devices ?? '-'],
+      ['Memory Usage', formatPercent(data.system_memory_use)],
+      ['CPU Usage', formatPercent(data.system_cpu_use)],
     ];
     page().innerHTML = `
-      ${pageHeader('仪表盘', '系统运行概览')}
+      ${pageHeader('Dashboard', 'System Overview')}
       <div class="grid stats-grid">
         ${stats.map(([title, value]) => `
           <div class="card">
@@ -719,13 +719,13 @@
             label: typeof item === 'string'
               ? item
               : (item.display_name_zh || item.display_name_cn || item.display_name || item.displayName || item.name),
-            language: typeof item === 'object' && item.language ? item.language : '普通话',
+            language: typeof item === 'object' && item.language ? item.language : 'Standard',
           });
         });
       }
       if (config.voice && !seen.has(config.voice)) {
         seen.add(config.voice);
-        voices.push({ value: config.voice, label: config.voice, language: '普通话' });
+        voices.push({ value: config.voice, label: config.voice, language: 'Standard' });
       }
     });
     return voices;
@@ -737,12 +737,12 @@
 
   async function renderAgents() {
     page().innerHTML = `
-      ${pageHeader('智能体', '先在首次配置向导创建唯一的初始设置助手；创建后，新设备会自动绑定给它', `
-        <input id="agent-search" placeholder="搜索智能体" style="min-height:32px;padding:6px 10px;border:1px solid var(--line);border-radius:6px">
-        <button class="btn primary" id="create-agent">新建智能体</button>
-        <button class="btn" id="agent-add-device">添加设备</button>
+      ${pageHeader('Agents', 'Create the Setup Assistant in Setup Wizard; new devices will bind to it automatically', `
+        <input id="agent-search" placeholder="Search agents" style="min-height:32px;padding:6px 10px;border:1px solid var(--line);border-radius:6px">
+        <button class="btn primary" id="create-agent">New Agent</button>
+        <button class="btn" id="agent-add-device">Add Device</button>
       `)}
-      <div id="agents-body">${loadingCard('正在加载智能体列表...')}</div>
+      <div id="agents-body">${loadingCard('Loading agents...')}</div>
     `;
 
     byId('agent-add-device').addEventListener('click', () => openBindDeviceModal());
@@ -760,7 +760,7 @@
       const filtered = agents.filter((agent) => !keyword || String(agent.name || '').toLowerCase().includes(keyword));
       byId('agents-body').innerHTML = filtered.length
         ? `<div class="grid agent-grid">${filtered.map((agent) => agentCard(agent, voices)).join('')}</div>`
-        : emptyState('暂无智能体', '<button class="btn primary" id="create-first-agent">创建第一个智能体</button>');
+        : emptyState('No agents found', '<button class="btn primary" id="create-first-agent">Create First Agent</button>');
       byId('create-first-agent')?.addEventListener('click', openCreateAgentModal);
     };
 
@@ -773,8 +773,8 @@
     return `
       <div class="card">
         <div class="card-title">
-          <h3>${escapeHtml(agent.name || '未命名智能体')}</h3>
-          ${agent.isOnboarding ? '<span class="tag blue">初始设置</span>' : `<button class="btn ghost danger small" data-delete-agent="${escapeHtml(agent.id)}">删除</button>`}
+          <h3>${escapeHtml(agent.name || 'Unnamed Agent')}</h3>
+          ${agent.isOnboarding ? '<span class="tag blue">Setup Assistant</span>' : `<button class="btn ghost danger small" data-delete-agent="${escapeHtml(agent.id)}">Delete</button>`}
         </div>
         <div class="chip-row">
           <span class="tag blue">ID ${escapeHtml(agent.id)}</span>
@@ -782,16 +782,16 @@
         </div>
         <div class="divider"></div>
         <div class="form">
-          <div><span class="muted">角色音色：</span>${escapeHtml(voiceLabel(voices, agent.voice) || '-')}</div>
-          ${agent.isOnboarding ? '<div><span class="muted">用途：</span>新设备的默认接待与设置助手</div>' : ''}
-          <div><span class="muted">最近对话：</span>${escapeHtml(formatDate(agent.lastConversationAt))}</div>
-          <div><span class="muted">设备数量：</span>${deviceCount}</div>
+          <div><span class="muted">Voice: </span>${escapeHtml(voiceLabel(voices, agent.voice) || '-')}</div>
+          ${agent.isOnboarding ? '<div><span class="muted">Role: </span>Default onboarding assistant for new devices</div>' : ''}
+          <div><span class="muted">Last Active: </span>${escapeHtml(formatDate(agent.lastConversationAt))}</div>
+          <div><span class="muted">Devices: </span>${deviceCount}</div>
         </div>
         <div class="divider"></div>
         <div class="inline-actions">
-          <button class="btn" data-link="/console/agents/${escapeHtml(agent.id)}/config">配置角色</button>
-          <button class="btn" data-link="/console/agents/${escapeHtml(agent.id)}/history">历史对话</button>
-          <button class="btn" data-link="/console/agents/${escapeHtml(agent.id)}/device">管理设备</button>
+          <button class="btn" data-link="/console/agents/${escapeHtml(agent.id)}/config">Configure Role</button>
+          <button class="btn" data-link="/console/agents/${escapeHtml(agent.id)}/history">Chat History</button>
+          <button class="btn" data-link="/console/agents/${escapeHtml(agent.id)}/device">Manage Devices</button>
         </div>
       </div>
     `;
@@ -799,18 +799,18 @@
 
   async function openCreateAgentModal() {
     openModal({
-      title: '新建智能体',
+      title: 'New Agent',
       body: `
         <form class="form" id="create-agent-form">
           <div class="field">
-            <label>智能体名称</label>
-            <input name="name" placeholder="请输入智能体名称" required>
+            <label>Agent Name</label>
+            <input name="name" placeholder="Enter agent name" required>
           </div>
         </form>
       `,
       footer: `
-        <button class="btn" data-close-modal>取消</button>
-        <button class="btn primary" id="create-agent-submit">创建</button>
+        <button class="btn" data-close-modal>Cancel</button>
+        <button class="btn primary" id="create-agent-submit">Create</button>
       `,
     });
     byId('create-agent-submit').addEventListener('click', async () => {
@@ -832,7 +832,7 @@
             prompt: '',
             name: values.name,
             LLM: defaultLLM,
-            language: '普通话',
+            language: 'Standard',
             voice: defaultVoice,
             voiceName: defaultVoiceName,
             asrSpeed: 2,
@@ -840,11 +840,11 @@
             tone: 50,
           },
         });
-        toast('智能体创建成功', 'success');
+        toast('Agent created successfully', 'success');
         closeModal();
         render();
       } catch (error) {
-        showError(error, '创建失败');
+        showError(error, 'Failed to create agent');
       }
     });
   }
@@ -852,27 +852,27 @@
   async function openBindDeviceModal(selectedAgentId = '') {
     const agents = normalizeList(await request('/api/user/agent/list'));
     if (!agents.length) {
-      toast('请先创建一个智能体', 'warning');
+      toast('Please create an agent first', 'warning');
       return;
     }
     openModal({
-      title: '绑定设备',
+      title: 'Bind Device',
       body: `
         <form class="form" id="bind-device-form">
           <div class="field">
-            <label>智能体</label>
+            <label>Agent</label>
             <select name="agentID" required>
-              ${agents.map((agent) => `<option value="${escapeHtml(agent.id)}" ${String(agent.id) === String(selectedAgentId) ? 'selected' : ''}>${escapeHtml(agent.name || `智能体 ${agent.id}`)}</option>`).join('')}
+              ${agents.map((agent) => `<option value="${escapeHtml(agent.id)}" ${String(agent.id) === String(selectedAgentId) ? 'selected' : ''}>${escapeHtml(agent.name || `Agent ${agent.id}`)}</option>`).join('')}
             </select>
           </div>
           <div class="field">
-            <label>设备 MAC 地址</label>
-            <input name="mac" placeholder="例如 94:A9:90:31:E2:E4" autocomplete="off" spellcheck="false" required>
+            <label>Device MAC Address</label>
+            <input name="mac" placeholder="e.g. 94:A9:90:31:E2:E4" autocomplete="off" spellcheck="false" required>
           </div>
-          <p class="muted">设备必须已请求过本服务的 OTA 地址。支持冒号、短横线或无分隔符的 MAC 格式。</p>
+          <p class="muted">Device must have contacted this server's OTA endpoint. Supports colon, hyphen, or unformatted MAC.</p>
         </form>
       `,
-      footer: `<button class="btn" data-close-modal>取消</button><button class="btn primary" id="bind-device-submit">绑定</button>`,
+      footer: `<button class="btn" data-close-modal>Cancel</button><button class="btn primary" id="bind-device-submit">Bind</button>`,
     });
     byId('bind-device-submit').addEventListener('click', async () => {
       const form = byId('bind-device-form');
@@ -880,10 +880,10 @@
       try {
         await request('/api/user/device/bind', { method: 'POST', body: formValues(form) });
         closeModal();
-        toast('设备绑定成功', 'success');
+        toast('Device bound successfully', 'success');
         render();
       } catch (error) {
-        showError(error, '绑定失败：请确认设备已接入且未被其他用户绑定');
+        showError(error, 'Binding failed: ensure device connected and not bound elsewhere');
       }
     });
   }
@@ -891,7 +891,7 @@
   async function renderAgentConfig(route) {
     const id = route.params.id;
     page().innerHTML = `
-      ${pageHeader('配置角色', `智能体 ID：${id}`, `<button class="btn" data-link="/console/agents">返回</button>`)}
+      ${pageHeader('Configure Role', `Agent ID: ${id}`, `<button class="btn" data-link="/console/agents">Back</button>`)}
       <div id="agent-config-body">${loadingCard()}</div>
     `;
     const [agentPayload, ttsProviders, llmProviders, templates] = await Promise.all([
@@ -903,39 +903,39 @@
     const agent = agentPayload.data || {};
     const voices = collectVoices(ttsProviders);
     if (agent.voice && !voices.some((voice) => voice.value === agent.voice)) {
-      voices.unshift({ value: agent.voice, label: agent.voiceName || agent.voice, language: agent.language || '普通话' });
+      voices.unshift({ value: agent.voice, label: agent.voiceName || agent.voice, language: agent.language || 'Standard' });
     }
-    const languages = Array.from(new Set(voices.map((voice) => voice.language || '普通话')));
+    const languages = Array.from(new Set(voices.map((voice) => voice.language || 'Standard')));
 
     byId('agent-config-body').innerHTML = `
       <form class="form" id="agent-config-form">
         <div class="card">
-          <div class="card-title"><h3>角色模板</h3></div>
+          <div class="card-title"><h3>Role Templates</h3></div>
           <div class="chip-row">
             ${templates.map((tpl, index) => `
               <button type="button" class="btn small" data-template-index="${index}">${escapeHtml(tpl.name)}</button>
-            `).join('') || '<span class="muted">暂无模板</span>'}
+            `).join('') || '<span class="muted">No templates available</span>'}
           </div>
         </div>
         <div class="card">
-          <div class="card-title"><h3>基础配置</h3></div>
+          <div class="card-title"><h3>Basic Settings</h3></div>
           <div class="form-grid">
             <div class="field">
-              <label>助手昵称</label>
+              <label>Assistant Name</label>
               <input name="assistantName" value="${escapeHtml(agent.name)}" required>
             </div>
             <div class="field">
-              <label>对话语言</label>
+              <label>Conversation Language</label>
               <select name="dialogLanguage" id="dialog-language">
                 ${languages.map((language) => `<option value="${escapeHtml(language)}" ${language === agent.language ? 'selected' : ''}>${escapeHtml(language)}</option>`).join('')}
               </select>
             </div>
             <div class="field">
-              <label>角色音色</label>
+              <label>Voice</label>
               <select name="voiceType" id="voice-type"></select>
             </div>
             <div class="field">
-              <label>语言模型</label>
+              <label>Language Model (LLM)</label>
               <select name="languageModel" required>
                 ${llmProviders.map((provider) => `
                   <option value="${escapeHtml(provider.name)}" ${provider.name === agent.LLM ? 'selected' : ''}>
@@ -947,51 +947,51 @@
           </div>
         </div>
         <div class="card">
-          <div class="card-title"><h3>角色介绍</h3></div>
+          <div class="card-title"><h3>Role Introduction</h3></div>
           <div class="field">
-            <label>提示词</label>
+            <label>System Prompt</label>
             <textarea name="roleDescription" rows="8" required>${escapeHtml(agent.prompt || '')}</textarea>
           </div>
         </div>
         <div class="card">
-          <div class="card-title"><h3>高级设置</h3></div>
+          <div class="card-title"><h3>Advanced Settings</h3></div>
           <div class="form-grid">
             <div class="field">
-              <label>语音识别速度</label>
+              <label>Speech Recognition Speed</label>
               <select name="recognitionSpeed">
-                <option value="1" ${agent.asrSpeed === 1 ? 'selected' : ''}>耐心</option>
-                <option value="2" ${agent.asrSpeed !== 1 && agent.asrSpeed !== 3 ? 'selected' : ''}>正常</option>
-                <option value="3" ${agent.asrSpeed === 3 ? 'selected' : ''}>快速</option>
+                <option value="1" ${agent.asrSpeed === 1 ? 'selected' : ''}>Patient</option>
+                <option value="2" ${agent.asrSpeed !== 1 && agent.asrSpeed !== 3 ? 'selected' : ''}>Normal</option>
+                <option value="3" ${agent.asrSpeed === 3 ? 'selected' : ''}>Fast</option>
               </select>
             </div>
             <div class="field">
-              <label>角色语速</label>
+              <label>Speech Rate</label>
               <select name="speechSpeed">
-                <option value="1" ${agent.speakSpeed === 1 ? 'selected' : ''}>慢速</option>
-                <option value="2" ${agent.speakSpeed !== 1 && agent.speakSpeed !== 3 ? 'selected' : ''}>正常</option>
-                <option value="3" ${agent.speakSpeed === 3 ? 'selected' : ''}>快速</option>
+                <option value="1" ${agent.speakSpeed === 1 ? 'selected' : ''}>Slow</option>
+                <option value="2" ${agent.speakSpeed !== 1 && agent.speakSpeed !== 3 ? 'selected' : ''}>Normal</option>
+                <option value="3" ${agent.speakSpeed === 3 ? 'selected' : ''}>Fast</option>
               </select>
             </div>
             <div class="field">
-              <label>角色音调</label>
+              <label>Voice Pitch</label>
               <input name="pitchValue" type="range" min="0" max="100" value="${escapeHtml(agent.tone ?? 50)}">
             </div>
           </div>
         </div>
         <div class="inline-actions">
-          <button type="button" class="btn" id="agent-reset">重置</button>
-          <button type="submit" class="btn primary">保存</button>
+          <button type="button" class="btn" id="agent-reset">Reset</button>
+          <button type="submit" class="btn primary">Save</button>
         </div>
       </form>
     `;
 
     const syncVoiceOptions = () => {
       const selectedLanguage = byId('dialog-language').value;
-      const filtered = voices.filter((voice) => (voice.language || '普通话') === selectedLanguage);
+      const filtered = voices.filter((voice) => (voice.language || 'Standard') === selectedLanguage);
       const options = (filtered.length ? filtered : voices).map((voice) => `
         <option value="${escapeHtml(voice.value)}" ${voice.value === agent.voice ? 'selected' : ''}>${escapeHtml(voice.label)}</option>
       `).join('');
-      byId('voice-type').innerHTML = options || `<option value="${escapeHtml(agent.voice || '')}">${escapeHtml(agent.voiceName || agent.voice || '默认音色')}</option>`;
+      byId('voice-type').innerHTML = options || `<option value="${escapeHtml(agent.voice || '')}">${escapeHtml(agent.voiceName || agent.voice || 'Default Voice')}</option>`;
     };
     syncVoiceOptions();
     byId('dialog-language').addEventListener('change', syncVoiceOptions);
@@ -1024,9 +1024,9 @@
             tone: Number(values.pitchValue),
           },
         });
-        toast('保存成功', 'success');
+        toast('Saved successfully', 'success');
       } catch (error) {
-        showError(error, '保存失败');
+        showError(error, 'Failed to save');
       }
     });
   }
@@ -1034,9 +1034,9 @@
   async function renderDevices(route) {
     const id = route.params.id;
     page().innerHTML = `
-      ${pageHeader('管理设备', `智能体 ID：${id}`, `
-        <button class="btn" data-link="/console/agents">返回</button>
-        <button class="btn primary" id="add-device">添加设备</button>
+      ${pageHeader('Manage Devices', `Agent ID: ${id}`, `
+        <button class="btn" data-link="/console/agents">Back</button>
+        <button class="btn primary" id="add-device">Add Device</button>
       `)}
       <div id="devices-body">${loadingCard()}</div>
     `;
@@ -1045,7 +1045,7 @@
     const devices = normalizeList(payload);
     byId('devices-body').innerHTML = devices.length
       ? `<div class="grid device-grid">${devices.map(deviceCard).join('')}</div>`
-      : emptyState('暂无设备');
+      : emptyState('No devices found');
   }
 
   function deviceCard(device) {
@@ -1054,20 +1054,20 @@
     return `
       <div class="card">
         <div class="card-title">
-          <h3>${escapeHtml(device.name || '未命名设备')}</h3>
-          <button class="btn ghost danger small" data-unbind-device="${escapeHtml(deviceId)}">解绑</button>
+          <h3>${escapeHtml(device.name || 'Unnamed Device')}</h3>
+          <button class="btn ghost danger small" data-unbind-device="${escapeHtml(deviceId)}">Unbind</button>
         </div>
         <div class="form">
-          <div><span class="muted">MAC 地址：</span>${escapeHtml(maskDeviceId(macAddress))}</div>
-          <div><span class="muted">固件版本：</span>${escapeHtml(device.version || '-')}</div>
-          <div><span class="muted">最近活跃：</span>${escapeHtml(formatDate(device.lastActiveTimeV2 || device.lastActiveTime))}</div>
-          <div><span class="muted">设备状态：</span>${device.mode === 'ban' ? '<span class="tag red">已禁用</span>' : '<span class="tag green">可用</span>'}</div>
-          <div><span class="muted">OTA 升级：</span>${device.ota ? '<span class="tag green">开启</span>' : '<span class="tag">关闭</span>'}</div>
+          <div><span class="muted">MAC Address: </span>${escapeHtml(maskDeviceId(macAddress))}</div>
+          <div><span class="muted">Firmware: </span>${escapeHtml(device.version || '-')}</div>
+          <div><span class="muted">Last Active: </span>${escapeHtml(formatDate(device.lastActiveTimeV2 || device.lastActiveTime))}</div>
+          <div><span class="muted">Status: </span>${device.mode === 'ban' ? '<span class="tag red">Disabled</span>' : '<span class="tag green">Active</span>'}</div>
+          <div><span class="muted">OTA Upgrade: </span>${device.ota ? '<span class="tag green">Enabled</span>' : '<span class="tag">Disabled</span>'}</div>
         </div>
         <div class="divider"></div>
-        <button class="btn small" data-copy="${escapeHtml(macAddress)}">复制 MAC</button>
-        <button class="btn small" data-toggle-device="${escapeHtml(deviceId)}" data-disabled="${device.mode === 'ban' ? 'true' : 'false'}">${device.mode === 'ban' ? '启用设备' : '禁用设备'}</button>
-        <button class="btn ghost small" data-clear-device-memory="${escapeHtml(deviceId)}">清空短期记忆</button>
+        <button class="btn small" data-copy="${escapeHtml(macAddress)}">Copy MAC</button>
+        <button class="btn small" data-toggle-device="${escapeHtml(deviceId)}" data-disabled="${device.mode === 'ban' ? 'true' : 'false'}">${device.mode === 'ban' ? 'Enable Device' : 'Disable Device'}</button>
+        <button class="btn ghost small" data-clear-device-memory="${escapeHtml(deviceId)}">Clear Short-term Memory</button>
       </div>
     `;
   }
@@ -1081,11 +1081,11 @@
   async function renderHistory(route) {
     const id = route.params.id;
     page().innerHTML = `
-      ${pageHeader('历史对话', `智能体 ID：${id}`, `<button class="btn" data-link="/console/agents">返回</button>`)}
+      ${pageHeader('Chat History', `Agent ID: ${id}`, `<button class="btn" data-link="/console/agents">Back</button>`)}
       <div class="history-layout">
         <div class="conversation-list" id="conversation-list">${loadingCard()}</div>
         <div class="message-panel" id="message-panel">
-          <div class="empty">请选择一个对话</div>
+          <div class="empty">Select a conversation</div>
         </div>
       </div>
     `;
@@ -1099,7 +1099,7 @@
           <div class="subtle">ID ${escapeHtml(item.id)} · ${escapeHtml(item.conversationId || '')}</div>
         </button>
       `).join('')
-      : emptyState('暂无历史对话');
+      : emptyState('No chat history');
   }
 
   async function selectConversation(id) {
@@ -1107,57 +1107,57 @@
       button.classList.toggle('active', button.dataset.conversation === String(id));
     });
     const panel = byId('message-panel');
-    panel.innerHTML = loadingCard('正在加载对话详情...');
+    panel.innerHTML = loadingCard('Loading conversation details...');
     const payload = await request(`/api/user/agent/history_dialog/${id}`);
     const dialog = payload?.data || {};
     const messages = parseJson(dialog.dialog, []);
     panel.innerHTML = `
       <div class="message-header">
-        对话详情 - ${escapeHtml(formatDate(dialog.createdAt))}
-        <button class="btn danger small" style="float:right" data-delete-dialog="${escapeHtml(id)}">删除对话</button>
+        Conversation - ${escapeHtml(formatDate(dialog.createdAt))}
+        <button class="btn danger small" style="float:right" data-delete-dialog="${escapeHtml(id)}">Delete Conversation</button>
       </div>
       <div class="message-list">
         ${Array.isArray(messages) && messages.length
           ? messages.map((message, index) => `
             <div class="message ${escapeHtml(message.role || 'assistant')}">
-              <div class="subtle">${escapeHtml(message.role || `消息 ${index + 1}`)}</div>
+              <div class="subtle">${escapeHtml(message.role || `Message ${index + 1}`)}</div>
               ${escapeHtml(message.content || '')}
             </div>
           `).join('')
-          : emptyState('暂无消息')}
+          : emptyState('No messages')}
       </div>
     `;
   }
 
   async function renderProfile() {
-    page().innerHTML = `${pageHeader('个人设置', '管理个人资料与登录密码')}${loadingCard()}`;
+    page().innerHTML = `${pageHeader('Profile', 'Manage user profile and password')}${loadingCard()}`;
     const payload = await request('/api/user/profile');
     const user = payload.data || {};
     page().innerHTML = `
-      ${pageHeader('个人设置', '管理个人资料与登录密码')}
+      ${pageHeader('Profile', 'Manage user profile and password')}
       <div class="card">
         <form class="form" id="profile-form">
           <div class="form-grid">
             <div class="field">
-              <label>用户名</label>
+              <label>Username</label>
               <input value="${escapeHtml(user.username)}" disabled>
             </div>
             <div class="field">
-              <label>昵称</label>
+              <label>Nickname</label>
               <input name="nickname" value="${escapeHtml(user.nickname || user.username || '')}">
             </div>
             <div class="field">
-              <label>邮箱</label>
+              <label>Email</label>
               <input name="email" type="email" value="${escapeHtml(user.email || '')}">
             </div>
             <div class="field">
-              <label>头像 URL</label>
+              <label>Avatar URL</label>
               <input name="head_img" value="${escapeHtml(user.head_img || '')}">
             </div>
           </div>
           <div class="inline-actions">
-            <button class="btn primary" type="submit">保存资料</button>
-            <button class="btn" type="button" id="change-password">修改密码</button>
+            <button class="btn primary" type="submit">Save Profile</button>
+            <button class="btn" type="button" id="change-password">Change Password</button>
           </div>
         </form>
       </div>
@@ -1166,9 +1166,9 @@
       event.preventDefault();
       try {
         await request('/api/user/profile', { method: 'PUT', body: formValues(event.currentTarget) });
-        toast('保存成功', 'success');
+        toast('Saved successfully', 'success');
       } catch (error) {
-        showError(error, '保存失败');
+        showError(error, 'Failed to save');
       }
     });
     byId('change-password').addEventListener('click', openPasswordModal);
@@ -1176,22 +1176,22 @@
 
   function openPasswordModal() {
     openModal({
-      title: '修改密码',
+      title: 'Change Password',
       body: `
         <form class="form" id="password-form">
-          <div class="field"><label>旧密码</label><input name="old_password" type="password" required></div>
-          <div class="field"><label>新密码</label><input name="new_password" type="password" minlength="6" required></div>
-          <div class="field"><label>确认新密码</label><input name="confirm_password" type="password" minlength="6" required></div>
+          <div class="field"><label>Old Password</label><input name="old_password" type="password" required></div>
+          <div class="field"><label>New Password</label><input name="new_password" type="password" minlength="6" required></div>
+          <div class="field"><label>Confirm New Password</label><input name="confirm_password" type="password" minlength="6" required></div>
         </form>
       `,
-      footer: `<button class="btn" data-close-modal>取消</button><button class="btn primary" id="password-submit">保存</button>`,
+      footer: `<button class="btn" data-close-modal>Cancel</button><button class="btn primary" id="password-submit">Save</button>`,
     });
     byId('password-submit').addEventListener('click', async () => {
       const form = byId('password-form');
       if (!form.reportValidity()) return;
       const values = formValues(form);
       if (values.new_password !== values.confirm_password) {
-        toast('两次输入的新密码不一致', 'warning');
+        toast('New passwords do not match', 'warning');
         return;
       }
       try {
@@ -1202,45 +1202,45 @@
             new_password: values.new_password,
           },
         });
-        toast('密码修改成功', 'success');
+        toast('Password changed successfully', 'success');
         closeModal();
       } catch (error) {
-        showError(error, '密码修改失败');
+        showError(error, 'Failed to change password');
       }
     });
   }
 
   async function renderAdminSettings() {
-    page().innerHTML = `${pageHeader('系统配置', '模型选择与全局提示词')}${loadingCard()}`;
+    page().innerHTML = `${pageHeader('System Settings', 'Model selection and global prompt')}${loadingCard()}`;
     const payload = await request('/api/admin/system');
     const config = payload.data || {};
     page().innerHTML = `
-      ${pageHeader('系统配置', '模型选择与全局提示词')}
+      ${pageHeader('System Settings', 'Model selection and global prompt')}
       <div class="card">
         <form class="form" id="admin-settings-form">
           <div class="form-grid">
-            ${selectField('selectedASR', 'ASR 服务', config.selectedASR, config.asrList || [])}
-            ${selectField('selectedTTS', 'TTS 服务', config.selectedTTS, config.ttsList || [])}
-            ${selectField('selectedLLM', 'LLM 服务', config.selectedLLM, config.llmList || [])}
-            ${selectField('selectedVLLLM', 'VLLLM 服务', config.selectedVLLLM, config.vllmList || [])}
+            ${selectField('selectedASR', 'ASR Service', config.selectedASR, config.asrList || [])}
+            ${selectField('selectedTTS', 'TTS Service', config.selectedTTS, config.ttsList || [])}
+            ${selectField('selectedLLM', 'LLM Service', config.selectedLLM, config.llmList || [])}
+            ${selectField('selectedVLLLM', 'VLLM Service', config.selectedVLLLM, config.vllmList || [])}
           </div>
           <div class="field">
-            <label>提示词设置</label>
+            <label>Prompt Settings</label>
             <textarea name="prompt" rows="10">${escapeHtml(config.prompt || '')}</textarea>
           </div>
           <div class="field">
-            <label>快速回复词</label>
+            <label>Quick Reply Words</label>
             <div class="chip-row" id="quick-reply-list">
               ${(config.quickReplyWords || []).map((word, index) => quickReplyTag(word, index)).join('')}
             </div>
             <div class="input-with-button">
-              <input id="quick-reply-input" placeholder="输入新的快速回复词">
-              <button type="button" class="btn" id="quick-reply-add">添加</button>
+              <input id="quick-reply-input" placeholder="Enter new quick reply word">
+              <button type="button" class="btn" id="quick-reply-add">Add</button>
             </div>
           </div>
           <div class="inline-actions">
-            <button type="button" class="btn" id="settings-reset">重置</button>
-            <button type="submit" class="btn primary" ${canWriteAdmin() ? '' : 'disabled'}>保存配置</button>
+            <button type="button" class="btn" id="settings-reset">Reset</button>
+            <button type="submit" class="btn primary" ${canWriteAdmin() ? '' : 'disabled'}>Save Settings</button>
           </div>
         </form>
       </div>
@@ -1278,9 +1278,9 @@
       };
       try {
         await request('/api/admin/system', { method: 'POST', body: { data: JSON.stringify(next) } });
-        toast('配置保存成功', 'success');
+        toast('Configuration saved successfully', 'success');
       } catch (error) {
-        showError(error, '保存失败');
+        showError(error, 'Failed to save');
       }
     });
   }
@@ -1290,7 +1290,7 @@
       <div class="field">
         <label>${escapeHtml(label)}</label>
         <select name="${escapeHtml(name)}">
-          <option value="">请选择</option>
+          <option value="">Please select</option>
           ${options.map((option) => `<option value="${escapeHtml(option)}" ${option === value ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
         </select>
       </div>
@@ -1303,16 +1303,16 @@
 
   async function renderProviders() {
     page().innerHTML = `
-      ${pageHeader('模型供应商', '管理 ASR、TTS、LLM 和 VLLLM 服务', `
-        <input id="provider-search" placeholder="搜索供应商" style="min-height:32px;padding:6px 10px;border:1px solid var(--line);border-radius:6px">
+      ${pageHeader('Model Providers', 'Manage ASR, TTS, LLM, and VLLM services', `
+        <input id="provider-search" placeholder="Search providers" style="min-height:32px;padding:6px 10px;border:1px solid var(--line);border-radius:6px">
         <select id="provider-filter" style="min-height:32px;padding:6px 10px;border:1px solid var(--line);border-radius:6px">
-          <option value="all">所有类型</option>
+          <option value="all">All Types</option>
           <option value="ASR">ASR</option>
           <option value="TTS">TTS</option>
           <option value="LLM">LLM</option>
           <option value="VLLLM">VLLLM</option>
         </select>
-        <button class="btn primary" id="provider-add">添加供应商</button>
+        <button class="btn primary" id="provider-add">Add Provider</button>
       `)}
       <div id="providers-body">${loadingCard()}</div>
     `;
@@ -1328,7 +1328,7 @@
       const stats = ['ASR', 'TTS', 'LLM', 'VLLLM'].map((type) => `${type}: ${providers.filter((p) => p.type === type).length}`).join('，');
       byId('providers-body').innerHTML = `
         <div class="card"><span class="muted">${escapeHtml(stats)}</span></div>
-        ${filtered.length ? `<div class="grid provider-grid section">${filtered.map(providerCard).join('')}</div>` : emptyState('没有找到匹配的供应商')}
+        ${filtered.length ? `<div class="grid provider-grid section">${filtered.map(providerCard).join('')}</div>` : emptyState('No matching providers found')}
       `;
     };
     byId('provider-search').addEventListener('input', draw);
@@ -1348,14 +1348,14 @@
             <h3>${escapeHtml(provider.name)}</h3>
             <span class="subtle">${escapeHtml(providerTypeLabel(provider.type))}</span>
           </div>
-          <div class="chip-row"><span class="tag blue">${escapeHtml(provider.type)}</span><span class="tag">${escapeHtml(config.type || '未设置类型')}</span></div>
+          <div class="chip-row"><span class="tag blue">${escapeHtml(provider.type)}</span><span class="tag">${escapeHtml(config.type || 'Unset type')}</span></div>
         </div>
-        <div class="form">${configRows || '<span class="muted">暂无配置</span>'}</div>
+        <div class="form">${configRows || '<span class="muted">No configuration</span>'}</div>
         <div class="divider"></div>
         <div class="inline-actions">
-          <button class="btn small" data-test-provider="${escapeHtml(provider.type)}:${escapeHtml(provider.name)}">测试</button>
-          <button class="btn small" data-edit-provider="${escapeHtml(provider.type)}:${escapeHtml(provider.name)}">编辑</button>
-          <button class="btn danger small" data-delete-provider="${escapeHtml(provider.type)}:${escapeHtml(provider.name)}">删除</button>
+          <button class="btn small" data-test-provider="${escapeHtml(provider.type)}:${escapeHtml(provider.name)}">Test</button>
+          <button class="btn small" data-edit-provider="${escapeHtml(provider.type)}:${escapeHtml(provider.name)}">Edit</button>
+          <button class="btn danger small" data-delete-provider="${escapeHtml(provider.type)}:${escapeHtml(provider.name)}">Delete</button>
         </div>
         <div class="provider-test-result" aria-live="polite"></div>
       </div>
@@ -1364,36 +1364,36 @@
 
   const PROVIDER_FIELDS = {
     ASR: {
-      doubao: { label: '火山语音识别', fields: [['appid', '应用 ID', '例如：1234567890', true], ['access_token', '访问令牌', '填写火山控制台生成的令牌', true], ['output_dir', '临时文件目录', 'tmp/'], ['end_window_size', '结束静音时长（毫秒）', '300', false, 'number']] },
-      deepgram: { label: 'Deepgram', fields: [['addr', '服务地址', 'wss://api.deepgram.com/v1/listen'], ['api_key', 'API 密钥', '填写 Deepgram API Key', true], ['lang', '识别语言', 'zh-CN'], ['output_dir', '临时文件目录', 'tmp/']] },
-      gosherpa: { label: 'GoSherpa', fields: [['addr', '服务地址', 'ws://127.0.0.1:8848/asr']] },
-      stepfun: { label: '阶跃星辰', fields: [['api_key', 'API 密钥', '填写阶跃星辰 API Key', true], ['model', '模型名称', 'step-audio-2-mini'], ['voice', '音色', 'qingchunshaonv']] },
-      iflytek: { label: '讯飞语音识别', fields: [['appid', '应用 ID', '填写 APPID', true], ['api_key', 'API Key', '填写 API Key', true], ['api_secret', 'API Secret', '填写 API Secret', true], ['asr_url', '服务地址', 'wss://iat-api.xfyun.cn/v2/iat']] },
+      doubao: { label: 'Volcengine ASR', fields: [['appid', 'App ID', 'e.g. 1234567890', true], ['access_token', 'Access Token', 'Token from console', true], ['output_dir', 'Temp Directory', 'tmp/'], ['end_window_size', 'Silence Timeout (ms)', '300', false, 'number']] },
+      deepgram: { label: 'Deepgram', fields: [['addr', 'Service Address', 'wss://api.deepgram.com/v1/listen'], ['api_key', 'API Key', 'Enter Deepgram API Key', true], ['lang', 'Language', 'zh-CN'], ['output_dir', 'Temp Directory', 'tmp/']] },
+      gosherpa: { label: 'GoSherpa', fields: [['addr', 'Service Address', 'ws://127.0.0.1:8848/asr']] },
+      stepfun: { label: 'StepFun', fields: [['api_key', 'API Key', 'Enter StepFun API Key', true], ['model', 'Model Name', 'step-audio-2-mini'], ['voice', 'Voice', 'qingchunshaonv']] },
+      iflytek: { label: 'iFlytek ASR', fields: [['appid', 'App ID', 'Enter APPID', true], ['api_key', 'API Key', 'Enter API Key', true], ['api_secret', 'API Secret', 'Enter API Secret', true], ['asr_url', 'Service Address', 'wss://iat-api.xfyun.cn/v2/iat']] },
     },
     TTS: {
-      edge: { label: 'Microsoft Edge TTS', fields: [['voice', '音色', 'zh-CN-XiaoxiaoNeural'], ['output_dir', '临时文件目录', 'tmp/']] },
-      doubao: { label: '火山语音合成', fields: [['appid', '应用 ID', '填写 APPID', true], ['token', '访问令牌', '填写 Access Token', true], ['cluster', '资源集群', '填写资源集群名称'], ['voice', '音色', 'zh_female_wanwanxiaohe_moon_bigtts'], ['output_dir', '临时文件目录', 'tmp/']] },
-      gosherpa: { label: 'GoSherpa', fields: [['cluster', '服务地址', 'ws://127.0.0.1:8848/tts'], ['output_dir', '临时文件目录', 'tmp/']] },
-      deepgram: { label: 'Deepgram', fields: [['cluster', '服务地址', 'wss://api.deepgram.com/v1/speak'], ['token', 'API 密钥', '填写 Deepgram API Key', true], ['voice', '音色', 'aura-2-zeus-en'], ['output_dir', '临时文件目录', 'tmp/']] },
-      iflytek: { label: '讯飞语音合成', fields: [['appid', '应用 ID', '填写 APPID', true], ['token', 'API Key', '填写 API Key', true], ['cluster', 'API Secret', '填写 API Secret', true], ['voice', '音色', 'xiaoyan'], ['output_dir', '临时文件目录', 'tmp/']] },
+      edge: { label: 'Microsoft Edge TTS', fields: [['voice', 'Voice', 'zh-CN-XiaoxiaoNeural'], ['output_dir', 'Temp Directory', 'tmp/']] },
+      doubao: { label: 'Volcengine TTS', fields: [['appid', 'App ID', 'Enter APPID', true], ['token', 'Access Token', 'Enter Access Token', true], ['cluster', 'Cluster', 'Enter resource cluster name'], ['voice', 'Voice', 'zh_female_wanwanxiaohe_moon_bigtts'], ['output_dir', 'Temp Directory', 'tmp/']] },
+      gosherpa: { label: 'GoSherpa', fields: [['cluster', 'Service Address', 'ws://127.0.0.1:8848/tts'], ['output_dir', 'Temp Directory', 'tmp/']] },
+      deepgram: { label: 'Deepgram', fields: [['cluster', 'Service Address', 'wss://api.deepgram.com/v1/speak'], ['token', 'API Key', 'Enter Deepgram API Key', true], ['voice', 'Voice', 'aura-2-zeus-en'], ['output_dir', 'Temp Directory', 'tmp/']] },
+      iflytek: { label: 'iFlytek TTS', fields: [['appid', 'App ID', 'Enter APPID', true], ['token', 'API Key', 'Enter API Key', true], ['cluster', 'API Secret', 'Enter API Secret', true], ['voice', 'Voice', 'xiaoyan'], ['output_dir', 'Temp Directory', 'tmp/']] },
     },
     LLM: {
-      openai: { label: 'OpenAI 兼容接口', fields: [['url', 'API 地址', 'https://api.example.com/v1'], ['api_key', 'API 密钥', '填写 API Key', true], ['model_name', '模型名称', '例如：gpt-4o-mini'], ['max_tokens', '最大输出 Token', '500', false, 'number']] },
-      ollama: { label: 'Ollama 本地模型', fields: [['url', 'Ollama 地址', 'http://127.0.0.1:11434'], ['model_name', '模型名称', '例如：qwen3:8b']] },
-      dsh: { label: 'DSH Xiaozhi Bridge', suggestedName: 'DSHBridge', fields: [['url', 'Bridge WebSocket 地址', 'ws://127.0.0.1:17980/xiaozhi', false, 'url', 'ws://127.0.0.1:17980/xiaozhi'], ['api_key', 'Bridge 令牌', '与 XIAOZHI_BRIDGE_TOKEN 相同', true]] },
-      doubao: { label: '火山方舟', fields: [['url', 'API 地址', 'https://ark.cn-beijing.volces.com/api/v3'], ['api_key', 'API 密钥', '填写 API Key', true], ['model_name', '模型名称', '填写模型端点 ID'], ['max_tokens', '最大输出 Token', '4000', false, 'number']] },
-      coze: { label: '扣子', fields: [['bot_id', '智能体 ID', '填写 Bot ID', true], ['user_id', '用户 ID', '填写 User ID', true], ['personal_access_token', '个人访问令牌', '填写 PAT', true], ['url', 'API 地址', 'https://api.coze.cn']] },
+      openai: { label: 'OpenAI Compatible', fields: [['url', 'API URL', 'https://api.example.com/v1'], ['api_key', 'API Key', 'Enter API Key', true], ['model_name', 'Model Name', 'e.g. gpt-4o-mini'], ['max_tokens', 'Max Tokens', '500', false, 'number']] },
+      ollama: { label: 'Ollama Local Model', fields: [['url', 'Ollama URL', 'http://127.0.0.1:11434'], ['model_name', 'Model Name', 'e.g. qwen3:8b']] },
+      dsh: { label: 'DSH Xiaozhi Bridge', suggestedName: 'DSHBridge', fields: [['url', 'Bridge WebSocket URL', 'ws://127.0.0.1:17980/xiaozhi', false, 'url', 'ws://127.0.0.1:17980/xiaozhi'], ['api_key', 'Bridge Token', 'Same as XIAOZHI_BRIDGE_TOKEN', true]] },
+      doubao: { label: 'Volcengine Ark', fields: [['url', 'API URL', 'https://ark.cn-beijing.volces.com/api/v3'], ['api_key', 'API Key', 'Enter API Key', true], ['model_name', 'Model Name', 'Enter model endpoint ID'], ['max_tokens', 'Max Tokens', '4000', false, 'number']] },
+      coze: { label: 'Coze', fields: [['bot_id', 'Bot ID', 'Enter Bot ID', true], ['user_id', 'User ID', 'Enter User ID', true], ['personal_access_token', 'Personal Access Token', 'Enter Personal Access Token', true], ['url', 'API URL', 'https://api.coze.cn']] },
     },
     VLLLM: {
-      openai: { label: 'OpenAI 兼容视觉模型', fields: [['url', 'API 地址', 'https://api.example.com/v1'], ['api_key', 'API 密钥', '填写 API Key', true], ['model_name', '模型名称', '例如：glm-4v-flash'], ['max_tokens', '最大输出 Token', '1024', false, 'number']] },
-      ollama: { label: 'Ollama 视觉模型', fields: [['url', 'Ollama 地址', 'http://127.0.0.1:11434'], ['model_name', '模型名称', '例如：qwen2.5vl:7b']] },
+      openai: { label: 'OpenAI Compatible Vision', fields: [['url', 'API URL', 'https://api.example.com/v1'], ['api_key', 'API Key', 'Enter API Key', true], ['model_name', 'Model Name', 'e.g. glm-4v-flash'], ['max_tokens', 'Max Tokens', '1024', false, 'number']] },
+      ollama: { label: 'Ollama Vision', fields: [['url', 'Ollama URL', 'http://127.0.0.1:11434'], ['model_name', 'Model Name', 'e.g. qwen2.5vl:7b']] },
     },
   };
 
-  const PROVIDER_FIELD_LABELS = { url: '服务地址', addr: '服务地址', asr_url: '服务地址', cluster: '服务地址 / 集群', model_name: '模型', model: '模型', voice: '音色', type: '具体类型', appid: '应用 ID', lang: '语言', output_dir: '临时目录', max_tokens: '最大输出 Token' };
+  const PROVIDER_FIELD_LABELS = { url: 'Endpoint URL', addr: 'Service Address', asr_url: 'ASR URL', cluster: 'Cluster / Endpoint', model_name: 'Model Name', model: 'Model', voice: 'Voice', type: 'Type', appid: 'App ID', lang: 'Language', output_dir: 'Temp Directory', max_tokens: 'Max Tokens' };
 
   function providerTypeLabel(type) {
-    return { ASR: '语音识别', TTS: '语音合成', LLM: '大语言模型', VLLLM: '视觉语言模型' }[type] || type;
+    return { ASR: 'Speech Recognition (ASR)', TTS: 'Speech Synthesis (TTS)', LLM: 'Large Language Model (LLM)', VLLLM: 'Vision Language Model (VLLM)' }[type] || type;
   }
 
   function providerFieldLabel(key) {
@@ -1401,7 +1401,7 @@
   }
 
   function displayProviderValue(key, value) {
-    if (/(token|secret|key|password)/i.test(key)) return '已填写（已隐藏）';
+    if (/(token|secret|key|password)/i.test(key)) return 'Configured (Hidden)';
     if (value == null) return '';
     const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
     return text.length > 64 ? `${text.slice(0, 56)}…` : text;
@@ -1412,40 +1412,40 @@
     const selectedType = provider?.type || 'LLM';
     const selectedSubType = config.type || Object.keys(PROVIDER_FIELDS[selectedType] || {})[0] || 'openai';
     openModal({
-      title: provider ? '编辑供应商' : '添加供应商',
+      title: provider ? 'Edit Provider' : 'Add Provider',
       body: `
         <form class="form" id="provider-form">
-          <div class="alert provider-form-intro">先选择服务和具体类型，再填写可见字段；不常用的参数可在“高级 JSON”中补充。密钥不会显示在供应商卡片上。</div>
+          <div class="alert provider-form-intro">Select the category and provider type, then fill in fields. Advanced settings can be edited in Advanced JSON. Keys are kept private.</div>
           <div class="form-grid">
             <div class="field">
-              <label>服务分类</label>
+              <label>Category</label>
               <select name="type" ${provider ? 'disabled' : ''}>
                 ${['ASR', 'TTS', 'LLM', 'VLLLM'].map((type) => `<option value="${type}" ${selectedType === type ? 'selected' : ''}>${type} · ${providerTypeLabel(type)}</option>`).join('')}
               </select>
             </div>
             <div class="field">
-              <label>供应商名称</label>
-              <input name="name" value="${escapeHtml(provider?.name || '')}" placeholder="例如：我的火山方舟" ${provider ? 'disabled' : ''} required>
+              <label>Provider Name</label>
+              <input name="name" value="${escapeHtml(provider?.name || '')}" placeholder="e.g. My Provider" ${provider ? 'disabled' : ''} required>
             </div>
             <div class="field">
-              <label>具体类型</label>
+              <label>Specific Type</label>
               <select name="subType" id="provider-subtype" required></select>
             </div>
             <div class="field" id="provider-custom-subtype-field" hidden>
-              <label for="provider-custom-subtype">自定义具体类型</label>
-              <input name="customSubType" id="provider-custom-subtype" placeholder="例如：my_provider">
+              <label for="provider-custom-subtype">Custom Subtype</label>
+              <input name="customSubType" id="provider-custom-subtype" placeholder="e.g. my_provider">
             </div>
           </div>
           <div id="provider-config-fields" class="form-grid"></div>
           <details class="provider-advanced">
-            <summary>高级 JSON（可选）</summary>
-            <p class="subtle">字段表单会同步到此处；仅在需要填写未列出的参数时直接编辑。</p>
+            <summary>Advanced JSON (Optional)</summary>
+            <p class="subtle">Form fields sync here automatically. Edit directly only for extra unlisted parameters.</p>
             <textarea class="codebox" name="configJson" spellcheck="false">${escapeHtml(prettyJson(config))}</textarea>
           </details>
-          <div id="provider-form-status" class="subtle">保存后可在供应商卡片上进行测试。</div>
+          <div id="provider-form-status" class="subtle">You can run tests from the provider card after saving.</div>
         </form>
       `,
-      footer: `<button class="btn" data-close-modal>取消</button><button class="btn primary" id="provider-submit">保存</button>`,
+      footer: `<button class="btn" data-close-modal>Cancel</button><button class="btn primary" id="provider-submit">Save</button>`,
     });
 
     const form = byId('provider-form');
@@ -1461,7 +1461,7 @@
       const knownSubType = Object.prototype.hasOwnProperty.call(definitions, selectedSubType.toLowerCase()) ? selectedSubType.toLowerCase() : '';
       const shouldSetInitialSubType = !resetConfig && !subTypeInput.dataset.initialized;
       const selectedBeforeRender = subTypeInput.value;
-      subTypeInput.innerHTML = `${Object.entries(definitions).map(([value, definition]) => `<option value="${escapeHtml(value)}">${escapeHtml(`${value} · ${definition.label}`)}</option>`).join('')}<option value="__custom__">自定义类型…</option>`;
+      subTypeInput.innerHTML = `${Object.entries(definitions).map(([value, definition]) => `<option value="${escapeHtml(value)}">${escapeHtml(`${value} · ${definition.label}`)}</option>`).join('')}<option value="__custom__">Custom Type...</option>`;
       if (resetConfig) subTypeInput.value = Object.keys(definitions)[0] || '__custom__';
       if (shouldSetInitialSubType) {
         subTypeInput.value = knownSubType || '__custom__';
@@ -1487,19 +1487,19 @@
           <label for="provider-field-${escapeHtml(key)}">${escapeHtml(label)}</label>
           <div class="${secret ? 'input-with-button' : ''}">
             <input id="provider-field-${escapeHtml(key)}" data-provider-config-field="${escapeHtml(key)}" type="${secret ? 'password' : (inputType || 'text')}" value="${escapeHtml(configValue[key] ?? defaultValue ?? '')}" placeholder="${escapeHtml(placeholder || '')}" ${['appid', 'access_token', 'api_key', 'api_secret', 'token', 'model_name', 'model', 'voice'].includes(key) || (subType === 'dsh' && key === 'url') ? 'required' : ''}>
-            ${secret ? `<button class="btn small" type="button" data-toggle-provider-secret aria-label="显示或隐藏${escapeHtml(label)}">显示</button>` : ''}
+            ${secret ? `<button class="btn small" type="button" data-toggle-provider-secret aria-label="Toggle secret for ${escapeHtml(label)}">Show</button>` : ''}
           </div>
         </div>
-      `).join('') : '<div class="alert warning">此具体类型暂无快捷字段，请在高级 JSON 中填写完整配置。</div>';
+      `).join('') : '<div class="alert warning">No preset form fields for this type. Please enter full config in Advanced JSON.</div>';
       qsa('[data-provider-config-field]', form).forEach((input) => input.addEventListener('input', syncProviderJson));
       qsa('[data-toggle-provider-secret]', form).forEach((button) => button.addEventListener('click', () => {
         const input = button.parentElement.querySelector('[data-provider-config-field]');
         const hidden = input.type === 'password';
         input.type = hidden ? 'text' : 'password';
-        button.textContent = hidden ? '隐藏' : '显示';
+        button.textContent = hidden ? 'Hide' : 'Show';
       }));
-      if (definition?.suggestedName && !provider && !form.elements.name.value.trim()) form.elements.name.placeholder = `建议名称：${definition.suggestedName}`;
-      byId('provider-form-status').textContent = definition ? `已选择：${providerTypeLabel(type)} · ${definition.label}${definition.suggestedName ? `；建议供应商名称：${definition.suggestedName}` : ''}` : '请填写自定义类型，并在高级 JSON 中补充完整配置。';
+      if (definition?.suggestedName && !provider && !form.elements.name.value.trim()) form.elements.name.placeholder = `Suggested Name: ${definition.suggestedName}`;
+      byId('provider-form-status').textContent = definition ? `Selected: ${providerTypeLabel(type)} · ${definition.label}${definition.suggestedName ? `; Suggested Name: ${definition.suggestedName}` : ''}` : 'Please enter custom type and complete config in Advanced JSON.';
     };
     const syncProviderJson = () => {
       const configValue = currentConfig();
@@ -1528,7 +1528,7 @@
       syncProviderJson();
       const config = parseJson(values.configJson, null);
       if (!config) {
-        toast('配置 JSON 格式不正确', 'warning');
+        toast('Invalid JSON format', 'warning');
         return;
       }
       config.type = effectiveSubType() || config.type;
@@ -1544,25 +1544,25 @@
             body: { type, name, data: config },
           });
         }
-        toast('保存成功', 'success');
+        toast('Saved successfully', 'success');
         closeModal();
         render();
       } catch (error) {
-        showError(error, '保存失败');
+        showError(error, 'Failed to save');
       }
     });
   }
 
   async function renderUnbindDevice() {
     page().innerHTML = `
-      ${pageHeader('设备解绑', '管理员可按设备 ID 解绑设备')}
+      ${pageHeader('Unbind Device', 'Administrators can unbind devices by Device ID')}
       <div class="card">
         <form class="form" id="unbind-form">
           <div class="field">
-            <label>设备 ID</label>
-            <input name="deviceID" placeholder="请输入设备 ID" required>
+            <label>Device ID</label>
+            <input name="deviceID" placeholder="Enter Device ID" required>
           </div>
-          <button class="btn danger" type="submit" ${canWriteAdmin() ? '' : 'disabled'}>解绑</button>
+          <button class="btn danger" type="submit" ${canWriteAdmin() ? '' : 'disabled'}>Unbind</button>
         </form>
       </div>
     `;
@@ -1571,27 +1571,27 @@
       const values = formValues(event.currentTarget);
       try {
         await request('/api/admin/system/device', { method: 'DELETE', body: { deviceID: values.deviceID } });
-        toast('解绑成功', 'success');
+        toast('Unbound successfully', 'success');
       } catch (error) {
-        showError(error, '解绑失败');
+        showError(error, 'Failed to unbind');
       }
     });
   }
 
   async function renderAdvancedConfig() {
     page().innerHTML = `
-      ${pageHeader('高级配置', '管理系统运行参数')}
+      ${pageHeader('Advanced Settings', 'Manage system runtime configuration')}
       <div class="card">
         <div class="tabs">
           ${[
-            ['application', '应用配置'],
-            ['transport', '传输配置'],
-            ['web', 'Web 配置'],
-            ['auth', '认证配置'],
-            ['roles', '角色配置'],
-            ['mcp-functions', '本地 MCP 功能'],
-            ['exit-commands', '退出指令'],
-            ['log', '日志配置'],
+            ['application', 'Application Config'],
+            ['transport', 'Transport Config'],
+            ['web', 'Web Config'],
+            ['auth', 'Auth Config'],
+            ['roles', 'Role Presets'],
+            ['mcp-functions', 'Local MCP Tools'],
+            ['exit-commands', 'Exit Commands'],
+            ['log', 'Logging Config'],
           ].map(([key, label]) => `<button class="tab ${state.advancedTab === key ? 'active' : ''}" data-advanced-tab="${key}">${label}</button>`).join('')}
         </div>
         <div id="advanced-body">${loadingCard()}</div>
@@ -1606,30 +1606,30 @@
     const body = byId('advanced-body');
     body.innerHTML = loadingCard();
     if (tab === 'application') return drawSimpleConfig('application', [
-      ['quickReply', '快速回复', 'checkbox'],
-      ['saveTtsAudio', '保存 TTS 音频', 'checkbox'],
-      ['saveUserAudio', '保存用户音频文件', 'checkbox'],
+      ['quickReply', 'Quick Reply', 'checkbox'],
+      ['saveTtsAudio', 'Save TTS Audio', 'checkbox'],
+      ['saveUserAudio', 'Save User Audio', 'checkbox'],
     ]);
     if (tab === 'web') return drawSimpleConfig('web', [
-      ['port', 'Web 服务端口', 'number'],
-      ['staticDir', '静态目录', 'text'],
-      ['websocket', 'WebSocket 地址', 'text'],
-      ['visionUrl', '视觉服务 URL', 'text'],
-      ['activateText', '激活文案', 'text'],
+      ['port', 'Web Server Port', 'number'],
+      ['staticDir', 'Static Directory', 'text'],
+      ['websocket', 'WebSocket URL', 'text'],
+      ['visionUrl', 'Vision Service URL', 'text'],
+      ['activateText', 'Activation Prompt', 'text'],
     ]);
     if (tab === 'auth') return drawSimpleConfig('auth', [
-      ['token', '访问令牌', 'password'],
-      ['expiry', '过期时间（小时）', 'number'],
+      ['token', 'Access Token', 'password'],
+      ['expiry', 'Expiry (Hours)', 'number'],
     ]);
     if (tab === 'log') return drawSimpleConfig('log', [
-      ['logLevel', '日志级别', 'select:debug,info,warn,error'],
-      ['logDir', '日志目录', 'text'],
-      ['logFile', '日志文件名', 'text'],
+      ['logLevel', 'Log Level', 'select:debug,info,warn,error'],
+      ['logDir', 'Log Directory', 'text'],
+      ['logFile', 'Log Filename', 'text'],
     ]);
     if (tab === 'transport') return drawTransportConfig();
-    if (tab === 'roles') return drawCollectionConfig('roles', '角色', ['name', 'description', 'enabled']);
-    if (tab === 'mcp-functions') return drawCollectionConfig('mcp-functions', '本地 MCP 功能', ['functionName', 'description', 'enabled']);
-    if (tab === 'exit-commands') return drawCollectionConfig('exit-commands', '退出指令', ['command', 'enabled']);
+    if (tab === 'roles') return drawCollectionConfig('roles', 'Role', ['name', 'description', 'enabled']);
+    if (tab === 'mcp-functions') return drawCollectionConfig('mcp-functions', 'Local MCP Tool', ['functionName', 'description', 'enabled']);
+    if (tab === 'exit-commands') return drawCollectionConfig('exit-commands', 'Exit Command', ['command', 'enabled']);
   }
 
   async function drawSimpleConfig(type, fields) {
@@ -1639,7 +1639,7 @@
         <div class="form-grid">
           ${fields.map(([key, label, fieldType]) => simpleField(key, label, fieldType, config[key])).join('')}
         </div>
-        <button class="btn primary" type="submit" ${canWriteAdmin() ? '' : 'disabled'}>保存配置</button>
+        <button class="btn primary" type="submit" ${canWriteAdmin() ? '' : 'disabled'}>Save Configuration</button>
       </form>
     `;
     byId('simple-config-form').addEventListener('submit', async (event) => {
@@ -1650,9 +1650,9 @@
       });
       try {
         await request(`/api/admin/config/${type}`, { method: 'PUT', body: values });
-        toast('保存成功', 'success');
+        toast('Saved successfully', 'success');
       } catch (error) {
-        showError(error, '保存失败');
+        showError(error, 'Failed to save');
       }
     });
   }
@@ -1685,10 +1685,10 @@
     byId('advanced-body').innerHTML = `
       <form class="form" id="transport-form">
         <div class="field">
-          <label>传输配置 JSON</label>
+          <label>Transport Configuration JSON</label>
           <textarea class="codebox" name="transportJson" rows="18" spellcheck="false">${escapeHtml(prettyJson(configs))}</textarea>
         </div>
-        <button class="btn primary" type="submit" ${canWriteAdmin() ? '' : 'disabled'}>保存配置</button>
+        <button class="btn primary" type="submit" ${canWriteAdmin() ? '' : 'disabled'}>Save Configuration</button>
       </form>
     `;
     byId('transport-form').addEventListener('submit', async (event) => {
@@ -1696,14 +1696,14 @@
       const values = formValues(event.currentTarget);
       const next = parseJson(values.transportJson, null);
       if (!Array.isArray(next)) {
-        toast('传输配置必须是数组 JSON', 'warning');
+        toast('Transport configuration must be a JSON array', 'warning');
         return;
       }
       try {
         await request('/api/admin/config/transport', { method: 'PUT', body: next });
-        toast('保存成功', 'success');
+        toast('Saved successfully', 'success');
       } catch (error) {
-        showError(error, '保存失败');
+        showError(error, 'Failed to save');
       }
     });
   }
@@ -1713,22 +1713,22 @@
     const rows = normalizeList(payload);
     byId('advanced-body').innerHTML = `
       <div class="toolbar" style="justify-content:space-between;margin-bottom:12px">
-        <span class="muted">共 ${rows.length} 项</span>
-        <button class="btn primary" id="collection-add" ${canWriteAdmin() ? '' : 'disabled'}>添加${escapeHtml(label)}</button>
+        <span class="muted">${rows.length} item(s) total</span>
+        <button class="btn primary" id="collection-add" ${canWriteAdmin() ? '' : 'disabled'}>Add ${escapeHtml(label)}</button>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr>${fields.map((field) => `<th>${escapeHtml(field)}</th>`).join('')}<th>操作</th></tr></thead>
+          <thead><tr>${fields.map((field) => `<th>${escapeHtml(field)}</th>`).join('')}<th>Actions</th></tr></thead>
           <tbody>
             ${rows.map((row) => `
               <tr>
-                ${fields.map((field) => `<td>${field === 'enabled' ? (row[field] ? '<span class="tag green">启用</span>' : '<span class="tag">停用</span>') : escapeHtml(row[field] ?? '')}</td>`).join('')}
+                ${fields.map((field) => `<td>${field === 'enabled' ? (row[field] ? '<span class="tag green">Enabled</span>' : '<span class="tag">Disabled</span>') : escapeHtml(row[field] ?? '')}</td>`).join('')}
                 <td>
-                  <button class="btn small" data-edit-collection="${escapeHtml(endpoint)}:${escapeHtml(collectionId(row, endpoint))}">编辑</button>
-                  <button class="btn danger small" data-delete-collection="${escapeHtml(endpoint)}:${escapeHtml(collectionId(row, endpoint))}">删除</button>
+                  <button class="btn small" data-edit-collection="${escapeHtml(endpoint)}:${escapeHtml(collectionId(row, endpoint))}">Edit</button>
+                  <button class="btn danger small" data-delete-collection="${escapeHtml(endpoint)}:${escapeHtml(collectionId(row, endpoint))}">Delete</button>
                 </td>
               </tr>
-            `).join('') || `<tr><td colspan="${fields.length + 1}">${emptyState(`暂无${label}`)}</td></tr>`}
+            `).join('') || `<tr><td colspan="${fields.length + 1}">${emptyState(`No ${label} configured`)}</td></tr>`}
           </tbody>
         </table>
       </div>
@@ -1745,16 +1745,16 @@
 
   function openCollectionModal(endpoint, label, fields, row = null) {
     openModal({
-      title: `${row ? '编辑' : '添加'}${label}`,
+      title: `${row ? 'Edit' : 'Add'} ${label}`,
       body: `
         <form class="form" id="collection-form">
           ${fields.map((field) => field === 'enabled'
-            ? `<label class="field checkbox"><input type="checkbox" name="enabled" ${row?.enabled ? 'checked' : ''}><span>启用</span></label>`
+            ? `<label class="field checkbox"><input type="checkbox" name="enabled" ${row?.enabled ? 'checked' : ''}><span>Enabled</span></label>`
             : `<div class="field"><label>${escapeHtml(field)}</label><input name="${escapeHtml(field)}" value="${escapeHtml(row?.[field] ?? '')}" required></div>`
           ).join('')}
         </form>
       `,
-      footer: `<button class="btn" data-close-modal>取消</button><button class="btn primary" id="collection-submit">保存</button>`,
+      footer: `<button class="btn" data-close-modal>Cancel</button><button class="btn primary" id="collection-submit">Save</button>`,
     });
     byId('collection-submit').addEventListener('click', async () => {
       const form = byId('collection-form');
@@ -1767,19 +1767,19 @@
           await request(`/api/admin/config/${endpoint}`, { method: 'POST', body: values });
         }
         closeModal();
-        toast('保存成功', 'success');
+        toast('Saved successfully', 'success');
         drawAdvancedTab(endpoint);
       } catch (error) {
-        showError(error, '保存失败');
+        showError(error, 'Failed to save');
       }
     });
   }
 
   async function renderWhiteList() {
     page().innerHTML = `
-      ${pageHeader('白名单', '管理允许访问的 MAC 地址', `
-        <button class="btn primary" id="white-add">添加</button>
-        <button class="btn" id="white-batch">批量添加</button>
+      ${pageHeader('Whitelist', 'Manage authorized device MAC addresses', `
+        <button class="btn primary" id="white-add">Add</button>
+        <button class="btn" id="white-batch">Batch Add</button>
       `)}
       <div id="white-body">${loadingCard()}</div>
     `;
@@ -1792,36 +1792,36 @@
         <div class="card">
           <div class="table-wrap">
             <table>
-              <thead><tr><th>MAC 地址</th><th>操作</th></tr></thead>
+              <thead><tr><th>MAC Address</th><th>Actions</th></tr></thead>
               <tbody>
                 ${table.data.map((row) => `
                   <tr>
                     <td>${escapeHtml(row.mac || row.deviceId || '')}</td>
-                    <td><button class="btn danger small" data-delete-white="${escapeHtml(row.mac || row.deviceId || '')}">删除</button></td>
+                    <td><button class="btn danger small" data-delete-white="${escapeHtml(row.mac || row.deviceId || '')}">Delete</button></td>
                   </tr>
-                `).join('') || `<tr><td colspan="2">${emptyState('暂无白名单')}</td></tr>`}
+                `).join('') || `<tr><td colspan="2">${emptyState('No whitelist entries')}</td></tr>`}
               </tbody>
             </table>
           </div>
         </div>
       `;
     } catch (_error) {
-      byId('white-body').innerHTML = `<div class="alert warning">当前服务未提供白名单接口，或当前账号无权限访问。</div>`;
+      byId('white-body').innerHTML = `<div class="alert warning">Whitelist interface unavailable or current user lacks permission.</div>`;
     }
   }
 
   function openWhiteListModal() {
     openModal({
-      title: '添加白名单',
+      title: 'Add to Whitelist',
       body: `
         <form class="form" id="white-form">
           <div class="field">
-            <label>MAC 地址</label>
+            <label>MAC Address</label>
             <input name="mac" pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$" placeholder="AA:BB:CC:DD:EE:FF" required>
           </div>
         </form>
       `,
-      footer: `<button class="btn" data-close-modal>取消</button><button class="btn primary" id="white-submit">添加</button>`,
+      footer: `<button class="btn" data-close-modal>Cancel</button><button class="btn primary" id="white-submit">Add</button>`,
     });
     byId('white-submit').addEventListener('click', async () => {
       const form = byId('white-form');
@@ -1829,26 +1829,26 @@
       try {
         await request('/api/admin/system/whiteList/add', { method: 'POST', body: formValues(form) });
         closeModal();
-        toast('添加成功', 'success');
+        toast('Added successfully', 'success');
         render();
       } catch (error) {
-        showError(error, '添加失败');
+        showError(error, 'Failed to add');
       }
     });
   }
 
   function openWhiteListUpload() {
     openModal({
-      title: '批量添加白名单',
+      title: 'Batch Add to Whitelist',
       body: `
         <form class="form" id="white-upload-form">
           <div class="field">
-            <label>CSV 文件</label>
+            <label>CSV File</label>
             <input name="file" type="file" accept=".csv" required>
           </div>
         </form>
       `,
-      footer: `<button class="btn" data-close-modal>取消</button><button class="btn primary" id="white-upload-submit">上传</button>`,
+      footer: `<button class="btn" data-close-modal>Cancel</button><button class="btn primary" id="white-upload-submit">Upload</button>`,
     });
     byId('white-upload-submit').addEventListener('click', async () => {
       const form = byId('white-upload-form');
@@ -1859,10 +1859,10 @@
       try {
         await request('/api/admin/system/whiteList/batchAdd', { method: 'POST', body: data });
         closeModal();
-        toast('上传成功', 'success');
+        toast('Uploaded successfully', 'success');
         render();
       } catch (error) {
-        showError(error, '上传失败');
+        showError(error, 'Upload failed');
       }
     });
   }
@@ -1891,7 +1891,7 @@
     const copy = target.closest('[data-copy]');
     if (copy) {
       navigator.clipboard?.writeText(copy.dataset.copy);
-      toast('已复制', 'success');
+      toast('Copied to clipboard', 'success');
       return;
     }
 
@@ -1903,9 +1903,9 @@
 
     const deleteAgent = target.closest('[data-delete-agent]');
     if (deleteAgent) {
-      confirmAction('删除智能体', '删除后相关配置和历史对话无法恢复，确认删除吗？', async () => {
+      confirmAction('Delete Agent', 'This will delete configuration and chat history permanently. Are you sure?', async () => {
         await request(`/api/user/agent/${deleteAgent.dataset.deleteAgent}`, { method: 'DELETE' });
-        toast('删除成功', 'success');
+        toast('Deleted successfully', 'success');
         render();
       });
       return;
@@ -1913,9 +1913,9 @@
 
     const unbind = target.closest('[data-unbind-device]');
     if (unbind) {
-      confirmAction('解绑设备', '设备解绑后需要重新绑定，确认继续吗？', async () => {
+      confirmAction('Unbind Device', 'Device must be bound again after unbinding. Continue?', async () => {
         await request('/api/user/device', { method: 'DELETE', body: { deviceID: unbind.dataset.unbindDevice } });
-        toast('解绑成功', 'success');
+        toast('Unbound successfully', 'success');
         render();
       });
       return;
@@ -1924,12 +1924,12 @@
     const toggleDevice = target.closest('[data-toggle-device]');
     if (toggleDevice) {
       const currentlyDisabled = toggleDevice.dataset.disabled === 'true';
-      confirmAction(currentlyDisabled ? '启用设备' : '禁用设备', currentlyDisabled ? '恢复后设备可以重新建立语音会话，确认继续吗？' : '禁用后将立即拒绝该设备的新语音会话，确认继续吗？', async () => {
+      confirmAction(currentlyDisabled ? 'Enable Device' : 'Disable Device', currentlyDisabled ? 'Device will be allowed to start voice sessions again. Continue?' : 'Device will be blocked from starting voice sessions. Continue?', async () => {
         await request(`/api/user/device/${encodeURIComponent(toggleDevice.dataset.toggleDevice)}`, {
           method: 'PUT',
           body: { disabled: !currentlyDisabled },
         });
-        toast(currentlyDisabled ? '设备已启用' : '设备已禁用', 'success');
+        toast(currentlyDisabled ? 'Device enabled' : 'Device disabled', 'success');
         render();
       });
       return;
@@ -1937,9 +1937,9 @@
 
     const clearDeviceMemory = target.closest('[data-clear-device-memory]');
     if (clearDeviceMemory) {
-      confirmAction('清空短期记忆', '这会清空此设备当前智能体的短期对话上下文，确认继续吗？', async () => {
+      confirmAction('Clear Short-term Memory', 'This will clear short-term context for this device and agent. Continue?', async () => {
         await request(`/api/user/device/${encodeURIComponent(clearDeviceMemory.dataset.clearDeviceMemory)}/memory`, { method: 'DELETE' });
-        toast('短期记忆已清空', 'success');
+        toast('Short-term memory cleared', 'success');
       });
       return;
     }
@@ -1949,16 +1949,16 @@
       try {
         await selectConversation(conversation.dataset.conversation);
       } catch (error) {
-        showError(error, '加载对话失败');
+        showError(error, 'Failed to load conversation');
       }
       return;
     }
 
     const deleteDialog = target.closest('[data-delete-dialog]');
     if (deleteDialog) {
-      confirmAction('删除对话', '删除后无法恢复，确认删除吗？', async () => {
+      confirmAction('Delete Conversation', 'This conversation will be permanently removed. Continue?', async () => {
         await request(`/api/user/agent/history_dialog/${deleteDialog.dataset.deleteDialog}`, { method: 'DELETE' });
-        toast('删除成功', 'success');
+        toast('Deleted successfully', 'success');
         render();
       });
       return;
@@ -1981,28 +1981,28 @@
       const resultNode = testProvider.closest('.provider-card')?.querySelector('.provider-test-result');
       const previousText = testProvider.textContent;
       testProvider.disabled = true;
-      testProvider.textContent = '测试中…';
-      if (resultNode) resultNode.innerHTML = '<span class="subtle">正在验证已保存的配置，请稍候…</span>';
+      testProvider.textContent = 'Testing...';
+      if (resultNode) resultNode.innerHTML = '<span class="subtle">Verifying saved configuration, please wait...</span>';
       try {
         const result = await request(`/api/user/providers/${encodeURIComponent(type)}/${encodeURIComponent(name)}/test`, { method: 'POST' });
         const success = result?.success === true;
         if (resultNode) {
-          resultNode.innerHTML = `<div class="provider-test-message ${success ? 'success' : 'error'}">${escapeHtml(result?.message || (success ? '测试成功' : '测试失败'))}</div>`;
+          resultNode.innerHTML = `<div class="provider-test-message ${success ? 'success' : 'error'}">${escapeHtml(result?.message || (success ? 'Test succeeded' : 'Test failed'))}</div>`;
           const audioData = result?.data?.audio_base64;
           const audioFormat = String(result?.data?.audio_format || '').toLowerCase();
           if (success && typeof audioData === 'string' && /^(wav|mp3|ogg)$/.test(audioFormat)) {
             const player = document.createElement('audio');
             player.className = 'provider-test-audio';
             player.controls = true;
-            player.setAttribute('aria-label', '测试合成语音播放器');
+            player.setAttribute('aria-label', 'Speech synthesis test player');
             player.src = `data:audio/${audioFormat};base64,${audioData}`;
             resultNode.append(player);
           }
         }
-        toast(result?.message || (success ? '测试成功' : '测试失败'), success ? 'success' : 'error');
+        toast(result?.message || (success ? 'Test succeeded' : 'Test failed'), success ? 'success' : 'error');
       } catch (error) {
-        if (resultNode) resultNode.innerHTML = `<div class="provider-test-message error">${escapeHtml(error?.data?.message || error?.message || '测试失败')}</div>`;
-        showError(error, '测试失败');
+        if (resultNode) resultNode.innerHTML = `<div class="provider-test-message error">${escapeHtml(error?.data?.message || error?.message || 'Test failed')}</div>`;
+        showError(error, 'Test failed');
       } finally {
         testProvider.disabled = false;
         testProvider.textContent = previousText;
@@ -2014,9 +2014,9 @@
     if (deleteProvider) {
       const [type, ...nameParts] = deleteProvider.dataset.deleteProvider.split(':');
       const name = nameParts.join(':');
-      confirmAction('删除供应商', `确认删除 ${type}/${name} 吗？`, async () => {
+      confirmAction('Delete Provider', `Are you sure you want to delete ${type}/${name}?`, async () => {
         await request(`/api/user/providers/${encodeURIComponent(type)}/${encodeURIComponent(name)}`, { method: 'DELETE' });
-        toast('删除成功', 'success');
+        toast('Deleted successfully', 'success');
         render();
       });
       return;
@@ -2035,7 +2035,7 @@
       const payload = await request(`/api/admin/config/${endpoint}`);
       const rows = normalizeList(payload);
       const row = rows.find((item) => collectionId(item, endpoint) === id);
-      const labelMap = { roles: '角色', 'mcp-functions': '本地 MCP 功能', 'exit-commands': '退出指令' };
+      const labelMap = { roles: 'Role', 'mcp-functions': 'Local MCP Tool', 'exit-commands': 'Exit Command' };
       const fieldsMap = {
         roles: ['name', 'description', 'enabled'],
         'mcp-functions': ['functionName', 'description', 'enabled'],
@@ -2049,9 +2049,9 @@
     if (deleteCollection) {
       const [endpoint, ...idParts] = deleteCollection.dataset.deleteCollection.split(':');
       const id = idParts.join(':');
-      confirmAction('删除配置项', '确认删除该配置项吗？', async () => {
+      confirmAction('Delete Item', 'Are you sure you want to delete this configuration item?', async () => {
         await request(`/api/admin/config/${endpoint}/${encodeURIComponent(id)}`, { method: 'DELETE' });
-        toast('删除成功', 'success');
+        toast('Deleted successfully', 'success');
         drawAdvancedTab(endpoint);
       });
       return;
@@ -2059,12 +2059,12 @@
 
     const deleteWhite = target.closest('[data-delete-white]');
     if (deleteWhite) {
-      confirmAction('删除白名单', '确认删除该 MAC 地址吗？', async () => {
+      confirmAction('Delete Whitelist Entry', 'Are you sure you want to remove this MAC address?', async () => {
         await request('/api/admin/system/whiteList', {
           method: 'DELETE',
           body: { mac: deleteWhite.dataset.deleteWhite },
         });
-        toast('删除成功', 'success');
+        toast('Deleted successfully', 'success');
         render();
       });
     }

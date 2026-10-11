@@ -20,18 +20,18 @@ import (
 )
 
 const (
-	// 最大文件大小为5MB
+	// Max file size 5MB
 	MAX_FILE_SIZE = 5 * 1024 * 1024
 )
 
 type DefaultVisionService struct {
 	logger    *utils.Logger
 	config    *configs.Config
-	vlllmMap  map[string]*vlllm.Provider // 支持多个VLLLM provider
-	authToken *auth.AuthToken            // 认证工具
+	vlllmMap  map[string]*vlllm.Provider // Supports multiple VLLM providers
+	authToken *auth.AuthToken            // Authentication helper
 }
 
-// NewDefaultVisionService 构造函数
+// NewDefaultVisionService constructor
 func NewDefaultVisionService(
 	config *configs.Config,
 	logger *utils.Logger,
@@ -44,26 +44,26 @@ func NewDefaultVisionService(
 
 	service.authToken = auth.NewAuthToken(config.Server.Token)
 
-	// 初始化VLLLM providers
+	// Initialize VLLM providers
 	if err := service.initVLLMProviders(); err != nil {
-		return nil, fmt.Errorf("初始化VLLLM providers失败: %v", err)
+		return nil, fmt.Errorf("failed to initialize VLLM providers: %v", err)
 	}
 
 	return service, nil
 }
 
-// initVLLMProviders 初始化VLLLM providers
+// initVLLMProviders initializes VLLM providers
 func (s *DefaultVisionService) initVLLMProviders() error {
-	// 先看配置中的VLLLM provider
+	// Check configured VLLM provider
 	selected_vlllm := s.config.SelectedModule["VLLLM"]
 	if selected_vlllm == "" {
-		s.logger.Warn("请设置好VLLLM provider配置")
-		return fmt.Errorf("请设置好VLLLM provider配置")
+		s.logger.Warn("Please configure VLLM provider")
+		return fmt.Errorf("please configure VLLM provider")
 	}
 
 	vlllmConfig := s.config.VLLLM[selected_vlllm]
 
-	// 创建VLLLM provider配置
+	// Create VLLM provider configuration
 	providerConfig := &vlllm.Config{
 		Type:        vlllmConfig.Type,
 		ModelName:   vlllmConfig.ModelName,
@@ -75,82 +75,82 @@ func (s *DefaultVisionService) initVLLMProviders() error {
 		Security:    vlllmConfig.Security,
 	}
 
-	// 创建provider实例
+	// Create provider instance
 	provider, err := vlllm.NewProvider(providerConfig, s.logger)
 	if err != nil {
-		s.logger.Warn(fmt.Sprintf("创建VLLLM provider 失败: %v", err))
+		s.logger.Warn(fmt.Sprintf("Failed to create VLLM provider: %v", err))
 	}
 
-	// 初始化provider
+	// Initialize provider
 	if err := provider.Initialize(); err != nil {
-		s.logger.Warn(fmt.Sprintf("初始化VLLLM provider失败: %v", err))
+		s.logger.Warn(fmt.Sprintf("Failed to initialize VLLM provider: %v", err))
 	}
 
 	s.vlllmMap[selected_vlllm] = provider
-	s.logger.Info(fmt.Sprintf("[VLLLM] [初始化 %s] 成功", selected_vlllm))
+	s.logger.Info(fmt.Sprintf("[VLLM] [Initialized %s] successfully", selected_vlllm))
 
 	if len(s.vlllmMap) == 0 {
-		s.logger.Error("没有可用的VLLLM provider，请检查配置")
-		return fmt.Errorf("没有可用的VLLLM provider")
+		s.logger.Error("No available VLLM provider, please check configuration")
+		return fmt.Errorf("no available VLLM provider")
 	}
 
 	return nil
 }
 
-// Start 实现 VisionService 接口，注册所有 Vision 相关路由
+// Start registers Vision endpoints
 func (s *DefaultVisionService) Start(
 	ctx context.Context,
 	engine *gin.Engine,
 	apiGroup *gin.RouterGroup,
 ) error {
-	// Vision 主接口（GET用于状态检查，POST用于图片分析）
+	// Vision main endpoints (GET for status check, POST for image analysis)
 	apiGroup.GET("/vision", s.handleGet)
 	apiGroup.POST("/vision", s.handlePost)
 	apiGroup.OPTIONS("/vision", s.handleOptions)
 
-	s.logger.Info("[Vision] [服务] HTTP路由注册完成")
+	s.logger.Info("[Vision] [Service] HTTP routes registered successfully")
 	return nil
 }
 
-// handleOptions 处理OPTIONS请求（CORS）
+// handleOptions handles OPTIONS requests (CORS)
 func (s *DefaultVisionService) handleOptions(c *gin.Context) {
-	s.logger.Info("收到Vision CORS预检请求 options")
+	s.logger.Info("Received Vision CORS preflight OPTIONS request")
 	s.addCORSHeaders(c)
 	c.Status(http.StatusOK)
 }
 
-// handleGet 处理GET请求（状态检查）
-// @Summary Vision服务状态检查
-// @Description 检查Vision服务是否正常运行
+// handleGet handles GET status check request
+// @Summary Vision service status check
+// @Description Check if Vision service is running normally
 // @Tags Vision
 // @Produce plain
-// @Success 200 {string} string "服务状态信息"
+// @Success 200 {string} string "Service status message"
 // @Router /vision [get]
 func (s *DefaultVisionService) handleGet(c *gin.Context) {
-	s.logger.Info("收到Vision状态检查请求 get")
+	s.logger.Info("Received Vision status check GET request")
 	s.addCORSHeaders(c)
 
-	// 检查Vision服务状态
+	// Check Vision service status
 	var message string
 	if len(s.vlllmMap) > 0 {
-		message = fmt.Sprintf("MCP Vision 接口运行正常，共有 %d 个可用的视觉分析模型", len(s.vlllmMap))
+		message = fmt.Sprintf("MCP Vision endpoint is running normally with %d active visual model(s)", len(s.vlllmMap))
 	} else {
-		message = "MCP Vision 接口运行不正常，没有可用的VLLLM provider"
+		message = "MCP Vision endpoint is unhealthy: no active VLLM provider"
 	}
 
 	c.String(http.StatusOK, message)
 }
 
-// handlePost 处理POST请求（图片分析）
-// @Summary 图片分析
-// @Description 上传图片并进行视觉分析，返回分析结果
+// handlePost handles POST image analysis request
+// @Summary Image analysis
+// @Description Upload image for visual analysis and return result
 // @Tags Vision
 // @Accept multipart/form-data
 // @Produce json
 // @Param Authorization header string true "Bearer Token"
-// @Param Device-Id header string true "设备ID"
-// @Param question formData string true "问题文本"
-// @Param image formData file true "图片文件"
+// @Param Device-Id header string true "Device ID"
+// @Param question formData string true "Question text"
+// @Param image formData file true "Image file"
 // @Success 200 {object} VisionResponse
 // @Failure 400 {object} VisionResponse
 // @Failure 401 {object} VisionResponse
@@ -161,29 +161,29 @@ func (s *DefaultVisionService) handlePost(c *gin.Context) {
 
 	deviceID := c.GetHeader("Device-Id")
 
-	// 验证认证
+	// Verify authentication
 	authResult, err := s.verifyAuth(c)
 	if err != nil {
 		s.respondError(c, http.StatusUnauthorized, err.Error())
-		s.logger.Warn("vision 认证失败 %v", err)
+		s.logger.Warn("Vision auth failed: %v", err)
 		return
 	}
 
 	if !authResult.IsValid {
-		s.respondError(c, http.StatusUnauthorized, "无效的认证token或设备ID不匹配")
-		s.logger.Warn(fmt.Sprintf("Vision认证失败: %s", authResult.DeviceID))
+		s.respondError(c, http.StatusUnauthorized, "Invalid auth token or device ID mismatch")
+		s.logger.Warn(fmt.Sprintf("Vision auth failed: %s", authResult.DeviceID))
 		return
 	}
 
-	// 解析multipart表单
+	// Parse multipart form
 	req, err := s.parseMultipartRequest(c, deviceID)
 	if err != nil {
 		s.respondError(c, http.StatusBadRequest, err.Error())
-		s.logger.Warn(fmt.Sprintf("Vision请求解析失败: %v", err))
+		s.logger.Warn(fmt.Sprintf("Vision request parsing failed: %v", err))
 		return
 	}
 
-	s.logger.Debug("收到Vision分析请求 %v", map[string]interface{}{
+	s.logger.Debug("Received Vision analysis request: %v", map[string]interface{}{
 		"device_id":  req.DeviceID,
 		"client_id":  req.ClientID,
 		"question":   req.Question,
@@ -191,10 +191,10 @@ func (s *DefaultVisionService) handlePost(c *gin.Context) {
 		"image_path": req.ImagePath,
 	})
 
-	// 处理图片分析
+	// Process image analysis
 	result, err := s.processVisionRequest(req)
 
-	// 返回成功响应
+	// Return response
 	response := VisionResponse{
 		Success: true,
 		Result:  result,
@@ -202,44 +202,44 @@ func (s *DefaultVisionService) handlePost(c *gin.Context) {
 
 	if err != nil {
 		s.respondError(c, http.StatusInternalServerError, err.Error())
-		s.logger.Warn(fmt.Sprintf("Vision请求处理失败: %v", err))
-		// 返回成功响应
+		s.logger.Warn(fmt.Sprintf("Vision request processing failed: %v", err))
+		// Return response
 		response.Success = false
 		response.Message = err.Error()
-		response.Result = "" // 清空结果
+		response.Result = "" // Clear result
 	}
 
-	s.logger.Info("Vision分析结果%t: %s", response.Success, response.Result)
+	s.logger.Info("Vision analysis result (success=%t): %s", response.Success, response.Result)
 	c.JSON(http.StatusOK, response)
 }
 
-// verifyAuth 验证认证token
+// verifyAuth validates authentication token
 func (s *DefaultVisionService) verifyAuth(c *gin.Context) (*AuthVerifyResult, error) {
-	// 获取Authorization头
+	// Retrieve Authorization header
 	authHeader := c.GetHeader("Authorization")
 	if !strings.HasPrefix(authHeader, "Bearer ") {
-		return nil, fmt.Errorf("无效的认证token或token已过期")
+		return nil, fmt.Errorf("invalid or expired authentication token")
 	}
 
-	token := authHeader[7:] // 移除"Bearer "前缀
+	token := authHeader[7:] // Strip "Bearer " prefix
 
-	// 打印认证token
-	s.logger.Debug(fmt.Sprintf("收到认证token: %s", token))
+	// Log auth token
+	s.logger.Debug(fmt.Sprintf("Received auth token: %s", token))
 
-	// 验证token（注意VerifyToken返回3个值）
+	// Verify token
 	isValid, deviceID, err := s.authToken.VerifyToken(token)
 	if err != nil || !isValid {
-		s.logger.Warn(fmt.Sprintf("认证token验证失败: %v", err))
-		return nil, fmt.Errorf("无效的认证token或token已过期")
+		s.logger.Warn(fmt.Sprintf("Auth token validation failed: %v", err))
+		return nil, fmt.Errorf("invalid or expired authentication token")
 	}
 
-	// 检查设备ID匹配
+	// Check device ID match
 	requestDeviceID := c.GetHeader("Device-Id")
 	if requestDeviceID != deviceID {
 		s.logger.Warn(
-			fmt.Sprintf("设备ID与token不匹配: 请求设备ID=%s, token设备ID=%s", requestDeviceID, deviceID),
+			fmt.Sprintf("Device ID does not match token: requestDeviceID=%s, tokenDeviceID=%s", requestDeviceID, deviceID),
 		)
-		return nil, fmt.Errorf("设备ID与token不匹配")
+		return nil, fmt.Errorf("device ID does not match token")
 	}
 
 	return &AuthVerifyResult{
@@ -248,72 +248,72 @@ func (s *DefaultVisionService) verifyAuth(c *gin.Context) (*AuthVerifyResult, er
 	}, nil
 }
 
-// parseMultipartRequest 解析multipart表单请求
+// parseMultipartRequest parses multipart form request
 func (s *DefaultVisionService) parseMultipartRequest(
 	c *gin.Context,
 	deviceID string,
 ) (*VisionRequest, error) {
-	// 解析multipart表单
+	// Parse multipart form
 	err := c.Request.ParseMultipartForm(MAX_FILE_SIZE)
 	if err != nil {
-		return nil, fmt.Errorf("解析multipart表单失败: %v", err)
+		return nil, fmt.Errorf("failed to parse multipart form: %v", err)
 	}
 
-	// 打印所有的form字段
-	s.logger.Info("解析到的form字段:")
+	// Log all form fields
+	s.logger.Info("Parsed form fields:")
 	if c.Request.MultipartForm != nil {
-		// 打印所有文本字段
+		// Log all text fields
 		for key, values := range c.Request.MultipartForm.Value {
-			s.logger.Info(fmt.Sprintf("文本字段 %s: %v", key, values))
+			s.logger.Info(fmt.Sprintf("Text field %s: %v", key, values))
 		}
-		// 打印所有文件字段
+		// Log all file fields
 		for key, files := range c.Request.MultipartForm.File {
-			s.logger.Info(fmt.Sprintf("文件字段 %s: 共%d个文件", key, len(files)))
+			s.logger.Info(fmt.Sprintf("File field %s: %d files", key, len(files)))
 			for i, file := range files {
 				s.logger.Info(
-					fmt.Sprintf("  文件%d: %s (大小: %d bytes)", i+1, file.Filename, file.Size),
+					fmt.Sprintf("  File %d: %s (size: %d bytes)", i+1, file.Filename, file.Size),
 				)
 			}
 		}
 	}
 
-	// 获取question字段
+	// Retrieve question field
 	question := c.Request.FormValue("question")
 	if question == "" {
-		return nil, fmt.Errorf("缺少问题字段")
+		return nil, fmt.Errorf("missing question field")
 	}
 
-	// 获取图片文件
+	// Retrieve image file
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		return nil, fmt.Errorf("缺少图片文件: %v", err)
+		return nil, fmt.Errorf("missing image file: %v", err)
 	}
 	defer file.Close()
 
-	// 检查文件大小
+	// Check file size
 	if header.Size > MAX_FILE_SIZE {
-		return nil, fmt.Errorf("图片大小超过限制，最大允许%dMB", MAX_FILE_SIZE/1024/1024)
+		return nil, fmt.Errorf("image size exceeds limit, maximum allowed is %dMB", MAX_FILE_SIZE/1024/1024)
 	}
 
-	// 读取图片数据
+	// Read image bytes
 	imageData, err := io.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("读取图片数据失败: %v", err)
+		return nil, fmt.Errorf("failed to read image data: %v", err)
 	}
 
 	if len(imageData) == 0 {
-		return nil, fmt.Errorf("图片数据为空")
+		return nil, fmt.Errorf("image data is empty")
 	}
 
-	// 验证图片格式
+	// Validate image format
 	if !s.isValidImageFile(imageData) {
-		return nil, fmt.Errorf("不支持的文件格式，请上传有效的图片文件（支持JPEG、PNG、GIF、BMP、TIFF、WEBP格式）")
+		return nil, fmt.Errorf("unsupported file format, please upload a valid image (JPEG, PNG, GIF, BMP, TIFF, WEBP supported)")
 	}
 
-	// 将图片保存在本地
+	// Save image locally
 	saveImageToFile, err := s.saveImageToFile(imageData, deviceID)
 	if err != nil {
-		return nil, fmt.Errorf("保存图片文件失败(%s): %v", saveImageToFile, err)
+		return nil, fmt.Errorf("failed to save image file (%s): %v", saveImageToFile, err)
 	}
 
 	return &VisionRequest{
@@ -321,12 +321,12 @@ func (s *DefaultVisionService) parseMultipartRequest(
 		Image:     imageData,
 		DeviceID:  deviceID,
 		ClientID:  c.GetHeader("Client-Id"),
-		ImagePath: saveImageToFile, // 保存的图片路径
+		ImagePath: saveImageToFile, // Path to saved image
 	}, nil
 }
 
 func (s *DefaultVisionService) saveImageToFile(imageData []byte, deviceID string) (string, error) {
-	// 生成唯一的文件名
+	// Generate unique filename
 	device_id_format := strings.ReplaceAll(deviceID, ":", "_")
 	filename := fmt.Sprintf(
 		"%s_%d.%s",
@@ -336,39 +336,39 @@ func (s *DefaultVisionService) saveImageToFile(imageData []byte, deviceID string
 	)
 	filepath := fmt.Sprintf("uploads/%s", filename)
 
-	// 确保uploads目录存在
+	// Ensure uploads directory exists
 	if err := os.MkdirAll("uploads", os.ModePerm); err != nil {
-		return "", fmt.Errorf("创建uploads目录失败: %v", err)
+		return "", fmt.Errorf("failed to create uploads directory: %v", err)
 	}
 
-	// 保存图片文件
+	// Save image file
 	if err := os.WriteFile(filepath, imageData, 0o644); err != nil {
-		return "", fmt.Errorf("保存图片文件失败: %v", err)
+		return "", fmt.Errorf("failed to save image file: %v", err)
 	}
 
-	s.logger.Info(fmt.Sprintf("图片已保存到: %s", filepath))
+	s.logger.Info(fmt.Sprintf("Image saved to: %s", filepath))
 	return filepath, nil
 }
 
-// processVisionRequest 处理视觉分析请求
+// processVisionRequest handles visual analysis request
 func (s *DefaultVisionService) processVisionRequest(req *VisionRequest) (string, error) {
-	// 选择VLLLM provider
+	// Select VLLM provider
 	provider := s.selectProvider("")
 	if provider == nil {
-		return "", fmt.Errorf("没有可用的视觉分析模型")
+		return "", fmt.Errorf("no visual analysis model available")
 	}
 
-	// 将图片转换为base64
+	// Convert image to base64
 	imageBase64 := base64.StdEncoding.EncodeToString(req.Image)
 
-	// 创建ImageData结构
+	// Create ImageData structure
 	imageData := image.ImageData{
 		Data:   imageBase64,
 		Format: s.detectImageFormat(req.Image),
 	}
-	s.logger.Debug("处理图片数据: %s, 格式: %s", req.ClientID, imageData.Format)
-	// 调用VLLLM provider
-	messages := []providers.Message{} // 空的历史消息
+	s.logger.Debug("Processing image data for %s, format: %s", req.ClientID, imageData.Format)
+	// Call VLLM provider
+	messages := []providers.Message{} // Empty history
 	responseChan, err := provider.ResponseWithImage(
 		context.Background(),
 		"",
@@ -377,29 +377,29 @@ func (s *DefaultVisionService) processVisionRequest(req *VisionRequest) (string,
 		req.Question,
 	)
 	if err != nil {
-		return "", fmt.Errorf("调用VLLLM失败: %v", err)
+		return "", fmt.Errorf("failed to call VLLM: %v", err)
 	}
 
-	// 收集所有响应内容
+	// Collect response chunks
 	var result strings.Builder
 	for content := range responseChan {
 		result.WriteString(content)
 	}
-	s.logger.Info(fmt.Sprintf("VLLLM分析结果: %s", result.String()))
+	s.logger.Info(fmt.Sprintf("VLLM analysis result: %s", result.String()))
 
 	return result.String(), nil
 }
 
-// selectProvider 选择VLLLM provider
+// selectProvider selects VLLM provider
 func (s *DefaultVisionService) selectProvider(modelName string) *vlllm.Provider {
-	// 如果指定了模型名，尝试找到对应的provider
+	// If model name specified, attempt to match provider
 	if modelName != "" {
 		if provider, exists := s.vlllmMap[modelName]; exists {
 			return provider
 		}
 	}
 
-	// 否则返回第一个可用的provider
+	// Otherwise return first available provider
 	for _, provider := range s.vlllmMap {
 		return provider
 	}
@@ -407,13 +407,13 @@ func (s *DefaultVisionService) selectProvider(modelName string) *vlllm.Provider 
 	return nil
 }
 
-// isValidImageFile 检查是否为有效的图片文件
+// isValidImageFile checks for valid image header
 func (s *DefaultVisionService) isValidImageFile(data []byte) bool {
 	if len(data) < 8 {
 		return false
 	}
 
-	// 检查常见图片格式的文件头
+	// Check common image format magic bytes
 	return s.hasJPEGHeader(data) ||
 		s.hasPNGHeader(data) ||
 		s.hasGIFHeader(data) ||
@@ -421,38 +421,38 @@ func (s *DefaultVisionService) isValidImageFile(data []byte) bool {
 		s.hasWebPHeader(data)
 }
 
-// hasJPEGHeader 检查JPEG文件头
+// hasJPEGHeader checks JPEG header
 func (s *DefaultVisionService) hasJPEGHeader(data []byte) bool {
 	return len(data) >= 2 && data[0] == 0xFF && data[1] == 0xD8
 }
 
-// hasPNGHeader 检查PNG文件头
+// hasPNGHeader checks PNG header
 func (s *DefaultVisionService) hasPNGHeader(data []byte) bool {
 	return len(data) >= 8 &&
 		data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 &&
 		data[4] == 0x0D && data[5] == 0x0A && data[6] == 0x1A && data[7] == 0x0A
 }
 
-// hasGIFHeader 检查GIF文件头
+// hasGIFHeader checks GIF header
 func (s *DefaultVisionService) hasGIFHeader(data []byte) bool {
 	return len(data) >= 6 &&
 		((data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x38 && data[4] == 0x37 && data[5] == 0x61) ||
 			(data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x38 && data[4] == 0x39 && data[5] == 0x61))
 }
 
-// hasBMPHeader 检查BMP文件头
+// hasBMPHeader checks BMP header
 func (s *DefaultVisionService) hasBMPHeader(data []byte) bool {
 	return len(data) >= 2 && data[0] == 0x42 && data[1] == 0x4D
 }
 
-// hasWebPHeader 检查WebP文件头
+// hasWebPHeader checks WebP header
 func (s *DefaultVisionService) hasWebPHeader(data []byte) bool {
 	return len(data) >= 12 &&
 		data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 &&
 		data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50
 }
 
-// detectImageFormat 检测图片格式
+// detectImageFormat detects image format
 func (s *DefaultVisionService) detectImageFormat(data []byte) string {
 	if s.hasJPEGHeader(data) {
 		return "jpeg"
@@ -469,10 +469,10 @@ func (s *DefaultVisionService) detectImageFormat(data []byte) string {
 	if s.hasWebPHeader(data) {
 		return "webp"
 	}
-	return "jpeg" // 默认格式
+	return "jpeg" // Default fallback format
 }
 
-// addCORSHeaders 添加CORS头
+// addCORSHeaders adds CORS headers
 func (s *DefaultVisionService) addCORSHeaders(c *gin.Context) {
 	c.Header("Access-Control-Allow-Headers", "client-id, content-type, device-id, authorization")
 	c.Header("Access-Control-Allow-Credentials", "true")
@@ -480,7 +480,7 @@ func (s *DefaultVisionService) addCORSHeaders(c *gin.Context) {
 	c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 }
 
-// respondError 返回错误响应
+// respondError writes error response
 func (s *DefaultVisionService) respondError(c *gin.Context, statusCode int, message string) {
 	response := VisionResponse{
 		Success: false,
@@ -489,13 +489,13 @@ func (s *DefaultVisionService) respondError(c *gin.Context, statusCode int, mess
 	c.JSON(statusCode, response)
 }
 
-// Cleanup 清理资源
+// Cleanup frees resources
 func (s *DefaultVisionService) Cleanup() error {
 	for name, provider := range s.vlllmMap {
 		if err := provider.Cleanup(); err != nil {
-			s.logger.Warn(fmt.Sprintf("清理VLLLM provider %s 失败: %v", name, err))
+			s.logger.Warn(fmt.Sprintf("Failed to clean up VLLM provider %s: %v", name, err))
 		}
 	}
-	s.logger.Info("Vision服务清理完成")
+	s.logger.Info("Vision service cleanup completed")
 	return nil
 }

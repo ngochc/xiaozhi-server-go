@@ -1,25 +1,28 @@
-# MCP使用方式
+# MCP Usage Guide
 
-## ESP32 MCP
-esp32的MCP，添加自定义MCP工具需要在前端修改，默认支持4个（self.get_device_status，self.audio_speaker.set_volume，self.screen.set_brightness，self.screen.set_theme）
+## ESP32 Client MCP
+ESP32 clients support device-level MCP tools. By default, 4 built-in device tools are supported:
+- `self.get_device_status`
+- `self.audio_speaker.set_volume`
+- `self.screen.set_brightness`
+- `self.screen.set_theme`
 
-服务无需修改配置，直接支持。
+No server-side configuration changes are required for device MCP. When an ESP32 connects, the server logs confirm tool registration. You can test voice control directly by telling the assistant to adjust the speaker volume.
 
-使用esp32客户端连接服务后，服务日志会打印以上4个工具的注册信息，直接对话，让小智调整音量，即可测试效果。
+## Server-Side External MCP
+External MCP servers can be configured via `.mcp_server_settings.json` located in the root repository or executable directory:
 
-## 服务端外部MCP
-服务端通过在源码根目录/二进制程序（windows-amd64-server.exe或linux-amd64-server-upx）所在目录配置.mcp_server_settings.json文件，支持外部MCP调用，格式为
-```
+```json
 {
   "mcpServers": {
     "amap-maps": {
       "command": "npx",
       "args": [
-          "-y",
-          "@amap/amap-maps-mcp-server"
+        "-y",
+        "@amap/amap-maps-mcp-server"
       ],
       "env": {
-          "AMAP_MAPS_API_KEY": "你的高德api key"
+        "AMAP_MAPS_API_KEY": "your_api_key"
       }
     },
     "filesystem": {
@@ -27,13 +30,13 @@ esp32的MCP，添加自定义MCP工具需要在前端修改，默认支持4个�
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "配置权限路径"
+        "/allowed/path"
       ]
     },
-     "playwright": {
+    "playwright": {
       "command": "npx",
       "args": ["-y", "@executeautomation/playwright-mcp-server"],
-      "des" : "run 'npx playwright install' first"
+      "des": "run 'npx playwright install' first"
     },
     "windows-cli": {
       "command": "npx",
@@ -42,11 +45,12 @@ esp32的MCP，添加自定义MCP工具需要在前端修改，默认支持4个�
   }
 }
 ```
-服务端需要安装node才支持npx格式的MCP，其他格式的MCP请自行尝试
 
-目前仅支持Stdio格式的MCP，如需使用SSE模式，可以考虑使用mcp-proxy方式，配置方式如下
+Running NPX-based MCP tools requires Node.js installed on the server host.
 
-```
+The server currently uses Stdio transport for external MCP processes. If connecting to SSE-based MCP endpoints, you can use `mcp-proxy`:
+
+```json
 {
   "mcpServers": {
     "zapier": {
@@ -59,4 +63,4 @@ esp32的MCP，添加自定义MCP工具需要在前端修改，默认支持4个�
 }
 ```
 
-连接建立时会为该连接创建MCP Manager并加载MCP配置；连接断开后会清理对应资源，观察日志可以确认MCP是否加载成功
+An MCP Manager instance is allocated per active client connection upon session start and automatically freed on disconnect. Check server logs to verify MCP tools initialization.

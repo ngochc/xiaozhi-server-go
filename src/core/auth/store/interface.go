@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// ClientInfo 客户端认证信息结构
+// ClientInfo client authentication info struct
 type ClientInfo struct {
 	ClientID  string                 `json:"client_id"`
 	Username  string                 `json:"username"`
@@ -16,33 +16,33 @@ type ClientInfo struct {
 	Metadata  map[string]interface{} `json:"metadata,omitempty"`
 }
 
-// AuthStore 认证存储接口
+// AuthStore authentication store interface
 type AuthStore interface {
-	// StoreAuth 存储客户端认证信息
+	// StoreAuth stores client authentication info
 	StoreAuth(clientID, username, password string, metadata map[string]interface{}) error
 
-	// ValidateAuth 验证客户端认证信息
+	// ValidateAuth validates client authentication info
 	ValidateAuth(clientID, username, password string) (bool, *ClientInfo, error)
 
-	// GetClientInfo 获取客户端信息
+	// GetClientInfo gets client information
 	GetClientInfo(clientID string) (*ClientInfo, error)
 
-	// RemoveAuth 删除客户端认证信息
+	// RemoveAuth removes client authentication info
 	RemoveAuth(clientID string) error
 
-	// ListClients 列出所有客户端ID
+	// ListClients lists all client IDs
 	ListClients() ([]string, error)
 
-	// CleanupExpired 清理过期认证
+	// CleanupExpired cleans up expired authentications
 	CleanupExpired() error
 
-	// Close 关闭存储连接
+	// Close closes store connection
 	Close() error
 }
 
-// StoreConfig 存储配置
+// StoreConfig store configuration
 type StoreConfig struct {
 	Type     string                 `yaml:"type"`   // memory/file/redis
-	Config   map[string]interface{} `yaml:"config"` // 具体存储的配置
-	ExpiryHr int                    `yaml:"expiry"` // 过期时间(小时)
+	Config   map[string]interface{} `yaml:"config"` // Specific store configuration
+	ExpiryHr int                    `yaml:"expiry"` // Expiry time (hours)
 }

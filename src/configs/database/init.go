@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	SystemConfigID = 1 // 系统配置的唯一ID
-	ModuleConfigID = 1 // 模块配置的唯一ID
-	ServerConfigID = 1 // 服务器配置的唯一ID
-	ServerStatusID = 1 // 服务器状态的唯一ID
+	SystemConfigID = 1 // System config ID
+	ModuleConfigID = 1 // Module config ID
+	ServerConfigID = 1 // Server config ID
+	ServerStatusID = 1 // Server status ID
 )
 
 type DBLogger struct {
@@ -56,7 +56,7 @@ func (l *DBLogger) Trace(
 	elapsed := time.Since(begin)
 	if err != nil {
 		if strings.Contains(err.Error(), "record not found") {
-			// 忽略记录未找到的错误
+			// Ignore record not found errors
 			return
 		}
 		l.logger.Error("SQL Trace Error", map[string]interface{}{
@@ -82,20 +82,20 @@ var (
 
 func GetDB() *gorm.DB {
 	if DB == nil {
-		panic("数据库未初始化，请先调用 InitDB()")
+		panic("database not initialized, please call InitDB() first")
 	}
 	return DB
 }
 
-// GetTxDB 获取一个新的事务DB（需手动Commit或Rollback）
+// GetTxDB returns a new transaction DB instance (requires manual Commit or Rollback)
 func GetTxDB() *gorm.DB {
 	if DB == nil {
-		panic("数据库未初始化，请先调用 InitDB()")
+		panic("database not initialized, please call InitDB() first")
 	}
 	return DB.Begin()
 }
 
-// InitDB 初始化数据库类型并连接
+// InitDB initializes database connection and migrates tables
 func InitDB() (*gorm.DB, string, error) {
 	var (
 		db  *gorm.DB
@@ -107,10 +107,10 @@ func InitDB() (*gorm.DB, string, error) {
 	db, err = gorm.Open(sqlite.Open(path))
 
 	if err != nil {
-		return nil, "", fmt.Errorf("连接数据库失败: %w", err)
+		return nil, "", fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// 自动迁移所有表
+	// Auto migrate tables
 	if err := migrateTables(db); err != nil {
 		return nil, dbType, err
 	}
@@ -126,10 +126,10 @@ func SetLogger(logger *xiaozhi_utils.Logger) {
 
 	var version string
 	DB.Raw("SELECT sqlite_version()").Scan(&version)
-	logger.Info("SQLite 数据库连接成功，版本: %s", version)
+	logger.Info("SQLite database connected successfully, version: %s", version)
 }
 
-// migrateTables 自动迁移模型表结构
+// migrateTables runs automatic migration for database models
 func migrateTables(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&models.LLMConfig{},
@@ -146,17 +146,17 @@ func migrateTables(db *gorm.DB) error {
 	return err
 }
 
-// InsertDefaultConfigIfNeeded 首次启动插入默认配置
+// InsertDefaultConfigIfNeeded inserts default configurations on first boot
 func InsertDefaultConfigIfNeeded(db *gorm.DB) error {
 	config := configs.Cfg
 	if err := InitProviders(db, config); err != nil {
-		return fmt.Errorf("初始化提供者配置失败: %v", err)
+		return fmt.Errorf("failed to initialize providers configuration: %v", err)
 	}
 	if err := InitAdminUser(db, config); err != nil {
-		return fmt.Errorf("初始化管理员用户失败: %v", err)
+		return fmt.Errorf("failed to initialize admin user: %v", err)
 	}
 	if err := NormalizeSingleUserData(db); err != nil {
-		return fmt.Errorf("归并个人版默认用户数据失败: %v", err)
+		return fmt.Errorf("failed to normalize single-user data: %v", err)
 	}
 	return nil
 }

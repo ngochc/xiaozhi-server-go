@@ -20,16 +20,16 @@ const (
 // Ogg Opus file. The result can be decoded independently with FFmpeg/libopus.
 func SaveOpusPackets(outputDir, deviceID, sessionID string, sampleRate, channels, frameDuration int, packets [][]byte) (string, error) {
 	if len(packets) == 0 {
-		return "", fmt.Errorf("没有可保存的 Opus 包")
+		return "", fmt.Errorf("no Opus packets to save")
 	}
 	if sampleRate <= 0 || channels < 1 || channels > 2 || frameDuration <= 0 {
-		return "", fmt.Errorf("无效的 Opus 参数：%dHz/%d 声道/%dms", sampleRate, channels, frameDuration)
+		return "", fmt.Errorf("invalid Opus parameters: %dHz/%d channels/%dms", sampleRate, channels, frameDuration)
 	}
 	if outputDir == "" {
-		return "", fmt.Errorf("Opus 抓包目录不能为空")
+		return "", fmt.Errorf("Opus capture directory cannot be empty")
 	}
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
-		return "", fmt.Errorf("创建 Opus 抓包目录失败: %w", err)
+		return "", fmt.Errorf("failed to create Opus capture directory: %w", err)
 	}
 
 	name := fmt.Sprintf("opus-%s-%s-%s.ogg",
@@ -40,18 +40,18 @@ func SaveOpusPackets(outputDir, deviceID, sessionID string, sampleRate, channels
 	path := filepath.Join(outputDir, name)
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
-		return "", fmt.Errorf("创建 Opus 抓包文件失败: %w", err)
+		return "", fmt.Errorf("failed to create Opus capture file: %w", err)
 	}
 	defer file.Close()
 
 	serial := uint32(time.Now().UnixNano())
 	sequence := uint32(0)
 	if err := writeOggPage(file, oggPageBOS, 0, serial, sequence, opusIdentificationHeader(sampleRate, channels)); err != nil {
-		return "", fmt.Errorf("写入 Opus 标识页失败: %w", err)
+		return "", fmt.Errorf("failed to write Opus identification page: %w", err)
 	}
 	sequence++
 	if err := writeOggPage(file, 0, 0, serial, sequence, opusCommentHeader()); err != nil {
-		return "", fmt.Errorf("写入 Opus 注释页失败: %w", err)
+		return "", fmt.Errorf("failed to write Opus comment page: %w", err)
 	}
 	sequence++
 
@@ -61,7 +61,7 @@ func SaveOpusPackets(outputDir, deviceID, sessionID string, sampleRate, channels
 	granulePosition := uint64(0)
 	for i, packet := range packets {
 		if len(packet) == 0 {
-			return "", fmt.Errorf("第 %d 个 Opus 包为空", i+1)
+			return "", fmt.Errorf("Opus packet %d is empty", i+1)
 		}
 		granulePosition += granuleStep
 		headerType := byte(0)
@@ -69,13 +69,13 @@ func SaveOpusPackets(outputDir, deviceID, sessionID string, sampleRate, channels
 			headerType = oggPageEOS
 		}
 		if err := writeOggPage(file, headerType, granulePosition, serial, sequence, packet); err != nil {
-			return "", fmt.Errorf("写入第 %d 个 Opus 包失败: %w", i+1, err)
+			return "", fmt.Errorf("failed to write Opus packet %d: %w", i+1, err)
 		}
 		sequence++
 	}
 
 	if err := file.Sync(); err != nil {
-		return "", fmt.Errorf("同步 Opus 抓包文件失败: %w", err)
+		return "", fmt.Errorf("failed to sync Opus capture file: %w", err)
 	}
 	return path, nil
 }
@@ -123,11 +123,11 @@ func writeOggPage(w io.Writer, headerType byte, granulePosition uint64, serial, 
 
 func oggLacingValues(packetLength int) ([]byte, error) {
 	if packetLength < 0 {
-		return nil, fmt.Errorf("Opus 包长度不能为负数")
+		return nil, fmt.Errorf("Opus packet length cannot be negative")
 	}
 	segmentCount := packetLength/255 + 1
 	if segmentCount > 255 {
-		return nil, fmt.Errorf("Opus 包过大，无法写入单个 Ogg 页：%d 字节", packetLength)
+		return nil, fmt.Errorf("Opus packet too large to write into single Ogg page: %d bytes", packetLength)
 	}
 	lacing := make([]byte, segmentCount)
 	for i := 0; i < segmentCount-1; i++ {

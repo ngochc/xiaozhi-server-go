@@ -5,21 +5,21 @@ import (
 	"xiaozhi-server-go/src/core/utils"
 )
 
-// OpenAIVLLMProvider OpenAI类型的VLLLM提供者
+// OpenAIVLLMProvider OpenAI VLLLM provider
 type OpenAIVLLMProvider struct {
 	*vlllm.Provider
 }
 
-// NewProvider 创建OpenAI VLLLM提供者实例
+// NewProvider creates OpenAI VLLLM provider instance
 func NewProvider(config *vlllm.Config, logger *utils.Logger) (*vlllm.Provider, error) {
-	// 直接使用基础VLLLM Provider，因为它已经复用了LLM架构
-	// OpenAI类型的VLLLM只需要确保使用正确的模型名称（如glm-4v-flash）
+	// Directly use BaseVLLMProvider as it reuses LLM architecture
+	// OpenAI VLLLM requires ensuring correct model name
 	provider, err := vlllm.NewProvider(config, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Debug("OpenAI VLLLM Provider创建成功 %v", map[string]interface{}{
+	logger.Debug("OpenAI VLLLM Provider created successfully %v", map[string]interface{}{
 		"model_name": config.ModelName,
 		"base_url":   config.BaseURL,
 	})
@@ -27,7 +27,7 @@ func NewProvider(config *vlllm.Config, logger *utils.Logger) (*vlllm.Provider, e
 	return provider, nil
 }
 
-// init 注册OpenAI VLLLM提供者
+// init registers OpenAI VLLLM provider
 func init() {
 	vlllm.Register("openai", NewProvider)
 }

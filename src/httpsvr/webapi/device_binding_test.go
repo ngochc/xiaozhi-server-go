@@ -29,15 +29,15 @@ func TestDeviceBindingUsesDefaultUserAndDisable(t *testing.T) {
 	database.DB = db
 	t.Cleanup(func() { database.DB = previousDB })
 
-	agent := &models.Agent{Name: "我的智能体", UserID: 1}
+	agent := &models.Agent{Name: "My Agent", UserID: 1}
 	if err := db.Create(agent).Error; err != nil {
 		t.Fatal(err)
 	}
-	otherAgent := &models.Agent{Name: "另一个智能体", UserID: database.AdminUserID}
+	otherAgent := &models.Agent{Name: "Another Agent", UserID: database.AdminUserID}
 	if err := db.Create(otherAgent).Error; err != nil {
 		t.Fatal(err)
 	}
-	device := &models.Device{Name: "测试设备", DeviceID: "device-001", MACAddress: "94:A9:90:31:E2:E4", ClientID: "client-001"}
+	device := &models.Device{Name: "Test Device", DeviceID: "device-001", MACAddress: "94:A9:90:31:E2:E4", ClientID: "client-001"}
 	if err := db.Create(device).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestDeviceBindingUsesDefaultUserAndDisable(t *testing.T) {
 		t.Fatalf("first bind status = %d, body = %s", response.Code, response.Body.String())
 	}
 
-	macDevice := &models.Device{Name: "MAC 设备", DeviceID: "board-002", MACAddress: "AA:BB:CC:DD:EE:FF", ClientID: "client-002"}
+	macDevice := &models.Device{Name: "MAC Device", DeviceID: "board-002", MACAddress: "AA:BB:CC:DD:EE:FF", ClientID: "client-002"}
 	if err := db.Create(macDevice).Error; err != nil {
 		t.Fatal(err)
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-// Config 定义MCP客户端配置
+// Config defines MCP client configuration
 type Config struct {
 	Enabled       bool     `yaml:"enabled"`
 	ServerAddress string   `yaml:"server_address"`
@@ -21,13 +21,13 @@ type Config struct {
 	Namespace     string   `yaml:"namespace"`
 	NodeID        string   `yaml:"node_id"`
 	ResourceTypes []string `yaml:"resource_types"`
-	Command       string   `yaml:"command,omitempty"` // 命令行连接方式
-	Args          []string `yaml:"args,omitempty"`    // 命令行参数
-	Env           []string `yaml:"env,omitempty"`     // 环境变量
-	URL           string   `yaml:"url,omitempty"`     // SSE连接URL
+	Command       string   `yaml:"command,omitempty"` // Command-line execution
+	Args          []string `yaml:"args,omitempty"`    // Command arguments
+	Env           []string `yaml:"env,omitempty"`     // Environment variables
+	URL           string   `yaml:"url,omitempty"`     // SSE connection URL
 }
 
-// Client 封装MCP客户端功能
+// Client encapsulates MCP client functionality
 type Client struct {
 	client         *mcpclient.Client
 	stdioClient    *mcpclient.Client
@@ -40,7 +40,7 @@ type Client struct {
 	logger         *utils.Logger
 }
 
-// NewClient 创建一个新的MCP客户端实例
+// NewClient creates a new MCP client instance
 func NewClient(config *Config, logger *utils.Logger) (*Client, error) {
 	if !config.Enabled {
 		return nil, fmt.Errorf("MCP client is disabled in config")
@@ -53,9 +53,9 @@ func NewClient(config *Config, logger *utils.Logger) (*Client, error) {
 		logger: logger,
 	}
 
-	// 根据配置选择适当的客户端类型
+	// Select client type based on config
 	if config.Command != "" {
-		// 使用命令行方式连接
+		// Connect via command line
 		stdioClient, err := mcpclient.NewStdioMCPClient(
 			config.Command,
 			config.Env,
@@ -73,12 +73,12 @@ func NewClient(config *Config, logger *utils.Logger) (*Client, error) {
 	return c, nil
 }
 
-// Start 启动MCP客户端并监听资源更新
+// Start starts MCP client and listens for updates
 func (c *Client) Start(ctx context.Context) error {
 	if c.useStdioClient {
 		// c.logger.Info("Starting MCP stdio client with command: %s", c.config.Command)
 
-		// 创建初始化请求
+		// Create initialization request
 		initRequest := mcp.InitializeRequest{}
 		initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
 		initRequest.Params.ClientInfo = mcp.Implementation{
@@ -86,11 +86,11 @@ func (c *Client) Start(ctx context.Context) error {
 			Version: "1.0.0",
 		}
 
-		// 设置超时上下文
+		// Set timeout context
 		initCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
-		// 初始化客户端
+		// Initialize client
 		initResult, err := c.stdioClient.Initialize(initCtx, initRequest)
 		if err != nil {
 			return fmt.Errorf("failed to initialize stdio MCP client: %w", err)
@@ -101,7 +101,7 @@ func (c *Client) Start(ctx context.Context) error {
 			initResult.ServerInfo.Version,
 			c.config.Command)
 
-		// 获取工具列表
+		// Get tools list
 		err = c.fetchTools(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to fetch tools: %w", err)
@@ -115,10 +115,10 @@ func (c *Client) Start(ctx context.Context) error {
 	return nil
 }
 
-// fetchTools 获取可用的工具列表
+// fetchTools fetches list of available tools
 func (c *Client) fetchTools(ctx context.Context) error {
 	if c.useStdioClient {
-		// 使用协议方式获取工具列表
+		// Fetch tools list via protocol
 		toolsRequest := mcp.ListToolsRequest{}
 		tools, err := c.stdioClient.ListTools(ctx, toolsRequest)
 		if err != nil {
@@ -128,10 +128,10 @@ func (c *Client) fetchTools(ctx context.Context) error {
 		c.mu.Lock()
 		defer c.mu.Unlock()
 
-		// 清空当前工具列表
+		// Clear current tools list
 		c.tools = make([]Tool, 0, len(tools.Tools))
 
-		// 添加获取到的工具
+		// Add retrieved tools
 		toolNames := ""
 		for _, tool := range tools.Tools {
 			required := tool.InputSchema.Required
@@ -153,13 +153,13 @@ func (c *Client) fetchTools(ctx context.Context) error {
 		c.logger.Info("Fetching %s available tools %s", c.name, toolNames)
 		return nil
 	} else {
-		// 原有方式的实现保持不变
-		// 这里可以通过资源类型获取工具信息
+		// Legacy implementation remains unchanged
+		// Tool information can be retrieved via resource types
 		return nil
 	}
 }
 
-// Stop 停止MCP客户端
+// Stop stops MCP client
 func (c *Client) Stop() {
 	if c.useStdioClient {
 		if c.stdioClient != nil {
@@ -178,11 +178,11 @@ func (c *Client) Stop() {
 	c.mu.Unlock()
 }
 
-// HasTool 检查是否有指定名称的工具
+// HasTool checks if tool with name exists
 func (c *Client) HasTool(name string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	// 如果有mcp_前缀，则去掉前缀
+	// Strip mcp_ prefix if present
 	if len(name) > 4 && name[:4] == "mcp_" {
 		name = name[4:]
 	}
@@ -195,7 +195,7 @@ func (c *Client) HasTool(name string) bool {
 	return false
 }
 
-// GetAvailableTools 获取所有可用工具
+// GetAvailableTools gets all available tools
 func (c *Client) GetAvailableTools() []openai.Tool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -220,17 +220,17 @@ func (c *Client) GetAvailableTools() []openai.Tool {
 	return result
 }
 
-// CallTool 调用指定的工具
+// CallTool calls specified tool
 func (c *Client) CallTool(
 	ctx context.Context,
 	name string,
 	args map[string]any,
 ) (interface{}, error) {
-	// 如果有mcp_前缀，则去掉前缀
+	// Strip mcp_ prefix if present
 	if len(name) > 4 && name[:4] == "mcp_" {
 		name = name[4:]
 	}
-	// 检查工具是否存在
+	// Check if tool exists
 	if !c.HasTool(name) {
 		return nil, fmt.Errorf("tool %s not found", name)
 	}
@@ -245,14 +245,14 @@ func (c *Client) CallTool(
 			return nil, fmt.Errorf("failed to call tool %s: %w", name, err)
 		}
 
-		// 处理返回结果
+		// Process result
 		if result == nil || len(result.Content) == 0 {
 			return nil, nil
 		}
 
-		// 返回第一个内容项，或整个内容列表
+		// Return first content item or entire list
 		if len(result.Content) == 1 {
-			// 如果是文本内容，直接返回文本
+			// If text content, return text directly
 			if textContent, ok := result.Content[0].(mcp.TextContent); ok {
 				return textContent.Text, nil
 			}
@@ -263,7 +263,7 @@ func (c *Client) CallTool(
 			return ret, nil
 		}
 
-		// 处理多个内容项的情况
+		// Handle multiple content items
 		processedContent := make([]interface{}, 0, len(result.Content))
 		for _, content := range result.Content {
 			if textContent, ok := content.(mcp.TextContent); ok {
@@ -279,29 +279,29 @@ func (c *Client) CallTool(
 		return ret, nil
 	}
 
-	// 原始网络客户端不支持直接调用工具
+	// Raw network client does not support calling tools directly
 	return nil, fmt.Errorf("tool calling not implemented for network client")
 }
 
-// IsReady 检查客户端是否已初始化完成并准备就绪
+// IsReady checks if client is initialized and ready
 func (c *Client) IsReady() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.ready
 }
 
-// ResetConnection 重置连接状态
+// ResetConnection resets connection state
 func (c *Client) ResetConnection() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// 保留工具信息，只重置连接状态
+	// Preserve tool info, reset connection state only
 	c.ready = false
 
-	// 如果有活跃连接，优雅关闭
+	// Gracefully close active connection if any
 	if c.useStdioClient && c.stdioClient != nil {
-		// 不完全关闭，只标记为未就绪
-		// 在下次Start时会重新建立连接
+		// Mark not ready without full teardown
+		// Re-establishes connection on next Start
 	}
 
 	return nil

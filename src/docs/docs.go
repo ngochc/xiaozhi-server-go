@@ -17,14 +17,14 @@ const docTemplate = `{
     "paths": {
         "/ota/": {
             "get": {
-                "description": "获取 OTA 服务状态和 WebSocket 地址，供设备查询",
+                "description": "Get OTA service status and WebSocket address for device query",
                 "produces": [
                     "text/plain"
                 ],
                 "tags": [
                     "OTA"
                 ],
-                "summary": "获取 OTA 状态",
+                "summary": "Get OTA status",
                 "responses": {
                     "200": {
                         "description": "OTA interface is running, websocket address: ws://...",
@@ -35,7 +35,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "设备上传信息后，返回最新固件版本和下载地址",
+                "description": "Upload device info to get latest firmware version and download URL",
                 "consumes": [
                     "application/json"
                 ],
@@ -45,17 +45,17 @@ const docTemplate = `{
                 "tags": [
                     "OTA"
                 ],
-                "summary": "上传设备信息获取最新固件",
+                "summary": "Upload device info to get latest firmware",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "设备ID",
+                        "description": "Device ID",
                         "name": "device-id",
                         "in": "header",
                         "required": true
                     },
                     {
-                        "description": "请求体",
+                        "description": "Request body",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -80,7 +80,7 @@ const docTemplate = `{
                 }
             },
             "options": {
-                "description": "处理 OTA 接口的 OPTIONS 预检请求，返回 200",
+                "description": "Handle OPTIONS preflight request for OTA endpoints, returns 200",
                 "consumes": [
                     "*/*"
                 ],
@@ -90,7 +90,7 @@ const docTemplate = `{
                 "tags": [
                     "OTA"
                 ],
-                "summary": "OTA 预检请求",
+                "summary": "OTA preflight request",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -103,18 +103,18 @@ const docTemplate = `{
         },
         "/ota_bin/{filename}": {
             "get": {
-                "description": "根据文件名下载 OTA 固件",
+                "description": "Download OTA firmware by filename",
                 "produces": [
                     "application/octet-stream"
                 ],
                 "tags": [
                     "OTA"
                 ],
-                "summary": "下载 OTA 固件文件",
+                "summary": "Download OTA firmware file",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "固件文件名",
+                        "description": "Firmware filename",
                         "name": "filename",
                         "in": "path",
                         "required": true
@@ -122,7 +122,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "文件流"
+                        "description": "File stream"
                     },
                     "404": {
                         "description": "Not Found",
@@ -140,7 +140,7 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string",
-                    "example": "缺少 device-id"
+                    "example": "Missing device-id"
                 },
                 "success": {
                     "type": "boolean",
@@ -211,8 +211,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "小智服务端 API 文档",
-	Description:      "小智服务端，包含OTA与Vision等接口",
+	Title:            "Xiaozhi Server API Documentation",
+	Description:      "Xiaozhi Server, including OTA, Vision, and Management APIs",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

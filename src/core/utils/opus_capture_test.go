@@ -49,10 +49,10 @@ func TestSaveOpusPacketsWritesReadableOggOpus(t *testing.T) {
 
 	ffmpeg, err := exec.LookPath("ffmpeg")
 	if err != nil {
-		t.Skip("未安装 FFmpeg，跳过独立解码验证")
+		t.Skip("FFmpeg not installed, skipping standalone decode validation")
 	}
 	if output, err := exec.Command(ffmpeg, "-v", "error", "-i", path, "-f", "null", "-").CombinedOutput(); err != nil {
-		t.Fatalf("FFmpeg/libopus 独立解码失败: %v\n%s", err, output)
+		t.Fatalf("FFmpeg/libopus standalone decode failed: %v\n%s", err, output)
 	}
 }
 

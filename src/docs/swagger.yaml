@@ -3,7 +3,7 @@ definitions:
   ota.ErrorResponse:
     properties:
       message:
-        example: 缺少 device-id
+        example: Missing device-id
         type: string
       success:
         example: false
@@ -48,13 +48,13 @@ definitions:
 host: localhost:8080
 info:
   contact: {}
-  description: 小智服务端，包含OTA与Vision等接口
-  title: 小智服务端 API 文档
+  description: Xiaozhi Server, including OTA, Vision, and Management APIs
+  title: Xiaozhi Server API Documentation
   version: "1.0"
 paths:
   /ota/:
     get:
-      description: 获取 OTA 服务状态和 WebSocket 地址，供设备查询
+      description: Get OTA service status and WebSocket address for device query
       produces:
       - text/plain
       responses:
@@ -62,13 +62,13 @@ paths:
           description: 'OTA interface is running, websocket address: ws://...'
           schema:
             type: string
-      summary: 获取 OTA 状态
+      summary: Get OTA status
       tags:
       - OTA
     options:
       consumes:
       - '*/*'
-      description: 处理 OTA 接口的 OPTIONS 预检请求，返回 200
+      description: Handle OPTIONS preflight request for OTA endpoints, returns 200
       produces:
       - text/plain
       responses:
@@ -76,20 +76,20 @@ paths:
           description: OK
           schema:
             type: string
-      summary: OTA 预检请求
+      summary: OTA preflight request
       tags:
       - OTA
     post:
       consumes:
       - application/json
-      description: 设备上传信息后，返回最新固件版本和下载地址
+      description: Upload device info to get latest firmware version and download URL
       parameters:
-      - description: 设备ID
+      - description: Device ID
         in: header
         name: device-id
         required: true
         type: string
-      - description: 请求体
+      - description: Request body
         in: body
         name: body
         required: true
@@ -106,14 +106,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/ota.ErrorResponse'
-      summary: 上传设备信息获取最新固件
+      summary: Upload device info to get latest firmware
       tags:
       - OTA
   /ota_bin/{filename}:
     get:
-      description: 根据文件名下载 OTA 固件
+      description: Download OTA firmware by filename
       parameters:
-      - description: 固件文件名
+      - description: Firmware filename
         in: path
         name: filename
         required: true
@@ -122,12 +122,12 @@ paths:
       - application/octet-stream
       responses:
         "200":
-          description: 文件流
+          description: File stream
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/ota.ErrorResponse'
-      summary: 下载 OTA 固件文件
+      summary: Download OTA firmware file
       tags:
       - OTA
 swagger: "2.0"

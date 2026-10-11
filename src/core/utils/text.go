@@ -10,45 +10,45 @@ import (
 )
 
 var (
-	// 预编译正则表达式
+	// Precompiled regular expressions
 	reSplitString          = regexp.MustCompile(`[.,!?;。！？；：]+`)
 	reMarkdownChars        = regexp.MustCompile(`(\*\*|__|\*|_|#{1,6}\s|` + "`" + `{1,3}|~~|>\s|\[.*?\]\(.*?\)|\!\[.*?\]\(.*?\)|\|.*?\|)`)
 	reRemoveAllPunctuation = regexp.MustCompile(
 		`[.,!?;:，。！？、；：""''「」『』（）\(\)【】\[\]{}《》〈〉—–\-_~·…‖\|\\/*&\^%\$#@\+=<>]`,
 	)
-	reWakeUpWord             = regexp.MustCompile(`^你好.+`)
-	reRemoveParenthesesCN    = regexp.MustCompile(`（[^）]*）`)  // 中文括号
-	reRemoveParenthesesEN    = regexp.MustCompile(`\([^)]*\)`)  // 英文括号
+	reWakeUpWord             = regexp.MustCompile(`^(?i)(hello|hi|hey|\x{4f60}\x{597d}).+`)
+	reRemoveParenthesesCN    = regexp.MustCompile(`（[^）]*）`)  // Chinese parentheses
+	reRemoveParenthesesEN    = regexp.MustCompile(`\([^)]*\)`)  // English parentheses
 )
 
-// splitAtLastPunctuation 在最后一个标点符号处分割文本，优化聊天场景下的分句逻辑
+// SplitAtLastPunctuation splits text at the last punctuation mark, optimizing sentence segmentation for chat
 func SplitAtLastPunctuation(text string) (string, int) {
 	if len(text) == 0 {
 		return "", 0
 	}
 
-	// 定义不同优先级的分句标点符号
-	// 优先级1：强制停顿的标点（句号、问号、感叹号等）
+	// Define sentence-splitting punctuations by priority
+	// Priority 1: Strong pause punctuations (period, question mark, exclamation mark, etc.)
 	strongPunctuations := []string{"。", "？", "！", "；", "?", "!", ";"}
 
-	// 优先级2：中等停顿的标点（逗号、冒号等）
+	// Priority 2: Medium pause punctuations (comma, colon, etc.)
 	mediumPunctuations := []string{"，", "：", ",", ".", ":"}
 
-	// 优先级3：轻微停顿的标点（顿号、括号等）
+	// Priority 3: Light pause punctuations (enumeration comma, brackets, etc.)
 	lightPunctuations := []string{"、", "）", ")", "】", "]", "》", ">", "`", "'"}
 
-	// 动态调整最小分句长度，避免超出文本长度
+	// Dynamically adjust min segment length to prevent exceeding text length
 	minLength := 2
 	if len(text) < minLength {
 		minLength = 1
 	}
 
-	// 优先查找强停顿标点
+	// Prioritize strong pause punctuation
 	if segment, pos := findLastPunctuationWithMinLength(text, strongPunctuations, minLength); pos > 0 {
 		return segment, pos
 	}
 
-	// 如果文本较长（超过50字符），考虑中等停顿标点
+	// If text is long (>50 chars), consider medium pause punctuation
 	if len(text) > 50 {
 		minLength = 8
 		if len(text) < minLength {
@@ -59,7 +59,7 @@ func SplitAtLastPunctuation(text string) (string, int) {
 		}
 	}
 
-	// 如果文本很长（超过80字符），考虑轻微停顿标点
+	// If text is very long (>80 chars), consider light pause punctuation
 	if len(text) > 80 {
 		minLength = 8
 		if len(text) < minLength {
@@ -70,7 +70,7 @@ func SplitAtLastPunctuation(text string) (string, int) {
 		}
 	}
 
-	// 如果没有找到合适的标点，且文本过长（超过100字符），强制在空格处分割
+	// If no suitable punctuation found and text is long (>100 chars), force split at space
 	if len(text) > 100 {
 		minLength = 8
 		if len(text) < minLength {
@@ -81,7 +81,7 @@ func SplitAtLastPunctuation(text string) (string, int) {
 		}
 	}
 
-	// 如果文本过长（超过120字符），强制分割
+	// If text is overly long (>120 chars), force split
 	if len(text) > 120 {
 		cutPos := 80
 		if len(text) < cutPos {
@@ -93,9 +93,9 @@ func SplitAtLastPunctuation(text string) (string, int) {
 	return "", 0
 }
 
-// findLastPunctuationWithMinLength 查找最后一个标点符号位置，确保最小长度
+// findLastPunctuationWithMinLength finds last punctuation position ensuring minLength
 func findLastPunctuationWithMinLength(text string, punctuations []string, minLength int) (string, int) {
-	// 安全检查：确保 minLength 不超过文本长度
+	// Safety check: ensure minLength does not exceed text length
 	if minLength >= len(text) {
 		minLength = len(text) - 1
 		if minLength < 0 {
@@ -107,22 +107,22 @@ func findLastPunctuationWithMinLength(text string, punctuations []string, minLen
 	foundPunctuation := ""
 
 	for _, punct := range punctuations {
-		// 从最小长度位置开始查找
+		// Search starting from minLength
 		searchText := text[minLength:]
 		if idx := strings.LastIndex(searchText, punct); idx != -1 {
 			actualIdx := idx + minLength
 
-			// 如果是小数点（英文句号），且前后均为 ASCII 数字，则认为是小数点，跳过此位置
+			// If period between digits, treat as decimal point and skip
 			if punct == "." {
-				// 确保前后索引在范围内再检查（按 rune 安全解码）
+				// Ensure indices within bounds before checking (rune-safe decode)
 				if actualIdx > 0 && actualIdx < len(text) {
-					// 解码前一个 rune
+					// Decode preceding rune
 					beforeRune, _ := utf8.DecodeLastRuneInString(text[:actualIdx])
-					// 解码后一个 rune（从 actualIdx+len(punct) 开始）
+					// Decode following rune
 					afterStart := actualIdx + len(punct)
 					if afterStart < len(text) {
 						afterRune, _ := utf8.DecodeRuneInString(text[afterStart:])
-						// 仅当两边都是 ASCII 数字时认为是小数点
+						// Only treat as decimal point when digits on both sides
 						if beforeRune >= '0' && beforeRune <= '9' && afterRune >= '0' && afterRune <= '9' {
 							continue
 						}
@@ -143,57 +143,57 @@ func findLastPunctuationWithMinLength(text string, punctuations []string, minLen
 
 	endPos := lastIndex + len(foundPunctuation)
 
-	// 检查标点符号后是否有需要一起保留的引号或括号
+	// Check if following closing quotes or brackets should be preserved
 	endPos = adjustForClosingQuotes(text, endPos)
 
-	// 确保不超出文本长度
+	// Ensure does not exceed text length
 	if endPos > len(text) {
 		endPos = len(text)
 	}
 	return text[:endPos], endPos
 }
 
-// adjustForClosingQuotes 调整结束位置，确保配对的引号和括号一起保留
+// adjustForClosingQuotes adjusts end position to preserve closing quotes and brackets
 func adjustForClosingQuotes(text string, pos int) int {
 	if pos >= len(text) {
 		return pos
 	}
 
-	// 转换为 rune 切片以正确处理 UTF-8 字符
+	// Convert to rune slice to handle UTF-8 correctly
 	runes := []rune(text)
 
-	// 把字节索引 pos 转为 rune 索引
+	// Convert byte index pos to rune index
 	runePos := len([]rune(text[:pos]))
 
-	// 只处理中文下引号的情况
+	// Handle Chinese closing quotes
 	chineseClosingQuotes := map[rune]bool{
-		'”': true, // 中文右双引号
-		'’': true, // 中文右单引号
+		'”': true, // Chinese closing double quote
+		'’': true, // Chinese closing single quote
 	}
 
-	// 最多向前查找2个字符（只考虑紧邻的引号）
+	// Look ahead up to 2 characters (adjacent quotes only)
 	maxLookAhead := 2
 
 	for i := 0; i < maxLookAhead && runePos < len(runes); i++ {
 		char := runes[runePos]
 
-		// 如果是中文下引号，包含它
+		// If closing quote, include it
 		if chineseClosingQuotes[char] {
 			runePos++
 			continue
 		}
 
-		// 遇到其他字符（包括空格、英文引号、上引号等），停止查找
+		// Stop searching on other characters
 		break
 	}
 
-	// 将 rune 索引转换回字节索引并返回
+	// Convert rune index back to byte index and return
 	return len(string(runes[:runePos]))
 }
 
-// findLastSpaceWithMinLength 查找最后一个空格位置，确保最小长度
+// findLastSpaceWithMinLength finds last space position ensuring minLength
 func findLastSpaceWithMinLength(text string, minLength int) (string, int) {
-	// 安全检查：确保 minLength 不超过文本长度
+	// Safety check: ensure minLength does not exceed text length
 	if minLength >= len(text) {
 		minLength = len(text) - 1
 		if minLength < 0 {
@@ -201,7 +201,7 @@ func findLastSpaceWithMinLength(text string, minLength int) (string, int) {
 		}
 	}
 
-	// 从最小长度位置开始查找空格
+	// Search for space starting from minLength
 	searchText := text[minLength:]
 	if idx := strings.LastIndex(searchText, " "); idx != -1 {
 		actualIdx := idx + minLength
@@ -211,10 +211,10 @@ func findLastSpaceWithMinLength(text string, minLength int) (string, int) {
 }
 
 func SplitByPunctuation(text string) []string {
-	// 使用正则表达式分割文本
+	// Split text using regular expression
 	parts := reSplitString.Split(text, -1)
 
-	// 过滤掉空字符串
+	// Filter out empty strings
 	var result []string
 	for _, part := range parts {
 		if strings.TrimSpace(part) != "" {
@@ -226,25 +226,25 @@ func SplitByPunctuation(text string) []string {
 }
 
 func RemoveMarkdownSyntax(text string) string {
-	// 替换Markdown符号为空格
+	// Remove Markdown syntax
 	cleaned := reMarkdownChars.ReplaceAllString(text, "")
 
 	return cleaned
 }
 
-// RemoveAllPunctuation 移除所有标点符号
+// RemoveAllPunctuation removes all punctuation marks
 func RemoveAllPunctuation(text string) string {
-	// 替换标点符号为空字符串
+	// Replace punctuation with empty string
 	cleaned := reRemoveAllPunctuation.ReplaceAllString(text, "")
 	return cleaned
 }
 
-// extract_json_from_string 提取字符串中的 JSON 部分
+// Extract_json_from_string extracts JSON portion from string
 func Extract_json_from_string(input string) map[string]interface{} {
-	// 提取最外层的{}
+	// Extract outermost {}
 	start := strings.Index(input, "{")
 	if start == -1 {
-		fmt.Println("没有找到JSON起始符号")
+		fmt.Println("No JSON start delimiter found")
 		return nil
 	}
 	bracketCount := 0
@@ -263,19 +263,19 @@ outer:
 		}
 	}
 	if end == -1 {
-		fmt.Println("没有找到完整的JSON结构")
+		fmt.Println("No complete JSON structure found")
 		return nil
 	}
 	jsonStr := input[start : end+1]
 	var jsonData map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonStr), &jsonData); err != nil {
-		fmt.Println("JSON解析错误:", err)
+		fmt.Println("JSON parsing error:", err)
 		return nil
 	}
 	return jsonData
 }
 
-// joinStrings 连接字符串切片
+// JoinStrings joins string slice
 func JoinStrings(strs []string) string {
 	var result string
 	for _, s := range strs {
@@ -284,13 +284,13 @@ func JoinStrings(strs []string) string {
 	return result
 }
 
-// IsWakeUpWord 判断是否是唤醒词，格式为"你好xx"
+// IsWakeUpWord checks if text matches wakeup pattern
 func IsWakeUpWord(text string) bool {
-	// 检测是否匹配
+	// Check match
 	return reWakeUpWord.MatchString(text)
 }
 
-// IsInArray 判断text是否在字符串数组中
+// IsInArray checks if text exists in string slice
 func IsInArray(text string, array []string) bool {
 	for _, item := range array {
 		if item == text {
@@ -300,13 +300,13 @@ func IsInArray(text string, array []string) bool {
 	return false
 }
 
-// RandomSelectFromArray 从字符串数组中随机选择一个返回
+// RandomSelectFromArray randomly selects an element from slice
 func RandomSelectFromArray(array []string) string {
 	if len(array) == 0 {
-		return "在呢"
+		return "I'm here"
 	}
 
-	// 生成随机索引
+	// Generate random index
 	index := rand.Intn(len(array))
 
 	return array[index]
@@ -321,12 +321,12 @@ func GenerateSecurePassword(length int) string {
 	return string(password)
 }
 
-// RemoveParentheses 移除括号及括号内的内容
-// 支持中文括号（）和英文括号()
+// RemoveParentheses removes parentheses and their enclosed content
+// Supports Chinese parentheses （） and English parentheses ()
 func RemoveParentheses(text string) string {
-	// 移除中文括号及其内容
+	// Remove Chinese parentheses and content
 	text = reRemoveParenthesesCN.ReplaceAllString(text, "")
-	// 移除英文括号及其内容
+	// Remove English parentheses and content
 	text = reRemoveParenthesesEN.ReplaceAllString(text, "")
 	return text
 }
